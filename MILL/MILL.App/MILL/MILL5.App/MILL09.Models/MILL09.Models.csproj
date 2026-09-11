@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MILL12.Services\MILL12.Services.csproj" />
+    <ProjectReference Include="..\MILL80.Infrastructure\MILL80.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

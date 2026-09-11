@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="MILL/MILL5.App/MILL03.Views/MILL03.Views.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+  <Project Path="MILL/MILL5.App/MILL06.Data/MILL06.Data.csproj" />
+  <Project Path="MILL/MILL5.App/MILL06.ViewModels/MILL06.ViewModels.csproj" />
+  <Project Path="MILL/MILL5.App/MILL09.Models/MILL09.Models.csproj" />
+  <Project Path="MILL/MILL5.App/MILL12.Services/MILL12.Services.csproj" />
+  <Project Path="MILL/MILL5.App/MILL80.Infrastructure/MILL80.Infrastructure.csproj" />
+  <Project Path="MILL/MILL5.App/MILL90.Tests/MILL90.Tests.csproj" />
+</Solution>
