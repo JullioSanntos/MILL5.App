@@ -78,4 +78,10 @@
 	  <ProjectReference Include="..\MILL80.Infrastructure\MILL80.Infrastructure.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <MauiXaml Update="MainView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
 </Project>

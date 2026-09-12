@@ -1,13 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Maui.Controls;
 
-namespace MILL03.Views {
-    public partial class App : Application {
-        public App() {
-            InitializeComponent();
-        }
+namespace MILL03.Views;
 
-        protected override Window CreateWindow(IActivationState? activationState) {
-            return new Window(new AppShell());
-        }
+public partial class App : Application {
+    public App() {
+        InitializeComponent();
+    }
+
+    protected override Window CreateWindow(IActivationState? activationState) {
+        // Spawns a dedicated OS Window with its own isolated MainView instance
+        return new Window(new MainView()) {
+            Title = "Enterprise Dashboard"
+        };
     }
 }
