@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MILL12.Services\MILL12.Services.csproj" />
     <ProjectReference Include="..\MILL80.Infrastructure\MILL80.Infrastructure.csproj" />
   </ItemGroup>

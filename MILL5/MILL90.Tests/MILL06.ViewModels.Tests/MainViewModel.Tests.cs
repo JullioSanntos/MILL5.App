@@ -9,7 +9,7 @@ namespace MILL90.Tests.MILL06.ViewModels.Tests {
     public class MainViewModelTests {
         [TestMethod]
         public void InstantiationTests() {
-            var target = new MainViewModel();
+            var target = MainViewModel.Instance;
             Assert.IsNotNull(target);
         }
     }

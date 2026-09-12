@@ -5,7 +5,7 @@ namespace MILL90.Tests.MILL09.Models.Tests {
     public class MainModelTests {
         [TestMethod]
         public void InstantiationTest() {
-            var target = new MainModel();
+            var target = MainModel.Instance;
             Assert.IsNotNull(target);
         }
     }
