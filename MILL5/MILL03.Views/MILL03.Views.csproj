@@ -70,4 +70,12 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\MILL06.Data\MILL06.Data.csproj" />
+	  <ProjectReference Include="..\MILL06.ViewModels\MILL06.ViewModels.csproj" />
+	  <ProjectReference Include="..\MILL09.Models\MILL09.Models.csproj" />
+	  <ProjectReference Include="..\MILL12.Services\MILL12.Services.csproj" />
+	  <ProjectReference Include="..\MILL80.Infrastructure\MILL80.Infrastructure.csproj" />
+	</ItemGroup>
+
 </Project>
