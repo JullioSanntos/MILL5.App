@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Employee pay history.
 /// </summary>
 public partial class EmployeePayHistory
-{    /// <summary>
+{
+    /// <summary>
     /// Employee identification number. Foreign key to Employee.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -42,8 +45,9 @@ public partial class EmployeePayHistory
     public virtual Employee BusinessEntity { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class EmployeePayHistoryRepository : IEntitySetLoader<EmployeePayHistory>, IEntitySaver<EmployeePayHistory>
+[Register(typeof(IEntitySetLoader<MILL09.Models.EmployeePayHistory>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.EmployeePayHistory>), ServiceLifetime.Transient)]
+public class EmployeePayHistoryRepository : IEntitySetLoader<MILL09.Models.EmployeePayHistory>, IEntitySaver<MILL09.Models.EmployeePayHistory>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -52,21 +56,31 @@ public class EmployeePayHistoryRepository : IEntitySetLoader<EmployeePayHistory>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<EmployeePayHistory>
-    public async Task<IReadOnlyList<EmployeePayHistory>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.EmployeePayHistory>
+    public async Task<IReadOnlyList<MILL09.Models.EmployeePayHistory>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<EmployeePayHistory>()
+        var dbEntities = await _dbContext.Set<EmployeePayHistory>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<EmployeePayHistory>
 
-    #region IEntitySaver<EmployeePayHistory>
-    public async Task SaveAsync(EmployeePayHistory entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.EmployeePayHistory
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            RateChangeDate = db.RateChangeDate,
+            ModifiedDate = db.ModifiedDate,
+            PayFrequency = db.PayFrequency,
+            Rate = db.Rate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.EmployeePayHistory>
+
+    #region IEntitySaver<MILL09.Models.EmployeePayHistory>
+    public Task SaveAsync(MILL09.Models.EmployeePayHistory entity, CancellationToken ct)
     {
-        _dbContext.Set<EmployeePayHistory>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<EmployeePayHistory>
+    #endregion IEntitySaver<MILL09.Models.EmployeePayHistory>
 }
-

@@ -58,6 +58,9 @@ public partial class PhoneNumberType : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].PhoneNumberTypeId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsPhoneNumberTypesLoaded = true;
         OnRefreshed();
     }
 
@@ -93,21 +96,24 @@ public partial class MainModel
     public ObservableCollection<PhoneNumberType> PhoneNumberTypes
     {
         get { if (_phoneNumberTypes == null) PhoneNumberTypes = new ObservableCollection<PhoneNumberType>(); return _phoneNumberTypes!; }
-        private set
-        {
-            SetProperty(ref _phoneNumberTypes, value);
-            OnPropertyChanged(nameof(IsPhoneNumberTypesLoaded));
-        }
+        private set => SetProperty(ref _phoneNumberTypes, value);
     }
 
-    public bool IsPhoneNumberTypesLoaded => _phoneNumberTypes != null;
+    private bool _isPhoneNumberTypesLoaded;
+    public bool IsPhoneNumberTypesLoaded
+    {
+        get => _isPhoneNumberTypesLoaded;
+        internal set => SetProperty(ref _isPhoneNumberTypesLoaded, value);
+    }
 
     internal void UnloadPhoneNumberTypesStorage()
     {
         if (_phoneNumberTypes == null) return;
         _phoneNumberTypes = null;
         OnPropertyChanged(nameof(PhoneNumberTypes));
-        OnPropertyChanged(nameof(IsPhoneNumberTypesLoaded));
+
+        // Reset the load state flag
+        IsPhoneNumberTypesLoaded = false;
     }
 }
 }

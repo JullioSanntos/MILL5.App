@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Lookup table containing the ISO standard codes for countries and regions.
 /// </summary>
 public partial class CountryRegion
-{    /// <summary>
+{
+    /// <summary>
     /// ISO standard code for countries and regions.
     /// </summary>
     public string CountryRegionCode { get; set; }
@@ -36,8 +39,9 @@ public partial class CountryRegion
     public virtual ICollection<StateProvince> StateProvinces { get; set; } = new List<StateProvince>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class CountryRegionRepository : IEntitySetLoader<CountryRegion>, IEntitySaver<CountryRegion>
+[Register(typeof(IEntitySetLoader<MILL09.Models.CountryRegion>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.CountryRegion>), ServiceLifetime.Transient)]
+public class CountryRegionRepository : IEntitySetLoader<MILL09.Models.CountryRegion>, IEntitySaver<MILL09.Models.CountryRegion>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -46,21 +50,29 @@ public class CountryRegionRepository : IEntitySetLoader<CountryRegion>, IEntityS
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<CountryRegion>
-    public async Task<IReadOnlyList<CountryRegion>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.CountryRegion>
+    public async Task<IReadOnlyList<MILL09.Models.CountryRegion>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<CountryRegion>()
+        var dbEntities = await _dbContext.Set<CountryRegion>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<CountryRegion>
 
-    #region IEntitySaver<CountryRegion>
-    public async Task SaveAsync(CountryRegion entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.CountryRegion
+        {
+            CountryRegionCode = db.CountryRegionCode,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.CountryRegion>
+
+    #region IEntitySaver<MILL09.Models.CountryRegion>
+    public Task SaveAsync(MILL09.Models.CountryRegion entity, CancellationToken ct)
     {
-        _dbContext.Set<CountryRegion>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<CountryRegion>
+    #endregion IEntitySaver<MILL09.Models.CountryRegion>
 }
-

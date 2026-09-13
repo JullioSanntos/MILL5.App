@@ -75,6 +75,9 @@ public partial class Store : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsStoresLoaded = true;
         OnRefreshed();
     }
 
@@ -113,21 +116,24 @@ public partial class MainModel
     public ObservableCollection<Store> Stores
     {
         get { if (_stores == null) Stores = new ObservableCollection<Store>(); return _stores!; }
-        private set
-        {
-            SetProperty(ref _stores, value);
-            OnPropertyChanged(nameof(IsStoresLoaded));
-        }
+        private set => SetProperty(ref _stores, value);
     }
 
-    public bool IsStoresLoaded => _stores != null;
+    private bool _isStoresLoaded;
+    public bool IsStoresLoaded
+    {
+        get => _isStoresLoaded;
+        internal set => SetProperty(ref _isStoresLoaded, value);
+    }
 
     internal void UnloadStoresStorage()
     {
         if (_stores == null) return;
         _stores = null;
         OnPropertyChanged(nameof(Stores));
-        OnPropertyChanged(nameof(IsStoresLoaded));
+
+        // Reset the load state flag
+        IsStoresLoaded = false;
     }
 }
 }

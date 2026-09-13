@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Product descriptions in several languages.
 /// </summary>
 public partial class ProductDescription
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ProductDescription records.
     /// </summary>
     public int ProductDescriptionId { get; set; }
@@ -37,8 +40,9 @@ public partial class ProductDescription
     public virtual ICollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCultures { get; set; } = new List<ProductModelProductDescriptionCulture>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ProductDescriptionRepository : IEntitySetLoader<ProductDescription>, IEntitySaver<ProductDescription>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ProductDescription>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ProductDescription>), ServiceLifetime.Transient)]
+public class ProductDescriptionRepository : IEntitySetLoader<MILL09.Models.ProductDescription>, IEntitySaver<MILL09.Models.ProductDescription>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -47,21 +51,30 @@ public class ProductDescriptionRepository : IEntitySetLoader<ProductDescription>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ProductDescription>
-    public async Task<IReadOnlyList<ProductDescription>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ProductDescription>
+    public async Task<IReadOnlyList<MILL09.Models.ProductDescription>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ProductDescription>()
+        var dbEntities = await _dbContext.Set<ProductDescription>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ProductDescription>
 
-    #region IEntitySaver<ProductDescription>
-    public async Task SaveAsync(ProductDescription entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ProductDescription
+        {
+            ProductDescriptionId = db.ProductDescriptionId,
+            Description = db.Description,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ProductDescription>
+
+    #region IEntitySaver<MILL09.Models.ProductDescription>
+    public Task SaveAsync(MILL09.Models.ProductDescription entity, CancellationToken ct)
     {
-        _dbContext.Set<ProductDescription>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ProductDescription>
+    #endregion IEntitySaver<MILL09.Models.ProductDescription>
 }
-

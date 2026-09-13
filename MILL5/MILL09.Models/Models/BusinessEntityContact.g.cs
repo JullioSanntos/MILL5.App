@@ -65,6 +65,9 @@ public partial class BusinessEntityContact : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsBusinessEntityContactsLoaded = true;
         OnRefreshed();
     }
 
@@ -102,21 +105,24 @@ public partial class MainModel
     public ObservableCollection<BusinessEntityContact> BusinessEntityContacts
     {
         get { if (_businessEntityContacts == null) BusinessEntityContacts = new ObservableCollection<BusinessEntityContact>(); return _businessEntityContacts!; }
-        private set
-        {
-            SetProperty(ref _businessEntityContacts, value);
-            OnPropertyChanged(nameof(IsBusinessEntityContactsLoaded));
-        }
+        private set => SetProperty(ref _businessEntityContacts, value);
     }
 
-    public bool IsBusinessEntityContactsLoaded => _businessEntityContacts != null;
+    private bool _isBusinessEntityContactsLoaded;
+    public bool IsBusinessEntityContactsLoaded
+    {
+        get => _isBusinessEntityContactsLoaded;
+        internal set => SetProperty(ref _isBusinessEntityContactsLoaded, value);
+    }
 
     internal void UnloadBusinessEntityContactsStorage()
     {
         if (_businessEntityContacts == null) return;
         _businessEntityContacts = null;
         OnPropertyChanged(nameof(BusinessEntityContacts));
-        OnPropertyChanged(nameof(IsBusinessEntityContactsLoaded));
+
+        // Reset the load state flag
+        IsBusinessEntityContactsLoaded = false;
     }
 }
 }

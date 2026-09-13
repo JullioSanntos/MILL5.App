@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Customers (resellers) of Adventure Works products.
 /// </summary>
 public partial class Store
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key. Foreign key to Customer.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -51,8 +54,9 @@ public partial class Store
     public virtual SalesPerson SalesPerson { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class StoreRepository : IEntitySetLoader<Store>, IEntitySaver<Store>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Store>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Store>), ServiceLifetime.Transient)]
+public class StoreRepository : IEntitySetLoader<MILL09.Models.Store>, IEntitySaver<MILL09.Models.Store>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -61,21 +65,32 @@ public class StoreRepository : IEntitySetLoader<Store>, IEntitySaver<Store>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Store>
-    public async Task<IReadOnlyList<Store>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Store>
+    public async Task<IReadOnlyList<MILL09.Models.Store>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Store>()
+        var dbEntities = await _dbContext.Set<Store>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Store>
 
-    #region IEntitySaver<Store>
-    public async Task SaveAsync(Store entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Store
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            Demographics = db.Demographics,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            Rowguid = db.Rowguid,
+            SalesPersonId = db.SalesPersonId,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Store>
+
+    #region IEntitySaver<MILL09.Models.Store>
+    public Task SaveAsync(MILL09.Models.Store entity, CancellationToken ct)
     {
-        _dbContext.Set<Store>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Store>
+    #endregion IEntitySaver<MILL09.Models.Store>
 }
-

@@ -58,6 +58,9 @@ public partial class Illustration : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].IllustrationId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsIllustrationsLoaded = true;
         OnRefreshed();
     }
 
@@ -93,21 +96,24 @@ public partial class MainModel
     public ObservableCollection<Illustration> Illustrations
     {
         get { if (_illustrations == null) Illustrations = new ObservableCollection<Illustration>(); return _illustrations!; }
-        private set
-        {
-            SetProperty(ref _illustrations, value);
-            OnPropertyChanged(nameof(IsIllustrationsLoaded));
-        }
+        private set => SetProperty(ref _illustrations, value);
     }
 
-    public bool IsIllustrationsLoaded => _illustrations != null;
+    private bool _isIllustrationsLoaded;
+    public bool IsIllustrationsLoaded
+    {
+        get => _isIllustrationsLoaded;
+        internal set => SetProperty(ref _isIllustrationsLoaded, value);
+    }
 
     internal void UnloadIllustrationsStorage()
     {
         if (_illustrations == null) return;
         _illustrations = null;
         OnPropertyChanged(nameof(Illustrations));
-        OnPropertyChanged(nameof(IsIllustrationsLoaded));
+
+        // Reset the load state flag
+        IsIllustrationsLoaded = false;
     }
 }
 }

@@ -82,6 +82,9 @@ public partial class Customer : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].CustomerId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsCustomersLoaded = true;
         OnRefreshed();
     }
 
@@ -121,21 +124,24 @@ public partial class MainModel
     public ObservableCollection<Customer> Customers
     {
         get { if (_customers == null) Customers = new ObservableCollection<Customer>(); return _customers!; }
-        private set
-        {
-            SetProperty(ref _customers, value);
-            OnPropertyChanged(nameof(IsCustomersLoaded));
-        }
+        private set => SetProperty(ref _customers, value);
     }
 
-    public bool IsCustomersLoaded => _customers != null;
+    private bool _isCustomersLoaded;
+    public bool IsCustomersLoaded
+    {
+        get => _isCustomersLoaded;
+        internal set => SetProperty(ref _isCustomersLoaded, value);
+    }
 
     internal void UnloadCustomersStorage()
     {
         if (_customers == null) return;
         _customers = null;
         OnPropertyChanged(nameof(Customers));
-        OnPropertyChanged(nameof(IsCustomersLoaded));
+
+        // Reset the load state flag
+        IsCustomersLoaded = false;
     }
 }
 }

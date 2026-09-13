@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Cross-reference table mapping vendors with the products they supply.
 /// </summary>
 public partial class ProductVendor
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key. Foreign key to Product.ProductID.
     /// </summary>
     public int ProductId { get; set; }
@@ -76,8 +79,9 @@ public partial class ProductVendor
     public virtual UnitMeasure UnitMeasureCodeNavigation { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ProductVendorRepository : IEntitySetLoader<ProductVendor>, IEntitySaver<ProductVendor>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ProductVendor>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ProductVendor>), ServiceLifetime.Transient)]
+public class ProductVendorRepository : IEntitySetLoader<MILL09.Models.ProductVendor>, IEntitySaver<MILL09.Models.ProductVendor>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -86,21 +90,37 @@ public class ProductVendorRepository : IEntitySetLoader<ProductVendor>, IEntityS
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ProductVendor>
-    public async Task<IReadOnlyList<ProductVendor>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ProductVendor>
+    public async Task<IReadOnlyList<MILL09.Models.ProductVendor>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ProductVendor>()
+        var dbEntities = await _dbContext.Set<ProductVendor>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ProductVendor>
 
-    #region IEntitySaver<ProductVendor>
-    public async Task SaveAsync(ProductVendor entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ProductVendor
+        {
+            ProductId = db.ProductId,
+            BusinessEntityId = db.BusinessEntityId,
+            AverageLeadTime = db.AverageLeadTime,
+            LastReceiptCost = db.LastReceiptCost,
+            LastReceiptDate = db.LastReceiptDate,
+            MaxOrderQty = db.MaxOrderQty,
+            MinOrderQty = db.MinOrderQty,
+            ModifiedDate = db.ModifiedDate,
+            OnOrderQty = db.OnOrderQty,
+            StandardPrice = db.StandardPrice,
+            UnitMeasureCode = db.UnitMeasureCode,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ProductVendor>
+
+    #region IEntitySaver<MILL09.Models.ProductVendor>
+    public Task SaveAsync(MILL09.Models.ProductVendor entity, CancellationToken ct)
     {
-        _dbContext.Set<ProductVendor>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ProductVendor>
+    #endregion IEntitySaver<MILL09.Models.ProductVendor>
 }
-

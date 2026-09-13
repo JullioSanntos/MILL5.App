@@ -78,6 +78,9 @@ public partial class CurrencyRate : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].CurrencyRateId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsCurrencyRatesLoaded = true;
         OnRefreshed();
     }
 
@@ -117,21 +120,24 @@ public partial class MainModel
     public ObservableCollection<CurrencyRate> CurrencyRates
     {
         get { if (_currencyRates == null) CurrencyRates = new ObservableCollection<CurrencyRate>(); return _currencyRates!; }
-        private set
-        {
-            SetProperty(ref _currencyRates, value);
-            OnPropertyChanged(nameof(IsCurrencyRatesLoaded));
-        }
+        private set => SetProperty(ref _currencyRates, value);
     }
 
-    public bool IsCurrencyRatesLoaded => _currencyRates != null;
+    private bool _isCurrencyRatesLoaded;
+    public bool IsCurrencyRatesLoaded
+    {
+        get => _isCurrencyRatesLoaded;
+        internal set => SetProperty(ref _isCurrencyRatesLoaded, value);
+    }
 
     internal void UnloadCurrencyRatesStorage()
     {
         if (_currencyRates == null) return;
         _currencyRates = null;
         OnPropertyChanged(nameof(CurrencyRates));
-        OnPropertyChanged(nameof(IsCurrencyRatesLoaded));
+
+        // Reset the load state flag
+        IsCurrencyRatesLoaded = false;
     }
 }
 }

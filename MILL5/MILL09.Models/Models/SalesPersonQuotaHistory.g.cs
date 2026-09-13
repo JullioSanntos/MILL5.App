@@ -61,6 +61,9 @@ public partial class SalesPersonQuotaHistory : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesPersonQuotaHistoriesLoaded = true;
         OnRefreshed();
     }
 
@@ -98,21 +101,24 @@ public partial class MainModel
     public ObservableCollection<SalesPersonQuotaHistory> SalesPersonQuotaHistories
     {
         get { if (_salesPersonQuotaHistories == null) SalesPersonQuotaHistories = new ObservableCollection<SalesPersonQuotaHistory>(); return _salesPersonQuotaHistories!; }
-        private set
-        {
-            SetProperty(ref _salesPersonQuotaHistories, value);
-            OnPropertyChanged(nameof(IsSalesPersonQuotaHistoriesLoaded));
-        }
+        private set => SetProperty(ref _salesPersonQuotaHistories, value);
     }
 
-    public bool IsSalesPersonQuotaHistoriesLoaded => _salesPersonQuotaHistories != null;
+    private bool _isSalesPersonQuotaHistoriesLoaded;
+    public bool IsSalesPersonQuotaHistoriesLoaded
+    {
+        get => _isSalesPersonQuotaHistoriesLoaded;
+        internal set => SetProperty(ref _isSalesPersonQuotaHistoriesLoaded, value);
+    }
 
     internal void UnloadSalesPersonQuotaHistoriesStorage()
     {
         if (_salesPersonQuotaHistories == null) return;
         _salesPersonQuotaHistories = null;
         OnPropertyChanged(nameof(SalesPersonQuotaHistories));
-        OnPropertyChanged(nameof(IsSalesPersonQuotaHistoriesLoaded));
+
+        // Reset the load state flag
+        IsSalesPersonQuotaHistoriesLoaded = false;
     }
 }
 }

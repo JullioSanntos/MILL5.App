@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Product inventory and manufacturing locations.
 /// </summary>
 public partial class Location
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Location records.
     /// </summary>
     public short LocationId { get; set; }
@@ -44,8 +47,9 @@ public partial class Location
     public virtual ICollection<WorkOrderRouting> WorkOrderRoutings { get; set; } = new List<WorkOrderRouting>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class LocationRepository : IEntitySetLoader<Location>, IEntitySaver<Location>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Location>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Location>), ServiceLifetime.Transient)]
+public class LocationRepository : IEntitySetLoader<MILL09.Models.Location>, IEntitySaver<MILL09.Models.Location>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -54,21 +58,31 @@ public class LocationRepository : IEntitySetLoader<Location>, IEntitySaver<Locat
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Location>
-    public async Task<IReadOnlyList<Location>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Location>
+    public async Task<IReadOnlyList<MILL09.Models.Location>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Location>()
+        var dbEntities = await _dbContext.Set<Location>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Location>
 
-    #region IEntitySaver<Location>
-    public async Task SaveAsync(Location entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Location
+        {
+            LocationId = db.LocationId,
+            Availability = db.Availability,
+            CostRate = db.CostRate,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Location>
+
+    #region IEntitySaver<MILL09.Models.Location>
+    public Task SaveAsync(MILL09.Models.Location entity, CancellationToken ct)
     {
-        _dbContext.Set<Location>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Location>
+    #endregion IEntitySaver<MILL09.Models.Location>
 }
-

@@ -57,6 +57,9 @@ public partial class SalesOrderHeaderSalesReason : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].SalesOrderId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesOrderHeaderSalesReasonsLoaded = true;
         OnRefreshed();
     }
 
@@ -92,21 +95,24 @@ public partial class MainModel
     public ObservableCollection<SalesOrderHeaderSalesReason> SalesOrderHeaderSalesReasons
     {
         get { if (_salesOrderHeaderSalesReasons == null) SalesOrderHeaderSalesReasons = new ObservableCollection<SalesOrderHeaderSalesReason>(); return _salesOrderHeaderSalesReasons!; }
-        private set
-        {
-            SetProperty(ref _salesOrderHeaderSalesReasons, value);
-            OnPropertyChanged(nameof(IsSalesOrderHeaderSalesReasonsLoaded));
-        }
+        private set => SetProperty(ref _salesOrderHeaderSalesReasons, value);
     }
 
-    public bool IsSalesOrderHeaderSalesReasonsLoaded => _salesOrderHeaderSalesReasons != null;
+    private bool _isSalesOrderHeaderSalesReasonsLoaded;
+    public bool IsSalesOrderHeaderSalesReasonsLoaded
+    {
+        get => _isSalesOrderHeaderSalesReasonsLoaded;
+        internal set => SetProperty(ref _isSalesOrderHeaderSalesReasonsLoaded, value);
+    }
 
     internal void UnloadSalesOrderHeaderSalesReasonsStorage()
     {
         if (_salesOrderHeaderSalesReasons == null) return;
         _salesOrderHeaderSalesReasons = null;
         OnPropertyChanged(nameof(SalesOrderHeaderSalesReasons));
-        OnPropertyChanged(nameof(IsSalesOrderHeaderSalesReasonsLoaded));
+
+        // Reset the load state flag
+        IsSalesOrderHeaderSalesReasonsLoaded = false;
     }
 }
 }

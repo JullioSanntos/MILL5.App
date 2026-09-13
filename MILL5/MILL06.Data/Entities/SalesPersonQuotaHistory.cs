@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Sales performance tracking.
 /// </summary>
 public partial class SalesPersonQuotaHistory
-{    /// <summary>
+{
+    /// <summary>
     /// Sales person identification number. Foreign key to SalesPerson.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -42,8 +45,9 @@ public partial class SalesPersonQuotaHistory
     public virtual SalesPerson BusinessEntity { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class SalesPersonQuotaHistoryRepository : IEntitySetLoader<SalesPersonQuotaHistory>, IEntitySaver<SalesPersonQuotaHistory>
+[Register(typeof(IEntitySetLoader<MILL09.Models.SalesPersonQuotaHistory>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.SalesPersonQuotaHistory>), ServiceLifetime.Transient)]
+public class SalesPersonQuotaHistoryRepository : IEntitySetLoader<MILL09.Models.SalesPersonQuotaHistory>, IEntitySaver<MILL09.Models.SalesPersonQuotaHistory>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -52,21 +56,31 @@ public class SalesPersonQuotaHistoryRepository : IEntitySetLoader<SalesPersonQuo
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<SalesPersonQuotaHistory>
-    public async Task<IReadOnlyList<SalesPersonQuotaHistory>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.SalesPersonQuotaHistory>
+    public async Task<IReadOnlyList<MILL09.Models.SalesPersonQuotaHistory>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<SalesPersonQuotaHistory>()
+        var dbEntities = await _dbContext.Set<SalesPersonQuotaHistory>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<SalesPersonQuotaHistory>
 
-    #region IEntitySaver<SalesPersonQuotaHistory>
-    public async Task SaveAsync(SalesPersonQuotaHistory entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.SalesPersonQuotaHistory
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            QuotaDate = db.QuotaDate,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+            SalesQuota = db.SalesQuota,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.SalesPersonQuotaHistory>
+
+    #region IEntitySaver<MILL09.Models.SalesPersonQuotaHistory>
+    public Task SaveAsync(MILL09.Models.SalesPersonQuotaHistory entity, CancellationToken ct)
     {
-        _dbContext.Set<SalesPersonQuotaHistory>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<SalesPersonQuotaHistory>
+    #endregion IEntitySaver<MILL09.Models.SalesPersonQuotaHistory>
 }
-

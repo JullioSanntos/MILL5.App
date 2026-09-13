@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Human beings involved with AdventureWorks: employees, customer contacts, and vendor contacts.
 /// </summary>
 public partial class Person
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Person records.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -96,8 +99,9 @@ public partial class Person
     public virtual ICollection<PersonPhone> PersonPhones { get; set; } = new List<PersonPhone>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class PersonRepository : IEntitySetLoader<Person>, IEntitySaver<Person>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Person>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Person>), ServiceLifetime.Transient)]
+public class PersonRepository : IEntitySetLoader<MILL09.Models.Person>, IEntitySaver<MILL09.Models.Person>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -106,21 +110,39 @@ public class PersonRepository : IEntitySetLoader<Person>, IEntitySaver<Person>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Person>
-    public async Task<IReadOnlyList<Person>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Person>
+    public async Task<IReadOnlyList<MILL09.Models.Person>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Person>()
+        var dbEntities = await _dbContext.Set<Person>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Person>
 
-    #region IEntitySaver<Person>
-    public async Task SaveAsync(Person entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Person
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            AdditionalContactInfo = db.AdditionalContactInfo,
+            Demographics = db.Demographics,
+            EmailPromotion = db.EmailPromotion,
+            FirstName = db.FirstName,
+            LastName = db.LastName,
+            MiddleName = db.MiddleName,
+            ModifiedDate = db.ModifiedDate,
+            NameStyle = db.NameStyle,
+            PersonType = db.PersonType,
+            Rowguid = db.Rowguid,
+            Suffix = db.Suffix,
+            Title = db.Title,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Person>
+
+    #region IEntitySaver<MILL09.Models.Person>
+    public Task SaveAsync(MILL09.Models.Person entity, CancellationToken ct)
     {
-        _dbContext.Set<Person>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Person>
+    #endregion IEntitySaver<MILL09.Models.Person>
 }
-

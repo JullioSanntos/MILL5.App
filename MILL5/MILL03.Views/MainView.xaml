@@ -2,14 +2,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:MILL03.Views.Controls"
+             xmlns:views="using:MILL03.Views.Views"
              x:Class="MILL03.Views.MainView"
              Title="Enterprise Dashboard">
 
     <Grid x:Name="RootGrid" BackgroundColor="Transparent">
 
-        <!-- The foundational cell that initializes the recursive grid -->
-        <controls:RegionCell />
-
+        <!-- The foundational cell that initializes the recursive grid --><!--
+        <controls:RegionCell />-->
+        <controls:RegionCell Grid.Row="0" Grid.Column="0">
+            <views:CustomersView />
+        </controls:RegionCell>
     </Grid>
 
 </ContentPage>

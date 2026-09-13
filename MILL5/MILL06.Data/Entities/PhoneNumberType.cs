@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Type of phone number of a person.
 /// </summary>
 public partial class PhoneNumberType
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for telephone number type records.
     /// </summary>
     public int PhoneNumberTypeId { get; set; }
@@ -32,8 +35,9 @@ public partial class PhoneNumberType
     public virtual ICollection<PersonPhone> PersonPhones { get; set; } = new List<PersonPhone>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class PhoneNumberTypeRepository : IEntitySetLoader<PhoneNumberType>, IEntitySaver<PhoneNumberType>
+[Register(typeof(IEntitySetLoader<MILL09.Models.PhoneNumberType>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.PhoneNumberType>), ServiceLifetime.Transient)]
+public class PhoneNumberTypeRepository : IEntitySetLoader<MILL09.Models.PhoneNumberType>, IEntitySaver<MILL09.Models.PhoneNumberType>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -42,21 +46,29 @@ public class PhoneNumberTypeRepository : IEntitySetLoader<PhoneNumberType>, IEnt
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<PhoneNumberType>
-    public async Task<IReadOnlyList<PhoneNumberType>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.PhoneNumberType>
+    public async Task<IReadOnlyList<MILL09.Models.PhoneNumberType>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<PhoneNumberType>()
+        var dbEntities = await _dbContext.Set<PhoneNumberType>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<PhoneNumberType>
 
-    #region IEntitySaver<PhoneNumberType>
-    public async Task SaveAsync(PhoneNumberType entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.PhoneNumberType
+        {
+            PhoneNumberTypeId = db.PhoneNumberTypeId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.PhoneNumberType>
+
+    #region IEntitySaver<MILL09.Models.PhoneNumberType>
+    public Task SaveAsync(MILL09.Models.PhoneNumberType entity, CancellationToken ct)
     {
-        _dbContext.Set<PhoneNumberType>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<PhoneNumberType>
+    #endregion IEntitySaver<MILL09.Models.PhoneNumberType>
 }
-

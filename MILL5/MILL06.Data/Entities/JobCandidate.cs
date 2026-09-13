@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Résumés submitted to Human Resources by job applicants.
 /// </summary>
 public partial class JobCandidate
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for JobCandidate records.
     /// </summary>
     public int JobCandidateId { get; set; }
@@ -37,8 +40,9 @@ public partial class JobCandidate
     public virtual Employee BusinessEntity { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class JobCandidateRepository : IEntitySetLoader<JobCandidate>, IEntitySaver<JobCandidate>
+[Register(typeof(IEntitySetLoader<MILL09.Models.JobCandidate>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.JobCandidate>), ServiceLifetime.Transient)]
+public class JobCandidateRepository : IEntitySetLoader<MILL09.Models.JobCandidate>, IEntitySaver<MILL09.Models.JobCandidate>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -47,21 +51,30 @@ public class JobCandidateRepository : IEntitySetLoader<JobCandidate>, IEntitySav
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<JobCandidate>
-    public async Task<IReadOnlyList<JobCandidate>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.JobCandidate>
+    public async Task<IReadOnlyList<MILL09.Models.JobCandidate>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<JobCandidate>()
+        var dbEntities = await _dbContext.Set<JobCandidate>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<JobCandidate>
 
-    #region IEntitySaver<JobCandidate>
-    public async Task SaveAsync(JobCandidate entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.JobCandidate
+        {
+            JobCandidateId = db.JobCandidateId,
+            BusinessEntityId = db.BusinessEntityId,
+            ModifiedDate = db.ModifiedDate,
+            Resume = db.Resume,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.JobCandidate>
+
+    #region IEntitySaver<MILL09.Models.JobCandidate>
+    public Task SaveAsync(MILL09.Models.JobCandidate entity, CancellationToken ct)
     {
-        _dbContext.Set<JobCandidate>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<JobCandidate>
+    #endregion IEntitySaver<MILL09.Models.JobCandidate>
 }
-

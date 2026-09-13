@@ -58,6 +58,9 @@ public partial class ScrapReason : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ScrapReasonId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsScrapReasonsLoaded = true;
         OnRefreshed();
     }
 
@@ -93,21 +96,24 @@ public partial class MainModel
     public ObservableCollection<ScrapReason> ScrapReasons
     {
         get { if (_scrapReasons == null) ScrapReasons = new ObservableCollection<ScrapReason>(); return _scrapReasons!; }
-        private set
-        {
-            SetProperty(ref _scrapReasons, value);
-            OnPropertyChanged(nameof(IsScrapReasonsLoaded));
-        }
+        private set => SetProperty(ref _scrapReasons, value);
     }
 
-    public bool IsScrapReasonsLoaded => _scrapReasons != null;
+    private bool _isScrapReasonsLoaded;
+    public bool IsScrapReasonsLoaded
+    {
+        get => _isScrapReasonsLoaded;
+        internal set => SetProperty(ref _isScrapReasonsLoaded, value);
+    }
 
     internal void UnloadScrapReasonsStorage()
     {
         if (_scrapReasons == null) return;
         _scrapReasons = null;
         OnPropertyChanged(nameof(ScrapReasons));
-        OnPropertyChanged(nameof(IsScrapReasonsLoaded));
+
+        // Reset the load state flag
+        IsScrapReasonsLoaded = false;
     }
 }
 }

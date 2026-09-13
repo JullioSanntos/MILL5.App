@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Source of the ID that connects vendors, customers, and employees with address and contact information.
 /// </summary>
 public partial class BusinessEntity
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for all customers, vendors, and employees.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -40,8 +43,9 @@ public partial class BusinessEntity
     public virtual Vendor Vendor { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class BusinessEntityRepository : IEntitySetLoader<BusinessEntity>, IEntitySaver<BusinessEntity>
+[Register(typeof(IEntitySetLoader<MILL09.Models.BusinessEntity>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.BusinessEntity>), ServiceLifetime.Transient)]
+public class BusinessEntityRepository : IEntitySetLoader<MILL09.Models.BusinessEntity>, IEntitySaver<MILL09.Models.BusinessEntity>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -50,21 +54,29 @@ public class BusinessEntityRepository : IEntitySetLoader<BusinessEntity>, IEntit
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<BusinessEntity>
-    public async Task<IReadOnlyList<BusinessEntity>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.BusinessEntity>
+    public async Task<IReadOnlyList<MILL09.Models.BusinessEntity>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<BusinessEntity>()
+        var dbEntities = await _dbContext.Set<BusinessEntity>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<BusinessEntity>
 
-    #region IEntitySaver<BusinessEntity>
-    public async Task SaveAsync(BusinessEntity entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.BusinessEntity
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.BusinessEntity>
+
+    #region IEntitySaver<MILL09.Models.BusinessEntity>
+    public Task SaveAsync(MILL09.Models.BusinessEntity entity, CancellationToken ct)
     {
-        _dbContext.Set<BusinessEntity>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<BusinessEntity>
+    #endregion IEntitySaver<MILL09.Models.BusinessEntity>
 }
-

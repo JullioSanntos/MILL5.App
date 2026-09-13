@@ -64,6 +64,9 @@ public partial class Shift : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ShiftId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsShiftsLoaded = true;
         OnRefreshed();
     }
 
@@ -101,21 +104,24 @@ public partial class MainModel
     public ObservableCollection<Shift> Shifts
     {
         get { if (_shifts == null) Shifts = new ObservableCollection<Shift>(); return _shifts!; }
-        private set
-        {
-            SetProperty(ref _shifts, value);
-            OnPropertyChanged(nameof(IsShiftsLoaded));
-        }
+        private set => SetProperty(ref _shifts, value);
     }
 
-    public bool IsShiftsLoaded => _shifts != null;
+    private bool _isShiftsLoaded;
+    public bool IsShiftsLoaded
+    {
+        get => _isShiftsLoaded;
+        internal set => SetProperty(ref _isShiftsLoaded, value);
+    }
 
     internal void UnloadShiftsStorage()
     {
         if (_shifts == null) return;
         _shifts = null;
         OnPropertyChanged(nameof(Shifts));
-        OnPropertyChanged(nameof(IsShiftsLoaded));
+
+        // Reset the load state flag
+        IsShiftsLoaded = false;
     }
 }
 }

@@ -14,10 +14,8 @@
 <#@ import namespace="Microsoft.EntityFrameworkCore.Design" #>
 <#@ import namespace="Microsoft.Extensions.DependencyInjection" #>
 <#
-    // Template version: 1000 - please do NOT remove this line
     if (EntityType.IsSimpleManyToManyJoinEntityType())
     {
-        // Don't scaffold these
         return "";
     }
 
@@ -28,40 +26,46 @@
     var usings = new List<string>
     {
         "System",
-        "System.Collections.Generic"
+        "System.Collections.Generic",
+        "System.Linq",
+        "System.Threading",
+        "System.Threading.Tasks",
+        "Microsoft.EntityFrameworkCore",
+        "Microsoft.Extensions.DependencyInjection",
+        "MILL80.Infrastructure",
+        "MILL09.Models.Interfaces"
     };
 
     if (Options.UseDataAnnotations)
     {
         usings.Add("System.ComponentModel.DataAnnotations");
         usings.Add("System.ComponentModel.DataAnnotations.Schema");
-        usings.Add("Microsoft.EntityFrameworkCore");
     }
 
     if (!string.IsNullOrEmpty(NamespaceHint))
-    {#>
-namespace <#= NamespaceHint #>;
-<#
+    {
+        WriteLine($"namespace {NamespaceHint};");
+        WriteLine("");
     }
 
     if (!string.IsNullOrEmpty(EntityType.GetComment()))
-    {#>
-/// <summary>
-/// <#= code.XmlComment(EntityType.GetComment()) #>
-/// </summary>
-<#
+    {
+        WriteLine("/// <summary>");
+        WriteLine($"/// {code.XmlComment(EntityType.GetComment())}");
+        WriteLine("/// </summary>");
     }
 
     if (Options.UseDataAnnotations)
     {
         foreach (var dataAnnotation in EntityType.GetDataAnnotations(annotationCodeGenerator))
-        {#>
-<#= code.Fragment(dataAnnotation) #>
-<#
+        {
+            WriteLine(code.Fragment(dataAnnotation));
         }
-    }#>
+    }
+#>
 public partial class <#= EntityType.Name #>
-{<#
+{
+<#
     var firstProperty = true;
     foreach (var property in EntityType.GetProperties().OrderBy(p => p.GetColumnOrder() ?? -1))
     {
@@ -71,11 +75,10 @@ public partial class <#= EntityType.Name #>
         }
 
         if (!string.IsNullOrEmpty(property.GetComment()))
-        {#>
-    /// <summary>
-    /// <#= code.XmlComment(property.GetComment(), indent: 1) #>
-    /// </summary>
-<#
+        {
+            WriteLine("    /// <summary>");
+            WriteLine($"    /// {code.XmlComment(property.GetComment(), indent: 1)}");
+            WriteLine("    /// </summary>");
         }
 
         if (Options.UseDataAnnotations)
@@ -83,18 +86,18 @@ public partial class <#= EntityType.Name #>
             var dataAnnotations = property.GetDataAnnotations(annotationCodeGenerator)
                 .Where(a => !(a.Type == typeof(RequiredAttribute) && Options.UseNullableReferenceTypes && !property.ClrType.IsValueType));
             foreach (var dataAnnotation in dataAnnotations)
-            {#>
-    <#= code.Fragment(dataAnnotation) #>
-<#
+            {
+                WriteLine($"    {code.Fragment(dataAnnotation)}");
             }
         }
 
         usings.AddRange(code.GetRequiredUsings(property.ClrType));
 
         var needsNullable = Options.UseNullableReferenceTypes && property.IsNullable && !property.ClrType.IsValueType;
-        var needsInitializer = Options.UseNullableReferenceTypes && !property.IsNullable && !property.ClrType.IsValueType;#>
-    public <#= code.Reference(property.ClrType) #><#= needsNullable ? "?" : "" #> <#= property.Name #> { get; set; }<#= needsInitializer ? " = null!;" : "" #>
-<#
+        var needsInitializer = Options.UseNullableReferenceTypes && !property.IsNullable && !property.ClrType.IsValueType;
+        
+        WriteLine($"    public {code.Reference(property.ClrType)}{(needsNullable ? "?" : "")} {property.Name} {{ get; set; }}{(needsInitializer ? " = null!;" : "")}");
+        
         firstProperty = false;
     }
 
@@ -105,24 +108,21 @@ public partial class <#= EntityType.Name #>
         if (Options.UseDataAnnotations)
         {
             foreach (var dataAnnotation in navigation.GetDataAnnotations(annotationCodeGenerator))
-            {#>
-    <#= code.Fragment(dataAnnotation) #>
-<#
+            {
+                WriteLine($"    {code.Fragment(dataAnnotation)}");
             }
         }
 
         var targetType = navigation.TargetEntityType.Name;
         if (navigation.IsCollection)
-        {#>
-    public virtual ICollection<<#= targetType #>> <#= navigation.Name #> { get; set; } = new List<<#= targetType #>>();
-<#
+        {
+            WriteLine($"    public virtual ICollection<{targetType}> {navigation.Name} {{ get; set; }} = new List<{targetType}>();");
         }
         else
         {
             var needsNullable = Options.UseNullableReferenceTypes && !(navigation.ForeignKey.IsRequired && navigation.IsOnDependent);
-            var needsInitializer = Options.UseNullableReferenceTypes && navigation.ForeignKey.IsRequired && navigation.IsOnDependent;#>
-    public virtual <#= targetType #><#= needsNullable ? "?" : "" #> <#= navigation.Name #> { get; set; }<#= needsInitializer ? " = null!;" : "" #>
-<#
+            var needsInitializer = Options.UseNullableReferenceTypes && navigation.ForeignKey.IsRequired && navigation.IsOnDependent;
+            WriteLine($"    public virtual {targetType}{(needsNullable ? "?" : "")} {navigation.Name} {{ get; set; }}{(needsInitializer ? " = null!;" : "")}");
         }
     }
 
@@ -133,27 +133,18 @@ public partial class <#= EntityType.Name #>
         if (Options.UseDataAnnotations)
         {
             foreach (var dataAnnotation in skipNavigation.GetDataAnnotations(annotationCodeGenerator))
-            {#>
-    <#= code.Fragment(dataAnnotation) #>
-<#
+            {
+                WriteLine($"    {code.Fragment(dataAnnotation)}");
             }
-        }#>
-    public virtual ICollection<<#= skipNavigation.TargetEntityType.Name #>> <#= skipNavigation.Name #> { get; set; } = new List<<#= skipNavigation.TargetEntityType.Name #>>();
-<#
-    }#>
+        }
+        WriteLine($"    public virtual ICollection<{skipNavigation.TargetEntityType.Name}> {skipNavigation.Name} {{ get; set; }} = new List<{skipNavigation.TargetEntityType.Name}>();");
+    }
+#>
 }
 
-<#
-    // 1. Inject required namespaces into the T4 collection
-    usings.Add("System.Threading");
-    usings.Add("System.Threading.Tasks");
-    usings.Add("Microsoft.EntityFrameworkCore");
-    usings.Add("Microsoft.Extensions.DependencyInjection");
-    usings.Add("MILL80.Infrastructure"); 
-    usings.Add("MILL09.Models.Interfaces"); 
-#>
-[Register(ServiceLifetime.Transient)]
-public class <#= EntityType.Name #>Repository : IEntitySetLoader<<#= EntityType.Name #>>, IEntitySaver<<#= EntityType.Name #>>
+[Register(typeof(IEntitySetLoader<MILL09.Models.<#= EntityType.Name #>>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.<#= EntityType.Name #>>), ServiceLifetime.Transient)]
+public class <#= EntityType.Name #>Repository : IEntitySetLoader<MILL09.Models.<#= EntityType.Name #>>, IEntitySaver<MILL09.Models.<#= EntityType.Name #>>
 {
     private readonly <#= Options.ContextName #> _dbContext;
 
@@ -162,28 +153,39 @@ public class <#= EntityType.Name #>Repository : IEntitySetLoader<<#= EntityType.
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<<#= EntityType.Name #>>
-    public async Task<IReadOnlyList<<#= EntityType.Name #>>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.<#= EntityType.Name #>>
+    public async Task<IReadOnlyList<MILL09.Models.<#= EntityType.Name #>>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<<#= EntityType.Name #>>()
+        var dbEntities = await _dbContext.Set<<#= EntityType.Name #>>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<<#= EntityType.Name #>>
 
-    #region IEntitySaver<<#= EntityType.Name #>>
-    public async Task SaveAsync(<#= EntityType.Name #> entity, CancellationToken ct)
-    {
-        _dbContext.Set<<#= EntityType.Name #>>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
-    }
-    #endregion IEntitySaver<<#= EntityType.Name #>>
-}
-
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.<#= EntityType.Name #>
+        {
 <#
-    // 2. Resume normal T4 footer generation
-    var previousOutput = GenerationEnvironment;
-    GenerationEnvironment = new StringBuilder();
+    foreach (var property in EntityType.GetProperties())
+    {
+        WriteLine($"            {property.Name} = db.{property.Name},");
+    }
+#>
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.<#= EntityType.Name #>>
+
+    #region IEntitySaver<MILL09.Models.<#= EntityType.Name #>>
+    public Task SaveAsync(MILL09.Models.<#= EntityType.Name #> entity, CancellationToken ct)
+    {
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
+    }
+    #endregion IEntitySaver<MILL09.Models.<#= EntityType.Name #>>
+}
+<#
+    // 2. Resume normal T4 footer generation using StringBuilders to prevent truncation
+    var previousOutput = GenerationEnvironment.ToString();
+    GenerationEnvironment.Clear();
     
     WriteLine("// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>");
     if (Options.UseNullableReferenceTypes)
@@ -193,11 +195,10 @@ public class <#= EntityType.Name #>Repository : IEntitySetLoader<<#= EntityType.
     WriteLine("");
 
     foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer()))
-    {#>
-using <#= ns #>;
-<#
+    {
+        WriteLine($"using {ns};");
     }
 
     WriteLine("");
-
-    GenerationEnvironment.Append(previousOutput);#>
+    Write(previousOutput);
+#>

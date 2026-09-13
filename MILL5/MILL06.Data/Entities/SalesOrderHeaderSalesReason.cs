@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Cross-reference table mapping sales orders to sales reason codes.
 /// </summary>
 public partial class SalesOrderHeaderSalesReason
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key. Foreign key to SalesOrderHeader.SalesOrderID.
     /// </summary>
     public int SalesOrderId { get; set; }
@@ -34,8 +37,9 @@ public partial class SalesOrderHeaderSalesReason
     public virtual SalesReason SalesReason { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class SalesOrderHeaderSalesReasonRepository : IEntitySetLoader<SalesOrderHeaderSalesReason>, IEntitySaver<SalesOrderHeaderSalesReason>
+[Register(typeof(IEntitySetLoader<MILL09.Models.SalesOrderHeaderSalesReason>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.SalesOrderHeaderSalesReason>), ServiceLifetime.Transient)]
+public class SalesOrderHeaderSalesReasonRepository : IEntitySetLoader<MILL09.Models.SalesOrderHeaderSalesReason>, IEntitySaver<MILL09.Models.SalesOrderHeaderSalesReason>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -44,21 +48,29 @@ public class SalesOrderHeaderSalesReasonRepository : IEntitySetLoader<SalesOrder
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<SalesOrderHeaderSalesReason>
-    public async Task<IReadOnlyList<SalesOrderHeaderSalesReason>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.SalesOrderHeaderSalesReason>
+    public async Task<IReadOnlyList<MILL09.Models.SalesOrderHeaderSalesReason>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<SalesOrderHeaderSalesReason>()
+        var dbEntities = await _dbContext.Set<SalesOrderHeaderSalesReason>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<SalesOrderHeaderSalesReason>
 
-    #region IEntitySaver<SalesOrderHeaderSalesReason>
-    public async Task SaveAsync(SalesOrderHeaderSalesReason entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.SalesOrderHeaderSalesReason
+        {
+            SalesOrderId = db.SalesOrderId,
+            SalesReasonId = db.SalesReasonId,
+            ModifiedDate = db.ModifiedDate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.SalesOrderHeaderSalesReason>
+
+    #region IEntitySaver<MILL09.Models.SalesOrderHeaderSalesReason>
+    public Task SaveAsync(MILL09.Models.SalesOrderHeaderSalesReason entity, CancellationToken ct)
     {
-        _dbContext.Set<SalesOrderHeaderSalesReason>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<SalesOrderHeaderSalesReason>
+    #endregion IEntitySaver<MILL09.Models.SalesOrderHeaderSalesReason>
 }
-

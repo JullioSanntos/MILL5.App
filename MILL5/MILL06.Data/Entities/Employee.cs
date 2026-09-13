@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Employee information such as salary, department, and title.
 /// </summary>
 public partial class Employee
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Employee records.  Foreign key to BusinessEntity.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -102,8 +105,9 @@ public partial class Employee
     public virtual SalesPerson SalesPerson { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class EmployeeRepository : IEntitySetLoader<Employee>, IEntitySaver<Employee>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Employee>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Employee>), ServiceLifetime.Transient)]
+public class EmployeeRepository : IEntitySetLoader<MILL09.Models.Employee>, IEntitySaver<MILL09.Models.Employee>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -112,21 +116,41 @@ public class EmployeeRepository : IEntitySetLoader<Employee>, IEntitySaver<Emplo
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Employee>
-    public async Task<IReadOnlyList<Employee>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Employee>
+    public async Task<IReadOnlyList<MILL09.Models.Employee>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Employee>()
+        var dbEntities = await _dbContext.Set<Employee>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Employee>
 
-    #region IEntitySaver<Employee>
-    public async Task SaveAsync(Employee entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Employee
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            BirthDate = db.BirthDate,
+            CurrentFlag = db.CurrentFlag,
+            Gender = db.Gender,
+            HireDate = db.HireDate,
+            JobTitle = db.JobTitle,
+            LoginId = db.LoginId,
+            MaritalStatus = db.MaritalStatus,
+            ModifiedDate = db.ModifiedDate,
+            NationalIdnumber = db.NationalIdnumber,
+            OrganizationLevel = db.OrganizationLevel,
+            Rowguid = db.Rowguid,
+            SalariedFlag = db.SalariedFlag,
+            SickLeaveHours = db.SickLeaveHours,
+            VacationHours = db.VacationHours,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Employee>
+
+    #region IEntitySaver<MILL09.Models.Employee>
+    public Task SaveAsync(MILL09.Models.Employee entity, CancellationToken ct)
     {
-        _dbContext.Set<Employee>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Employee>
+    #endregion IEntitySaver<MILL09.Models.Employee>
 }
-

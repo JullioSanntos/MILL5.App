@@ -71,6 +71,9 @@ public partial class TransactionHistory : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].TransactionId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsTransactionHistoriesLoaded = true;
         OnRefreshed();
     }
 
@@ -112,21 +115,24 @@ public partial class MainModel
     public ObservableCollection<TransactionHistory> TransactionHistories
     {
         get { if (_transactionHistories == null) TransactionHistories = new ObservableCollection<TransactionHistory>(); return _transactionHistories!; }
-        private set
-        {
-            SetProperty(ref _transactionHistories, value);
-            OnPropertyChanged(nameof(IsTransactionHistoriesLoaded));
-        }
+        private set => SetProperty(ref _transactionHistories, value);
     }
 
-    public bool IsTransactionHistoriesLoaded => _transactionHistories != null;
+    private bool _isTransactionHistoriesLoaded;
+    public bool IsTransactionHistoriesLoaded
+    {
+        get => _isTransactionHistoriesLoaded;
+        internal set => SetProperty(ref _isTransactionHistoriesLoaded, value);
+    }
 
     internal void UnloadTransactionHistoriesStorage()
     {
         if (_transactionHistories == null) return;
         _transactionHistories = null;
         OnPropertyChanged(nameof(TransactionHistories));
-        OnPropertyChanged(nameof(IsTransactionHistoriesLoaded));
+
+        // Reset the load state flag
+        IsTransactionHistoriesLoaded = false;
     }
 }
 }

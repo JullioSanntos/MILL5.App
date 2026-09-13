@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// General sales order information.
 /// </summary>
 public partial class SalesOrderHeader
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key.
     /// </summary>
     public int SalesOrderId { get; set; }
@@ -165,8 +168,9 @@ public partial class SalesOrderHeader
     public virtual SalesTerritory Territory { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class SalesOrderHeaderRepository : IEntitySetLoader<SalesOrderHeader>, IEntitySaver<SalesOrderHeader>
+[Register(typeof(IEntitySetLoader<MILL09.Models.SalesOrderHeader>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.SalesOrderHeader>), ServiceLifetime.Transient)]
+public class SalesOrderHeaderRepository : IEntitySetLoader<MILL09.Models.SalesOrderHeader>, IEntitySaver<MILL09.Models.SalesOrderHeader>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -175,21 +179,52 @@ public class SalesOrderHeaderRepository : IEntitySetLoader<SalesOrderHeader>, IE
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<SalesOrderHeader>
-    public async Task<IReadOnlyList<SalesOrderHeader>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.SalesOrderHeader>
+    public async Task<IReadOnlyList<MILL09.Models.SalesOrderHeader>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<SalesOrderHeader>()
+        var dbEntities = await _dbContext.Set<SalesOrderHeader>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<SalesOrderHeader>
 
-    #region IEntitySaver<SalesOrderHeader>
-    public async Task SaveAsync(SalesOrderHeader entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.SalesOrderHeader
+        {
+            SalesOrderId = db.SalesOrderId,
+            AccountNumber = db.AccountNumber,
+            BillToAddressId = db.BillToAddressId,
+            Comment = db.Comment,
+            CreditCardApprovalCode = db.CreditCardApprovalCode,
+            CreditCardId = db.CreditCardId,
+            CurrencyRateId = db.CurrencyRateId,
+            CustomerId = db.CustomerId,
+            DueDate = db.DueDate,
+            Freight = db.Freight,
+            ModifiedDate = db.ModifiedDate,
+            OnlineOrderFlag = db.OnlineOrderFlag,
+            OrderDate = db.OrderDate,
+            PurchaseOrderNumber = db.PurchaseOrderNumber,
+            RevisionNumber = db.RevisionNumber,
+            Rowguid = db.Rowguid,
+            SalesOrderNumber = db.SalesOrderNumber,
+            SalesPersonId = db.SalesPersonId,
+            ShipDate = db.ShipDate,
+            ShipMethodId = db.ShipMethodId,
+            ShipToAddressId = db.ShipToAddressId,
+            Status = db.Status,
+            SubTotal = db.SubTotal,
+            TaxAmt = db.TaxAmt,
+            TerritoryId = db.TerritoryId,
+            TotalDue = db.TotalDue,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.SalesOrderHeader>
+
+    #region IEntitySaver<MILL09.Models.SalesOrderHeader>
+    public Task SaveAsync(MILL09.Models.SalesOrderHeader entity, CancellationToken ct)
     {
-        _dbContext.Set<SalesOrderHeader>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<SalesOrderHeader>
+    #endregion IEntitySaver<MILL09.Models.SalesOrderHeader>
 }
-

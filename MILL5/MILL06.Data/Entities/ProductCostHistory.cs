@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Changes in the cost of a product over time.
 /// </summary>
 public partial class ProductCostHistory
-{    /// <summary>
+{
+    /// <summary>
     /// Product identification number. Foreign key to Product.ProductID
     /// </summary>
     public int ProductId { get; set; }
@@ -42,8 +45,9 @@ public partial class ProductCostHistory
     public virtual Product Product { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ProductCostHistoryRepository : IEntitySetLoader<ProductCostHistory>, IEntitySaver<ProductCostHistory>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ProductCostHistory>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ProductCostHistory>), ServiceLifetime.Transient)]
+public class ProductCostHistoryRepository : IEntitySetLoader<MILL09.Models.ProductCostHistory>, IEntitySaver<MILL09.Models.ProductCostHistory>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -52,21 +56,31 @@ public class ProductCostHistoryRepository : IEntitySetLoader<ProductCostHistory>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ProductCostHistory>
-    public async Task<IReadOnlyList<ProductCostHistory>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ProductCostHistory>
+    public async Task<IReadOnlyList<MILL09.Models.ProductCostHistory>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ProductCostHistory>()
+        var dbEntities = await _dbContext.Set<ProductCostHistory>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ProductCostHistory>
 
-    #region IEntitySaver<ProductCostHistory>
-    public async Task SaveAsync(ProductCostHistory entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ProductCostHistory
+        {
+            ProductId = db.ProductId,
+            StartDate = db.StartDate,
+            EndDate = db.EndDate,
+            ModifiedDate = db.ModifiedDate,
+            StandardCost = db.StandardCost,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ProductCostHistory>
+
+    #region IEntitySaver<MILL09.Models.ProductCostHistory>
+    public Task SaveAsync(MILL09.Models.ProductCostHistory entity, CancellationToken ct)
     {
-        _dbContext.Set<ProductCostHistory>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ProductCostHistory>
+    #endregion IEntitySaver<MILL09.Models.ProductCostHistory>
 }
-

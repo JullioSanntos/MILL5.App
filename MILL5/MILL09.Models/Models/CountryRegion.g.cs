@@ -72,6 +72,9 @@ public partial class CountryRegion : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].CountryRegionCode)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsCountryRegionsLoaded = true;
         OnRefreshed();
     }
 
@@ -107,21 +110,24 @@ public partial class MainModel
     public ObservableCollection<CountryRegion> CountryRegions
     {
         get { if (_countryRegions == null) CountryRegions = new ObservableCollection<CountryRegion>(); return _countryRegions!; }
-        private set
-        {
-            SetProperty(ref _countryRegions, value);
-            OnPropertyChanged(nameof(IsCountryRegionsLoaded));
-        }
+        private set => SetProperty(ref _countryRegions, value);
     }
 
-    public bool IsCountryRegionsLoaded => _countryRegions != null;
+    private bool _isCountryRegionsLoaded;
+    public bool IsCountryRegionsLoaded
+    {
+        get => _isCountryRegionsLoaded;
+        internal set => SetProperty(ref _isCountryRegionsLoaded, value);
+    }
 
     internal void UnloadCountryRegionsStorage()
     {
         if (_countryRegions == null) return;
         _countryRegions = null;
         OnPropertyChanged(nameof(CountryRegions));
-        OnPropertyChanged(nameof(IsCountryRegionsLoaded));
+
+        // Reset the load state flag
+        IsCountryRegionsLoaded = false;
     }
 }
 }

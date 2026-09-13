@@ -66,6 +66,9 @@ public partial class DatabaseLog : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].DatabaseLogId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsDatabaseLogsLoaded = true;
         OnRefreshed();
     }
 
@@ -106,21 +109,24 @@ public partial class MainModel
     public ObservableCollection<DatabaseLog> DatabaseLogs
     {
         get { if (_databaseLogs == null) DatabaseLogs = new ObservableCollection<DatabaseLog>(); return _databaseLogs!; }
-        private set
-        {
-            SetProperty(ref _databaseLogs, value);
-            OnPropertyChanged(nameof(IsDatabaseLogsLoaded));
-        }
+        private set => SetProperty(ref _databaseLogs, value);
     }
 
-    public bool IsDatabaseLogsLoaded => _databaseLogs != null;
+    private bool _isDatabaseLogsLoaded;
+    public bool IsDatabaseLogsLoaded
+    {
+        get => _isDatabaseLogsLoaded;
+        internal set => SetProperty(ref _isDatabaseLogsLoaded, value);
+    }
 
     internal void UnloadDatabaseLogsStorage()
     {
         if (_databaseLogs == null) return;
         _databaseLogs = null;
         OnPropertyChanged(nameof(DatabaseLogs));
-        OnPropertyChanged(nameof(IsDatabaseLogsLoaded));
+
+        // Reset the load state flag
+        IsDatabaseLogsLoaded = false;
     }
 }
 }

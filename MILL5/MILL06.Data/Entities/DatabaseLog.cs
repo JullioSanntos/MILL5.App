@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Audit table tracking all DDL changes made to the AdventureWorks database. Data is captured by the database trigger ddlDatabaseTriggerLog.
 /// </summary>
 public partial class DatabaseLog
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for DatabaseLog records.
     /// </summary>
     public int DatabaseLogId { get; set; }
@@ -55,8 +58,9 @@ public partial class DatabaseLog
     public string XmlEvent { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class DatabaseLogRepository : IEntitySetLoader<DatabaseLog>, IEntitySaver<DatabaseLog>
+[Register(typeof(IEntitySetLoader<MILL09.Models.DatabaseLog>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.DatabaseLog>), ServiceLifetime.Transient)]
+public class DatabaseLogRepository : IEntitySetLoader<MILL09.Models.DatabaseLog>, IEntitySaver<MILL09.Models.DatabaseLog>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -65,21 +69,34 @@ public class DatabaseLogRepository : IEntitySetLoader<DatabaseLog>, IEntitySaver
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<DatabaseLog>
-    public async Task<IReadOnlyList<DatabaseLog>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.DatabaseLog>
+    public async Task<IReadOnlyList<MILL09.Models.DatabaseLog>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<DatabaseLog>()
+        var dbEntities = await _dbContext.Set<DatabaseLog>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<DatabaseLog>
 
-    #region IEntitySaver<DatabaseLog>
-    public async Task SaveAsync(DatabaseLog entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.DatabaseLog
+        {
+            DatabaseLogId = db.DatabaseLogId,
+            DatabaseUser = db.DatabaseUser,
+            Event = db.Event,
+            Object = db.Object,
+            PostTime = db.PostTime,
+            Schema = db.Schema,
+            Tsql = db.Tsql,
+            XmlEvent = db.XmlEvent,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.DatabaseLog>
+
+    #region IEntitySaver<MILL09.Models.DatabaseLog>
+    public Task SaveAsync(MILL09.Models.DatabaseLog entity, CancellationToken ct)
     {
-        _dbContext.Set<DatabaseLog>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<DatabaseLog>
+    #endregion IEntitySaver<MILL09.Models.DatabaseLog>
 }
-

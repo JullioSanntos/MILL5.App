@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Items required to make bicycles and bicycle subassemblies. It identifies the heirarchical relationship between a parent product and its components.
 /// </summary>
 public partial class BillOfMaterial
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for BillOfMaterials records.
     /// </summary>
     public int BillOfMaterialsId { get; set; }
@@ -66,8 +69,9 @@ public partial class BillOfMaterial
     public virtual UnitMeasure UnitMeasureCodeNavigation { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class BillOfMaterialRepository : IEntitySetLoader<BillOfMaterial>, IEntitySaver<BillOfMaterial>
+[Register(typeof(IEntitySetLoader<MILL09.Models.BillOfMaterial>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.BillOfMaterial>), ServiceLifetime.Transient)]
+public class BillOfMaterialRepository : IEntitySetLoader<MILL09.Models.BillOfMaterial>, IEntitySaver<MILL09.Models.BillOfMaterial>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -76,21 +80,35 @@ public class BillOfMaterialRepository : IEntitySetLoader<BillOfMaterial>, IEntit
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<BillOfMaterial>
-    public async Task<IReadOnlyList<BillOfMaterial>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.BillOfMaterial>
+    public async Task<IReadOnlyList<MILL09.Models.BillOfMaterial>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<BillOfMaterial>()
+        var dbEntities = await _dbContext.Set<BillOfMaterial>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<BillOfMaterial>
 
-    #region IEntitySaver<BillOfMaterial>
-    public async Task SaveAsync(BillOfMaterial entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.BillOfMaterial
+        {
+            BillOfMaterialsId = db.BillOfMaterialsId,
+            Bomlevel = db.Bomlevel,
+            ComponentId = db.ComponentId,
+            EndDate = db.EndDate,
+            ModifiedDate = db.ModifiedDate,
+            PerAssemblyQty = db.PerAssemblyQty,
+            ProductAssemblyId = db.ProductAssemblyId,
+            StartDate = db.StartDate,
+            UnitMeasureCode = db.UnitMeasureCode,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.BillOfMaterial>
+
+    #region IEntitySaver<MILL09.Models.BillOfMaterial>
+    public Task SaveAsync(MILL09.Models.BillOfMaterial entity, CancellationToken ct)
     {
-        _dbContext.Set<BillOfMaterial>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<BillOfMaterial>
+    #endregion IEntitySaver<MILL09.Models.BillOfMaterial>
 }
-

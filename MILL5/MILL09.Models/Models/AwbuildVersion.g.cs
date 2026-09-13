@@ -54,6 +54,9 @@ public partial class AwbuildVersion : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].SystemInformationId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsAwbuildVersionsLoaded = true;
         OnRefreshed();
     }
 
@@ -90,21 +93,24 @@ public partial class MainModel
     public ObservableCollection<AwbuildVersion> AwbuildVersions
     {
         get { if (_awbuildVersions == null) AwbuildVersions = new ObservableCollection<AwbuildVersion>(); return _awbuildVersions!; }
-        private set
-        {
-            SetProperty(ref _awbuildVersions, value);
-            OnPropertyChanged(nameof(IsAwbuildVersionsLoaded));
-        }
+        private set => SetProperty(ref _awbuildVersions, value);
     }
 
-    public bool IsAwbuildVersionsLoaded => _awbuildVersions != null;
+    private bool _isAwbuildVersionsLoaded;
+    public bool IsAwbuildVersionsLoaded
+    {
+        get => _isAwbuildVersionsLoaded;
+        internal set => SetProperty(ref _isAwbuildVersionsLoaded, value);
+    }
 
     internal void UnloadAwbuildVersionsStorage()
     {
         if (_awbuildVersions == null) return;
         _awbuildVersions = null;
         OnPropertyChanged(nameof(AwbuildVersions));
-        OnPropertyChanged(nameof(IsAwbuildVersionsLoaded));
+
+        // Reset the load state flag
+        IsAwbuildVersionsLoaded = false;
     }
 }
 }

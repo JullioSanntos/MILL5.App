@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Tax rate lookup table.
 /// </summary>
 public partial class SalesTaxRate
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for SalesTaxRate records.
     /// </summary>
     public int SalesTaxRateId { get; set; }
@@ -52,8 +55,9 @@ public partial class SalesTaxRate
     public virtual StateProvince StateProvince { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class SalesTaxRateRepository : IEntitySetLoader<SalesTaxRate>, IEntitySaver<SalesTaxRate>
+[Register(typeof(IEntitySetLoader<MILL09.Models.SalesTaxRate>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.SalesTaxRate>), ServiceLifetime.Transient)]
+public class SalesTaxRateRepository : IEntitySetLoader<MILL09.Models.SalesTaxRate>, IEntitySaver<MILL09.Models.SalesTaxRate>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -62,21 +66,33 @@ public class SalesTaxRateRepository : IEntitySetLoader<SalesTaxRate>, IEntitySav
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<SalesTaxRate>
-    public async Task<IReadOnlyList<SalesTaxRate>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.SalesTaxRate>
+    public async Task<IReadOnlyList<MILL09.Models.SalesTaxRate>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<SalesTaxRate>()
+        var dbEntities = await _dbContext.Set<SalesTaxRate>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<SalesTaxRate>
 
-    #region IEntitySaver<SalesTaxRate>
-    public async Task SaveAsync(SalesTaxRate entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.SalesTaxRate
+        {
+            SalesTaxRateId = db.SalesTaxRateId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            Rowguid = db.Rowguid,
+            StateProvinceId = db.StateProvinceId,
+            TaxRate = db.TaxRate,
+            TaxType = db.TaxType,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.SalesTaxRate>
+
+    #region IEntitySaver<MILL09.Models.SalesTaxRate>
+    public Task SaveAsync(MILL09.Models.SalesTaxRate entity, CancellationToken ct)
     {
-        _dbContext.Set<SalesTaxRate>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<SalesTaxRate>
+    #endregion IEntitySaver<MILL09.Models.SalesTaxRate>
 }
-

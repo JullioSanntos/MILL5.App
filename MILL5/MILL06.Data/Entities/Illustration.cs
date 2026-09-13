@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Bicycle assembly diagrams.
 /// </summary>
 public partial class Illustration
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Illustration records.
     /// </summary>
     public int IllustrationId { get; set; }
@@ -32,8 +35,9 @@ public partial class Illustration
     public virtual ICollection<ProductModelIllustration> ProductModelIllustrations { get; set; } = new List<ProductModelIllustration>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class IllustrationRepository : IEntitySetLoader<Illustration>, IEntitySaver<Illustration>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Illustration>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Illustration>), ServiceLifetime.Transient)]
+public class IllustrationRepository : IEntitySetLoader<MILL09.Models.Illustration>, IEntitySaver<MILL09.Models.Illustration>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -42,21 +46,29 @@ public class IllustrationRepository : IEntitySetLoader<Illustration>, IEntitySav
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Illustration>
-    public async Task<IReadOnlyList<Illustration>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Illustration>
+    public async Task<IReadOnlyList<MILL09.Models.Illustration>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Illustration>()
+        var dbEntities = await _dbContext.Set<Illustration>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Illustration>
 
-    #region IEntitySaver<Illustration>
-    public async Task SaveAsync(Illustration entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Illustration
+        {
+            IllustrationId = db.IllustrationId,
+            Diagram = db.Diagram,
+            ModifiedDate = db.ModifiedDate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Illustration>
+
+    #region IEntitySaver<MILL09.Models.Illustration>
+    public Task SaveAsync(MILL09.Models.Illustration entity, CancellationToken ct)
     {
-        _dbContext.Set<Illustration>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Illustration>
+    #endregion IEntitySaver<MILL09.Models.Illustration>
 }
-

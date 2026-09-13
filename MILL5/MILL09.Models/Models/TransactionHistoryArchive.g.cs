@@ -69,6 +69,9 @@ public partial class TransactionHistoryArchive : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].TransactionId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsTransactionHistoryArchivesLoaded = true;
         OnRefreshed();
     }
 
@@ -110,21 +113,24 @@ public partial class MainModel
     public ObservableCollection<TransactionHistoryArchive> TransactionHistoryArchives
     {
         get { if (_transactionHistoryArchives == null) TransactionHistoryArchives = new ObservableCollection<TransactionHistoryArchive>(); return _transactionHistoryArchives!; }
-        private set
-        {
-            SetProperty(ref _transactionHistoryArchives, value);
-            OnPropertyChanged(nameof(IsTransactionHistoryArchivesLoaded));
-        }
+        private set => SetProperty(ref _transactionHistoryArchives, value);
     }
 
-    public bool IsTransactionHistoryArchivesLoaded => _transactionHistoryArchives != null;
+    private bool _isTransactionHistoryArchivesLoaded;
+    public bool IsTransactionHistoryArchivesLoaded
+    {
+        get => _isTransactionHistoryArchivesLoaded;
+        internal set => SetProperty(ref _isTransactionHistoryArchivesLoaded, value);
+    }
 
     internal void UnloadTransactionHistoryArchivesStorage()
     {
         if (_transactionHistoryArchives == null) return;
         _transactionHistoryArchives = null;
         OnPropertyChanged(nameof(TransactionHistoryArchives));
-        OnPropertyChanged(nameof(IsTransactionHistoryArchivesLoaded));
+
+        // Reset the load state flag
+        IsTransactionHistoryArchivesLoaded = false;
     }
 }
 }

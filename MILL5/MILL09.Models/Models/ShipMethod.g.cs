@@ -74,6 +74,9 @@ public partial class ShipMethod : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ShipMethodId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsShipMethodsLoaded = true;
         OnRefreshed();
     }
 
@@ -112,21 +115,24 @@ public partial class MainModel
     public ObservableCollection<ShipMethod> ShipMethods
     {
         get { if (_shipMethods == null) ShipMethods = new ObservableCollection<ShipMethod>(); return _shipMethods!; }
-        private set
-        {
-            SetProperty(ref _shipMethods, value);
-            OnPropertyChanged(nameof(IsShipMethodsLoaded));
-        }
+        private set => SetProperty(ref _shipMethods, value);
     }
 
-    public bool IsShipMethodsLoaded => _shipMethods != null;
+    private bool _isShipMethodsLoaded;
+    public bool IsShipMethodsLoaded
+    {
+        get => _isShipMethodsLoaded;
+        internal set => SetProperty(ref _isShipMethodsLoaded, value);
+    }
 
     internal void UnloadShipMethodsStorage()
     {
         if (_shipMethods == null) return;
         _shipMethods = null;
         OnPropertyChanged(nameof(ShipMethods));
-        OnPropertyChanged(nameof(IsShipMethodsLoaded));
+
+        // Reset the load state flag
+        IsShipMethodsLoaded = false;
     }
 }
 }

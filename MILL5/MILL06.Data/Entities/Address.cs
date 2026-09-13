@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Street address information for customers, employees, and vendors.
 /// </summary>
 public partial class Address
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Address records.
     /// </summary>
     public int AddressId { get; set; }
@@ -63,8 +66,9 @@ public partial class Address
     public virtual StateProvince StateProvince { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class AddressRepository : IEntitySetLoader<Address>, IEntitySaver<Address>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Address>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Address>), ServiceLifetime.Transient)]
+public class AddressRepository : IEntitySetLoader<MILL09.Models.Address>, IEntitySaver<MILL09.Models.Address>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -73,21 +77,34 @@ public class AddressRepository : IEntitySetLoader<Address>, IEntitySaver<Address
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Address>
-    public async Task<IReadOnlyList<Address>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Address>
+    public async Task<IReadOnlyList<MILL09.Models.Address>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Address>()
+        var dbEntities = await _dbContext.Set<Address>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Address>
 
-    #region IEntitySaver<Address>
-    public async Task SaveAsync(Address entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Address
+        {
+            AddressId = db.AddressId,
+            AddressLine1 = db.AddressLine1,
+            AddressLine2 = db.AddressLine2,
+            City = db.City,
+            ModifiedDate = db.ModifiedDate,
+            PostalCode = db.PostalCode,
+            Rowguid = db.Rowguid,
+            StateProvinceId = db.StateProvinceId,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Address>
+
+    #region IEntitySaver<MILL09.Models.Address>
+    public Task SaveAsync(MILL09.Models.Address entity, CancellationToken ct)
     {
-        _dbContext.Set<Address>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Address>
+    #endregion IEntitySaver<MILL09.Models.Address>
 }
-

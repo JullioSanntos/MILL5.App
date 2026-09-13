@@ -68,6 +68,9 @@ public partial class EmployeeDepartmentHistory : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsEmployeeDepartmentHistoriesLoaded = true;
         OnRefreshed();
     }
 
@@ -106,21 +109,24 @@ public partial class MainModel
     public ObservableCollection<EmployeeDepartmentHistory> EmployeeDepartmentHistories
     {
         get { if (_employeeDepartmentHistories == null) EmployeeDepartmentHistories = new ObservableCollection<EmployeeDepartmentHistory>(); return _employeeDepartmentHistories!; }
-        private set
-        {
-            SetProperty(ref _employeeDepartmentHistories, value);
-            OnPropertyChanged(nameof(IsEmployeeDepartmentHistoriesLoaded));
-        }
+        private set => SetProperty(ref _employeeDepartmentHistories, value);
     }
 
-    public bool IsEmployeeDepartmentHistoriesLoaded => _employeeDepartmentHistories != null;
+    private bool _isEmployeeDepartmentHistoriesLoaded;
+    public bool IsEmployeeDepartmentHistoriesLoaded
+    {
+        get => _isEmployeeDepartmentHistoriesLoaded;
+        internal set => SetProperty(ref _isEmployeeDepartmentHistoriesLoaded, value);
+    }
 
     internal void UnloadEmployeeDepartmentHistoriesStorage()
     {
         if (_employeeDepartmentHistories == null) return;
         _employeeDepartmentHistories = null;
         OnPropertyChanged(nameof(EmployeeDepartmentHistories));
-        OnPropertyChanged(nameof(IsEmployeeDepartmentHistoriesLoaded));
+
+        // Reset the load state flag
+        IsEmployeeDepartmentHistoriesLoaded = false;
     }
 }
 }

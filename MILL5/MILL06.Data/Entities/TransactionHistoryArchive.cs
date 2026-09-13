@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Transactions for previous years.
 /// </summary>
 public partial class TransactionHistoryArchive
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for TransactionHistoryArchive records.
     /// </summary>
     public int TransactionId { get; set; }
@@ -60,8 +63,9 @@ public partial class TransactionHistoryArchive
     public DateTime ModifiedDate { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class TransactionHistoryArchiveRepository : IEntitySetLoader<TransactionHistoryArchive>, IEntitySaver<TransactionHistoryArchive>
+[Register(typeof(IEntitySetLoader<MILL09.Models.TransactionHistoryArchive>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.TransactionHistoryArchive>), ServiceLifetime.Transient)]
+public class TransactionHistoryArchiveRepository : IEntitySetLoader<MILL09.Models.TransactionHistoryArchive>, IEntitySaver<MILL09.Models.TransactionHistoryArchive>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -70,21 +74,35 @@ public class TransactionHistoryArchiveRepository : IEntitySetLoader<TransactionH
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<TransactionHistoryArchive>
-    public async Task<IReadOnlyList<TransactionHistoryArchive>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.TransactionHistoryArchive>
+    public async Task<IReadOnlyList<MILL09.Models.TransactionHistoryArchive>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<TransactionHistoryArchive>()
+        var dbEntities = await _dbContext.Set<TransactionHistoryArchive>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<TransactionHistoryArchive>
 
-    #region IEntitySaver<TransactionHistoryArchive>
-    public async Task SaveAsync(TransactionHistoryArchive entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.TransactionHistoryArchive
+        {
+            TransactionId = db.TransactionId,
+            ActualCost = db.ActualCost,
+            ModifiedDate = db.ModifiedDate,
+            ProductId = db.ProductId,
+            Quantity = db.Quantity,
+            ReferenceOrderId = db.ReferenceOrderId,
+            ReferenceOrderLineId = db.ReferenceOrderLineId,
+            TransactionDate = db.TransactionDate,
+            TransactionType = db.TransactionType,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.TransactionHistoryArchive>
+
+    #region IEntitySaver<MILL09.Models.TransactionHistoryArchive>
+    public Task SaveAsync(MILL09.Models.TransactionHistoryArchive entity, CancellationToken ct)
     {
-        _dbContext.Set<TransactionHistoryArchive>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<TransactionHistoryArchive>
+    #endregion IEntitySaver<MILL09.Models.TransactionHistoryArchive>
 }
-

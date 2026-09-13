@@ -162,6 +162,9 @@ public partial class SalesOrderHeader : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].SalesOrderId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesOrderHeadersLoaded = true;
         OnRefreshed();
     }
 
@@ -220,21 +223,24 @@ public partial class MainModel
     public ObservableCollection<SalesOrderHeader> SalesOrderHeaders
     {
         get { if (_salesOrderHeaders == null) SalesOrderHeaders = new ObservableCollection<SalesOrderHeader>(); return _salesOrderHeaders!; }
-        private set
-        {
-            SetProperty(ref _salesOrderHeaders, value);
-            OnPropertyChanged(nameof(IsSalesOrderHeadersLoaded));
-        }
+        private set => SetProperty(ref _salesOrderHeaders, value);
     }
 
-    public bool IsSalesOrderHeadersLoaded => _salesOrderHeaders != null;
+    private bool _isSalesOrderHeadersLoaded;
+    public bool IsSalesOrderHeadersLoaded
+    {
+        get => _isSalesOrderHeadersLoaded;
+        internal set => SetProperty(ref _isSalesOrderHeadersLoaded, value);
+    }
 
     internal void UnloadSalesOrderHeadersStorage()
     {
         if (_salesOrderHeaders == null) return;
         _salesOrderHeaders = null;
         OnPropertyChanged(nameof(SalesOrderHeaders));
-        OnPropertyChanged(nameof(IsSalesOrderHeadersLoaded));
+
+        // Reset the load state flag
+        IsSalesOrderHeadersLoaded = false;
     }
 }
 }

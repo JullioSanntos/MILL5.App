@@ -83,6 +83,9 @@ public partial class SalesOrderDetail : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].SalesOrderId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesOrderDetailsLoaded = true;
         OnRefreshed();
     }
 
@@ -126,21 +129,24 @@ public partial class MainModel
     public ObservableCollection<SalesOrderDetail> SalesOrderDetails
     {
         get { if (_salesOrderDetails == null) SalesOrderDetails = new ObservableCollection<SalesOrderDetail>(); return _salesOrderDetails!; }
-        private set
-        {
-            SetProperty(ref _salesOrderDetails, value);
-            OnPropertyChanged(nameof(IsSalesOrderDetailsLoaded));
-        }
+        private set => SetProperty(ref _salesOrderDetails, value);
     }
 
-    public bool IsSalesOrderDetailsLoaded => _salesOrderDetails != null;
+    private bool _isSalesOrderDetailsLoaded;
+    public bool IsSalesOrderDetailsLoaded
+    {
+        get => _isSalesOrderDetailsLoaded;
+        internal set => SetProperty(ref _isSalesOrderDetailsLoaded, value);
+    }
 
     internal void UnloadSalesOrderDetailsStorage()
     {
         if (_salesOrderDetails == null) return;
         _salesOrderDetails = null;
         OnPropertyChanged(nameof(SalesOrderDetails));
-        OnPropertyChanged(nameof(IsSalesOrderDetailsLoaded));
+
+        // Reset the load state flag
+        IsSalesOrderDetailsLoaded = false;
     }
 }
 }

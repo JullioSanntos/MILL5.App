@@ -58,6 +58,9 @@ public partial class ContactType : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ContactTypeId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsContactTypesLoaded = true;
         OnRefreshed();
     }
 
@@ -93,21 +96,24 @@ public partial class MainModel
     public ObservableCollection<ContactType> ContactTypes
     {
         get { if (_contactTypes == null) ContactTypes = new ObservableCollection<ContactType>(); return _contactTypes!; }
-        private set
-        {
-            SetProperty(ref _contactTypes, value);
-            OnPropertyChanged(nameof(IsContactTypesLoaded));
-        }
+        private set => SetProperty(ref _contactTypes, value);
     }
 
-    public bool IsContactTypesLoaded => _contactTypes != null;
+    private bool _isContactTypesLoaded;
+    public bool IsContactTypesLoaded
+    {
+        get => _isContactTypesLoaded;
+        internal set => SetProperty(ref _isContactTypesLoaded, value);
+    }
 
     internal void UnloadContactTypesStorage()
     {
         if (_contactTypes == null) return;
         _contactTypes = null;
         OnPropertyChanged(nameof(ContactTypes));
-        OnPropertyChanged(nameof(IsContactTypesLoaded));
+
+        // Reset the load state flag
+        IsContactTypesLoaded = false;
     }
 }
 }

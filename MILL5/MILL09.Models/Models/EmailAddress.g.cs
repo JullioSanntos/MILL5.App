@@ -61,6 +61,9 @@ public partial class EmailAddress : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsEmailAddressesLoaded = true;
         OnRefreshed();
     }
 
@@ -98,21 +101,24 @@ public partial class MainModel
     public ObservableCollection<EmailAddress> EmailAddresses
     {
         get { if (_emailAddresses == null) EmailAddresses = new ObservableCollection<EmailAddress>(); return _emailAddresses!; }
-        private set
-        {
-            SetProperty(ref _emailAddresses, value);
-            OnPropertyChanged(nameof(IsEmailAddressesLoaded));
-        }
+        private set => SetProperty(ref _emailAddresses, value);
     }
 
-    public bool IsEmailAddressesLoaded => _emailAddresses != null;
+    private bool _isEmailAddressesLoaded;
+    public bool IsEmailAddressesLoaded
+    {
+        get => _isEmailAddressesLoaded;
+        internal set => SetProperty(ref _isEmailAddressesLoaded, value);
+    }
 
     internal void UnloadEmailAddressesStorage()
     {
         if (_emailAddresses == null) return;
         _emailAddresses = null;
         OnPropertyChanged(nameof(EmailAddresses));
-        OnPropertyChanged(nameof(IsEmailAddressesLoaded));
+
+        // Reset the load state flag
+        IsEmailAddressesLoaded = false;
     }
 }
 }

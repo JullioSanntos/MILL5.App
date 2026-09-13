@@ -60,6 +60,9 @@ public partial class PersonPhone : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsPersonPhonesLoaded = true;
         OnRefreshed();
     }
 
@@ -96,21 +99,24 @@ public partial class MainModel
     public ObservableCollection<PersonPhone> PersonPhones
     {
         get { if (_personPhones == null) PersonPhones = new ObservableCollection<PersonPhone>(); return _personPhones!; }
-        private set
-        {
-            SetProperty(ref _personPhones, value);
-            OnPropertyChanged(nameof(IsPersonPhonesLoaded));
-        }
+        private set => SetProperty(ref _personPhones, value);
     }
 
-    public bool IsPersonPhonesLoaded => _personPhones != null;
+    private bool _isPersonPhonesLoaded;
+    public bool IsPersonPhonesLoaded
+    {
+        get => _isPersonPhonesLoaded;
+        internal set => SetProperty(ref _isPersonPhonesLoaded, value);
+    }
 
     internal void UnloadPersonPhonesStorage()
     {
         if (_personPhones == null) return;
         _personPhones = null;
         OnPropertyChanged(nameof(PersonPhones));
-        OnPropertyChanged(nameof(IsPersonPhonesLoaded));
+
+        // Reset the load state flag
+        IsPersonPhonesLoaded = false;
     }
 }
 }

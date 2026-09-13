@@ -76,6 +76,9 @@ public partial class Currency : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].CurrencyCode)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsCurrenciesLoaded = true;
         OnRefreshed();
     }
 
@@ -111,21 +114,24 @@ public partial class MainModel
     public ObservableCollection<Currency> Currencies
     {
         get { if (_currencies == null) Currencies = new ObservableCollection<Currency>(); return _currencies!; }
-        private set
-        {
-            SetProperty(ref _currencies, value);
-            OnPropertyChanged(nameof(IsCurrenciesLoaded));
-        }
+        private set => SetProperty(ref _currencies, value);
     }
 
-    public bool IsCurrenciesLoaded => _currencies != null;
+    private bool _isCurrenciesLoaded;
+    public bool IsCurrenciesLoaded
+    {
+        get => _isCurrenciesLoaded;
+        internal set => SetProperty(ref _isCurrenciesLoaded, value);
+    }
 
     internal void UnloadCurrenciesStorage()
     {
         if (_currencies == null) return;
         _currencies = null;
         OnPropertyChanged(nameof(Currencies));
-        OnPropertyChanged(nameof(IsCurrenciesLoaded));
+
+        // Reset the load state flag
+        IsCurrenciesLoaded = false;
     }
 }
 }

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Employee department transfers.
 /// </summary>
 public partial class EmployeeDepartmentHistory
-{    /// <summary>
+{
+    /// <summary>
     /// Employee identification number. Foreign key to Employee.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -51,8 +54,9 @@ public partial class EmployeeDepartmentHistory
     public virtual Shift Shift { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class EmployeeDepartmentHistoryRepository : IEntitySetLoader<EmployeeDepartmentHistory>, IEntitySaver<EmployeeDepartmentHistory>
+[Register(typeof(IEntitySetLoader<MILL09.Models.EmployeeDepartmentHistory>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.EmployeeDepartmentHistory>), ServiceLifetime.Transient)]
+public class EmployeeDepartmentHistoryRepository : IEntitySetLoader<MILL09.Models.EmployeeDepartmentHistory>, IEntitySaver<MILL09.Models.EmployeeDepartmentHistory>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -61,21 +65,32 @@ public class EmployeeDepartmentHistoryRepository : IEntitySetLoader<EmployeeDepa
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<EmployeeDepartmentHistory>
-    public async Task<IReadOnlyList<EmployeeDepartmentHistory>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.EmployeeDepartmentHistory>
+    public async Task<IReadOnlyList<MILL09.Models.EmployeeDepartmentHistory>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<EmployeeDepartmentHistory>()
+        var dbEntities = await _dbContext.Set<EmployeeDepartmentHistory>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<EmployeeDepartmentHistory>
 
-    #region IEntitySaver<EmployeeDepartmentHistory>
-    public async Task SaveAsync(EmployeeDepartmentHistory entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.EmployeeDepartmentHistory
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            StartDate = db.StartDate,
+            DepartmentId = db.DepartmentId,
+            ShiftId = db.ShiftId,
+            EndDate = db.EndDate,
+            ModifiedDate = db.ModifiedDate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.EmployeeDepartmentHistory>
+
+    #region IEntitySaver<MILL09.Models.EmployeeDepartmentHistory>
+    public Task SaveAsync(MILL09.Models.EmployeeDepartmentHistory entity, CancellationToken ct)
     {
-        _dbContext.Set<EmployeeDepartmentHistory>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<EmployeeDepartmentHistory>
+    #endregion IEntitySaver<MILL09.Models.EmployeeDepartmentHistory>
 }
-

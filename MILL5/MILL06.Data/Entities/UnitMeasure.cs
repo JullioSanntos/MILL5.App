@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Unit of measure lookup table.
 /// </summary>
 public partial class UnitMeasure
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key.
     /// </summary>
     public string UnitMeasureCode { get; set; }
@@ -38,8 +41,9 @@ public partial class UnitMeasure
     public virtual ICollection<Product> ProductWeightUnitMeasureCodeNavigations { get; set; } = new List<Product>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class UnitMeasureRepository : IEntitySetLoader<UnitMeasure>, IEntitySaver<UnitMeasure>
+[Register(typeof(IEntitySetLoader<MILL09.Models.UnitMeasure>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.UnitMeasure>), ServiceLifetime.Transient)]
+public class UnitMeasureRepository : IEntitySetLoader<MILL09.Models.UnitMeasure>, IEntitySaver<MILL09.Models.UnitMeasure>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -48,21 +52,29 @@ public class UnitMeasureRepository : IEntitySetLoader<UnitMeasure>, IEntitySaver
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<UnitMeasure>
-    public async Task<IReadOnlyList<UnitMeasure>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.UnitMeasure>
+    public async Task<IReadOnlyList<MILL09.Models.UnitMeasure>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<UnitMeasure>()
+        var dbEntities = await _dbContext.Set<UnitMeasure>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<UnitMeasure>
 
-    #region IEntitySaver<UnitMeasure>
-    public async Task SaveAsync(UnitMeasure entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.UnitMeasure
+        {
+            UnitMeasureCode = db.UnitMeasureCode,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.UnitMeasure>
+
+    #region IEntitySaver<MILL09.Models.UnitMeasure>
+    public Task SaveAsync(MILL09.Models.UnitMeasure entity, CancellationToken ct)
     {
-        _dbContext.Set<UnitMeasure>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<UnitMeasure>
+    #endregion IEntitySaver<MILL09.Models.UnitMeasure>
 }
-

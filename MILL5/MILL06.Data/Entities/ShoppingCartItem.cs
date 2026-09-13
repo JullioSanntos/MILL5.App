@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Contains online customer orders until the order is submitted or cancelled.
 /// </summary>
 public partial class ShoppingCartItem
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ShoppingCartItem records.
     /// </summary>
     public int ShoppingCartItemId { get; set; }
@@ -47,8 +50,9 @@ public partial class ShoppingCartItem
     public virtual Product Product { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ShoppingCartItemRepository : IEntitySetLoader<ShoppingCartItem>, IEntitySaver<ShoppingCartItem>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ShoppingCartItem>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ShoppingCartItem>), ServiceLifetime.Transient)]
+public class ShoppingCartItemRepository : IEntitySetLoader<MILL09.Models.ShoppingCartItem>, IEntitySaver<MILL09.Models.ShoppingCartItem>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -57,21 +61,32 @@ public class ShoppingCartItemRepository : IEntitySetLoader<ShoppingCartItem>, IE
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ShoppingCartItem>
-    public async Task<IReadOnlyList<ShoppingCartItem>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ShoppingCartItem>
+    public async Task<IReadOnlyList<MILL09.Models.ShoppingCartItem>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ShoppingCartItem>()
+        var dbEntities = await _dbContext.Set<ShoppingCartItem>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ShoppingCartItem>
 
-    #region IEntitySaver<ShoppingCartItem>
-    public async Task SaveAsync(ShoppingCartItem entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ShoppingCartItem
+        {
+            ShoppingCartItemId = db.ShoppingCartItemId,
+            DateCreated = db.DateCreated,
+            ModifiedDate = db.ModifiedDate,
+            ProductId = db.ProductId,
+            Quantity = db.Quantity,
+            ShoppingCartId = db.ShoppingCartId,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ShoppingCartItem>
+
+    #region IEntitySaver<MILL09.Models.ShoppingCartItem>
+    public Task SaveAsync(MILL09.Models.ShoppingCartItem entity, CancellationToken ct)
     {
-        _dbContext.Set<ShoppingCartItem>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ShoppingCartItem>
+    #endregion IEntitySaver<MILL09.Models.ShoppingCartItem>
 }
-

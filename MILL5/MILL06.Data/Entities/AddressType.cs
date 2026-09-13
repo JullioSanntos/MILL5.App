@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Types of addresses stored in the Address table. 
 /// </summary>
 public partial class AddressType
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for AddressType records.
     /// </summary>
     public int AddressTypeId { get; set; }
@@ -37,8 +40,9 @@ public partial class AddressType
     public virtual ICollection<BusinessEntityAddress> BusinessEntityAddresses { get; set; } = new List<BusinessEntityAddress>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class AddressTypeRepository : IEntitySetLoader<AddressType>, IEntitySaver<AddressType>
+[Register(typeof(IEntitySetLoader<MILL09.Models.AddressType>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.AddressType>), ServiceLifetime.Transient)]
+public class AddressTypeRepository : IEntitySetLoader<MILL09.Models.AddressType>, IEntitySaver<MILL09.Models.AddressType>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -47,21 +51,30 @@ public class AddressTypeRepository : IEntitySetLoader<AddressType>, IEntitySaver
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<AddressType>
-    public async Task<IReadOnlyList<AddressType>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.AddressType>
+    public async Task<IReadOnlyList<MILL09.Models.AddressType>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<AddressType>()
+        var dbEntities = await _dbContext.Set<AddressType>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<AddressType>
 
-    #region IEntitySaver<AddressType>
-    public async Task SaveAsync(AddressType entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.AddressType
+        {
+            AddressTypeId = db.AddressTypeId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.AddressType>
+
+    #region IEntitySaver<MILL09.Models.AddressType>
+    public Task SaveAsync(MILL09.Models.AddressType entity, CancellationToken ct)
     {
-        _dbContext.Set<AddressType>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<AddressType>
+    #endregion IEntitySaver<MILL09.Models.AddressType>
 }
-

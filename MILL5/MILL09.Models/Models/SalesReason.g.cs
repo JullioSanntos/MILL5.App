@@ -61,6 +61,9 @@ public partial class SalesReason : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].SalesReasonId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesReasonsLoaded = true;
         OnRefreshed();
     }
 
@@ -97,21 +100,24 @@ public partial class MainModel
     public ObservableCollection<SalesReason> SalesReasons
     {
         get { if (_salesReasons == null) SalesReasons = new ObservableCollection<SalesReason>(); return _salesReasons!; }
-        private set
-        {
-            SetProperty(ref _salesReasons, value);
-            OnPropertyChanged(nameof(IsSalesReasonsLoaded));
-        }
+        private set => SetProperty(ref _salesReasons, value);
     }
 
-    public bool IsSalesReasonsLoaded => _salesReasons != null;
+    private bool _isSalesReasonsLoaded;
+    public bool IsSalesReasonsLoaded
+    {
+        get => _isSalesReasonsLoaded;
+        internal set => SetProperty(ref _isSalesReasonsLoaded, value);
+    }
 
     internal void UnloadSalesReasonsStorage()
     {
         if (_salesReasons == null) return;
         _salesReasons = null;
         OnPropertyChanged(nameof(SalesReasons));
-        OnPropertyChanged(nameof(IsSalesReasonsLoaded));
+
+        // Reset the load state flag
+        IsSalesReasonsLoaded = false;
     }
 }
 }

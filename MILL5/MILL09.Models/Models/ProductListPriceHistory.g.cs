@@ -59,6 +59,9 @@ public partial class ProductListPriceHistory : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ProductId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsProductListPriceHistoriesLoaded = true;
         OnRefreshed();
     }
 
@@ -96,21 +99,24 @@ public partial class MainModel
     public ObservableCollection<ProductListPriceHistory> ProductListPriceHistories
     {
         get { if (_productListPriceHistories == null) ProductListPriceHistories = new ObservableCollection<ProductListPriceHistory>(); return _productListPriceHistories!; }
-        private set
-        {
-            SetProperty(ref _productListPriceHistories, value);
-            OnPropertyChanged(nameof(IsProductListPriceHistoriesLoaded));
-        }
+        private set => SetProperty(ref _productListPriceHistories, value);
     }
 
-    public bool IsProductListPriceHistoriesLoaded => _productListPriceHistories != null;
+    private bool _isProductListPriceHistoriesLoaded;
+    public bool IsProductListPriceHistoriesLoaded
+    {
+        get => _isProductListPriceHistoriesLoaded;
+        internal set => SetProperty(ref _isProductListPriceHistoriesLoaded, value);
+    }
 
     internal void UnloadProductListPriceHistoriesStorage()
     {
         if (_productListPriceHistories == null) return;
         _productListPriceHistories = null;
         OnPropertyChanged(nameof(ProductListPriceHistories));
-        OnPropertyChanged(nameof(IsProductListPriceHistoriesLoaded));
+
+        // Reset the load state flag
+        IsProductListPriceHistoriesLoaded = false;
     }
 }
 }

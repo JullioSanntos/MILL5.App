@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Lookup table containing standard ISO currencies.
 /// </summary>
 public partial class Currency
-{    /// <summary>
+{
+    /// <summary>
     /// The ISO code for the Currency.
     /// </summary>
     public string CurrencyCode { get; set; }
@@ -36,8 +39,9 @@ public partial class Currency
     public virtual ICollection<CurrencyRate> CurrencyRateToCurrencyCodeNavigations { get; set; } = new List<CurrencyRate>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class CurrencyRepository : IEntitySetLoader<Currency>, IEntitySaver<Currency>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Currency>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Currency>), ServiceLifetime.Transient)]
+public class CurrencyRepository : IEntitySetLoader<MILL09.Models.Currency>, IEntitySaver<MILL09.Models.Currency>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -46,21 +50,29 @@ public class CurrencyRepository : IEntitySetLoader<Currency>, IEntitySaver<Curre
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Currency>
-    public async Task<IReadOnlyList<Currency>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Currency>
+    public async Task<IReadOnlyList<MILL09.Models.Currency>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Currency>()
+        var dbEntities = await _dbContext.Set<Currency>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Currency>
 
-    #region IEntitySaver<Currency>
-    public async Task SaveAsync(Currency entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Currency
+        {
+            CurrencyCode = db.CurrencyCode,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Currency>
+
+    #region IEntitySaver<MILL09.Models.Currency>
+    public Task SaveAsync(MILL09.Models.Currency entity, CancellationToken ct)
     {
-        _dbContext.Set<Currency>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Currency>
+    #endregion IEntitySaver<MILL09.Models.Currency>
 }
-

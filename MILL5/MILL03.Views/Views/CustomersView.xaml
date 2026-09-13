@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:MILL09.Models;assembly=MILL09.Models"
+             x:Class="MILL03.Views.Views.CustomersView">
+
+    <Grid RowDefinitions="Auto, *">
+        <Button Text="Load Customers" Clicked="OnLoadCustomersClicked" Margin="10"
+                TextColor="White" BackgroundColor="#2B579A">
+            <VisualStateManager.VisualStateGroups>
+                <!-- The missing VisualStateGroupList wrapper -->
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal" />
+
+                        <VisualState x:Name="PointerOver">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="#3E6DB3" />
+                            </VisualState.Setters>
+                        </VisualState>
+
+                        <VisualState x:Name="Pressed">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="#1C3F75" />
+                                <Setter Property="Scale" Value="0.98" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </VisualStateManager.VisualStateGroups>
+        </Button>
+
+        <CollectionView Grid.Row="1" 
+                        ItemsSource="{Binding Customers, Source={x:Static models:MainModel.Instance}}"
+                        Margin="10">
+            <CollectionView.Header>
+                <Grid ColumnDefinitions="100, 200, *">
+                    <Label Text="ID" FontAttributes="Bold" />
+                    <Label Text="Store ID" Grid.Column="1" FontAttributes="Bold" />
+                    <Label Text="Modified Date" Grid.Column="2" FontAttributes="Bold" />
+                </Grid>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="100, 200, *">
+                        <Label Text="{Binding CustomerId}" />
+                        <Label Text="{Binding StoreId}" Grid.Column="1" />
+                        <Label Text="{Binding ModifiedDate, StringFormat='{0:d}'}" Grid.Column="2" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentView>

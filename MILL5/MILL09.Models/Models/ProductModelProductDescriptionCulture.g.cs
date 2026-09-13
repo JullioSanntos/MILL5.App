@@ -60,6 +60,9 @@ public partial class ProductModelProductDescriptionCulture : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ProductModelId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsProductModelProductDescriptionCulturesLoaded = true;
         OnRefreshed();
     }
 
@@ -96,21 +99,24 @@ public partial class MainModel
     public ObservableCollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCultures
     {
         get { if (_productModelProductDescriptionCultures == null) ProductModelProductDescriptionCultures = new ObservableCollection<ProductModelProductDescriptionCulture>(); return _productModelProductDescriptionCultures!; }
-        private set
-        {
-            SetProperty(ref _productModelProductDescriptionCultures, value);
-            OnPropertyChanged(nameof(IsProductModelProductDescriptionCulturesLoaded));
-        }
+        private set => SetProperty(ref _productModelProductDescriptionCultures, value);
     }
 
-    public bool IsProductModelProductDescriptionCulturesLoaded => _productModelProductDescriptionCultures != null;
+    private bool _isProductModelProductDescriptionCulturesLoaded;
+    public bool IsProductModelProductDescriptionCulturesLoaded
+    {
+        get => _isProductModelProductDescriptionCulturesLoaded;
+        internal set => SetProperty(ref _isProductModelProductDescriptionCulturesLoaded, value);
+    }
 
     internal void UnloadProductModelProductDescriptionCulturesStorage()
     {
         if (_productModelProductDescriptionCultures == null) return;
         _productModelProductDescriptionCultures = null;
         OnPropertyChanged(nameof(ProductModelProductDescriptionCultures));
-        OnPropertyChanged(nameof(IsProductModelProductDescriptionCulturesLoaded));
+
+        // Reset the load state flag
+        IsProductModelProductDescriptionCulturesLoaded = false;
     }
 }
 }

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Sales territory lookup table.
 /// </summary>
 public partial class SalesTerritory
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for SalesTerritory records.
     /// </summary>
     public int TerritoryId { get; set; }
@@ -77,8 +80,9 @@ public partial class SalesTerritory
     public virtual ICollection<StateProvince> StateProvinces { get; set; } = new List<StateProvince>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class SalesTerritoryRepository : IEntitySetLoader<SalesTerritory>, IEntitySaver<SalesTerritory>
+[Register(typeof(IEntitySetLoader<MILL09.Models.SalesTerritory>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.SalesTerritory>), ServiceLifetime.Transient)]
+public class SalesTerritoryRepository : IEntitySetLoader<MILL09.Models.SalesTerritory>, IEntitySaver<MILL09.Models.SalesTerritory>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -87,21 +91,36 @@ public class SalesTerritoryRepository : IEntitySetLoader<SalesTerritory>, IEntit
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<SalesTerritory>
-    public async Task<IReadOnlyList<SalesTerritory>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.SalesTerritory>
+    public async Task<IReadOnlyList<MILL09.Models.SalesTerritory>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<SalesTerritory>()
+        var dbEntities = await _dbContext.Set<SalesTerritory>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<SalesTerritory>
 
-    #region IEntitySaver<SalesTerritory>
-    public async Task SaveAsync(SalesTerritory entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.SalesTerritory
+        {
+            TerritoryId = db.TerritoryId,
+            CostLastYear = db.CostLastYear,
+            CostYtd = db.CostYtd,
+            CountryRegionCode = db.CountryRegionCode,
+            Group = db.Group,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            Rowguid = db.Rowguid,
+            SalesLastYear = db.SalesLastYear,
+            SalesYtd = db.SalesYtd,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.SalesTerritory>
+
+    #region IEntitySaver<MILL09.Models.SalesTerritory>
+    public Task SaveAsync(MILL09.Models.SalesTerritory entity, CancellationToken ct)
     {
-        _dbContext.Set<SalesTerritory>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<SalesTerritory>
+    #endregion IEntitySaver<MILL09.Models.SalesTerritory>
 }
-

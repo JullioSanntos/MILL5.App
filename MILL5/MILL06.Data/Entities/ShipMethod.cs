@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Shipping company lookup table.
 /// </summary>
 public partial class ShipMethod
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ShipMethod records.
     /// </summary>
     public int ShipMethodId { get; set; }
@@ -49,8 +52,9 @@ public partial class ShipMethod
     public virtual ICollection<SalesOrderHeader> SalesOrderHeaders { get; set; } = new List<SalesOrderHeader>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ShipMethodRepository : IEntitySetLoader<ShipMethod>, IEntitySaver<ShipMethod>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ShipMethod>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ShipMethod>), ServiceLifetime.Transient)]
+public class ShipMethodRepository : IEntitySetLoader<MILL09.Models.ShipMethod>, IEntitySaver<MILL09.Models.ShipMethod>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -59,21 +63,32 @@ public class ShipMethodRepository : IEntitySetLoader<ShipMethod>, IEntitySaver<S
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ShipMethod>
-    public async Task<IReadOnlyList<ShipMethod>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ShipMethod>
+    public async Task<IReadOnlyList<MILL09.Models.ShipMethod>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ShipMethod>()
+        var dbEntities = await _dbContext.Set<ShipMethod>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ShipMethod>
 
-    #region IEntitySaver<ShipMethod>
-    public async Task SaveAsync(ShipMethod entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ShipMethod
+        {
+            ShipMethodId = db.ShipMethodId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            Rowguid = db.Rowguid,
+            ShipBase = db.ShipBase,
+            ShipRate = db.ShipRate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ShipMethod>
+
+    #region IEntitySaver<MILL09.Models.ShipMethod>
+    public Task SaveAsync(MILL09.Models.ShipMethod entity, CancellationToken ct)
     {
-        _dbContext.Set<ShipMethod>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ShipMethod>
+    #endregion IEntitySaver<MILL09.Models.ShipMethod>
 }
-

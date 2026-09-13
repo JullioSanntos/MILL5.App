@@ -83,6 +83,9 @@ public partial class UnitMeasure : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].UnitMeasureCode)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsUnitMeasuresLoaded = true;
         OnRefreshed();
     }
 
@@ -118,21 +121,24 @@ public partial class MainModel
     public ObservableCollection<UnitMeasure> UnitMeasures
     {
         get { if (_unitMeasures == null) UnitMeasures = new ObservableCollection<UnitMeasure>(); return _unitMeasures!; }
-        private set
-        {
-            SetProperty(ref _unitMeasures, value);
-            OnPropertyChanged(nameof(IsUnitMeasuresLoaded));
-        }
+        private set => SetProperty(ref _unitMeasures, value);
     }
 
-    public bool IsUnitMeasuresLoaded => _unitMeasures != null;
+    private bool _isUnitMeasuresLoaded;
+    public bool IsUnitMeasuresLoaded
+    {
+        get => _isUnitMeasuresLoaded;
+        internal set => SetProperty(ref _isUnitMeasuresLoaded, value);
+    }
 
     internal void UnloadUnitMeasuresStorage()
     {
         if (_unitMeasures == null) return;
         _unitMeasures = null;
         OnPropertyChanged(nameof(UnitMeasures));
-        OnPropertyChanged(nameof(IsUnitMeasuresLoaded));
+
+        // Reset the load state flag
+        IsUnitMeasuresLoaded = false;
     }
 }
 }

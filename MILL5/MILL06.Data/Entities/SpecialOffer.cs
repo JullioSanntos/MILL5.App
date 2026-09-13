@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Sale discounts lookup table.
 /// </summary>
 public partial class SpecialOffer
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for SpecialOffer records.
     /// </summary>
     public int SpecialOfferId { get; set; }
@@ -72,8 +75,9 @@ public partial class SpecialOffer
     public virtual ICollection<SpecialOfferProduct> SpecialOfferProducts { get; set; } = new List<SpecialOfferProduct>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class SpecialOfferRepository : IEntitySetLoader<SpecialOffer>, IEntitySaver<SpecialOffer>
+[Register(typeof(IEntitySetLoader<MILL09.Models.SpecialOffer>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.SpecialOffer>), ServiceLifetime.Transient)]
+public class SpecialOfferRepository : IEntitySetLoader<MILL09.Models.SpecialOffer>, IEntitySaver<MILL09.Models.SpecialOffer>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -82,21 +86,37 @@ public class SpecialOfferRepository : IEntitySetLoader<SpecialOffer>, IEntitySav
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<SpecialOffer>
-    public async Task<IReadOnlyList<SpecialOffer>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.SpecialOffer>
+    public async Task<IReadOnlyList<MILL09.Models.SpecialOffer>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<SpecialOffer>()
+        var dbEntities = await _dbContext.Set<SpecialOffer>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<SpecialOffer>
 
-    #region IEntitySaver<SpecialOffer>
-    public async Task SaveAsync(SpecialOffer entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.SpecialOffer
+        {
+            SpecialOfferId = db.SpecialOfferId,
+            Category = db.Category,
+            Description = db.Description,
+            DiscountPct = db.DiscountPct,
+            EndDate = db.EndDate,
+            MaxQty = db.MaxQty,
+            MinQty = db.MinQty,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+            StartDate = db.StartDate,
+            Type = db.Type,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.SpecialOffer>
+
+    #region IEntitySaver<MILL09.Models.SpecialOffer>
+    public Task SaveAsync(MILL09.Models.SpecialOffer entity, CancellationToken ct)
     {
-        _dbContext.Set<SpecialOffer>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<SpecialOffer>
+    #endregion IEntitySaver<MILL09.Models.SpecialOffer>
 }
-

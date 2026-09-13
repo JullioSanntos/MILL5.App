@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Cross-reference table mapping people to their credit card information in the CreditCard table. 
 /// </summary>
 public partial class PersonCreditCard
-{    /// <summary>
+{
+    /// <summary>
     /// Business entity identification number. Foreign key to Person.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -34,8 +37,9 @@ public partial class PersonCreditCard
     public virtual CreditCard CreditCard { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class PersonCreditCardRepository : IEntitySetLoader<PersonCreditCard>, IEntitySaver<PersonCreditCard>
+[Register(typeof(IEntitySetLoader<MILL09.Models.PersonCreditCard>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.PersonCreditCard>), ServiceLifetime.Transient)]
+public class PersonCreditCardRepository : IEntitySetLoader<MILL09.Models.PersonCreditCard>, IEntitySaver<MILL09.Models.PersonCreditCard>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -44,21 +48,29 @@ public class PersonCreditCardRepository : IEntitySetLoader<PersonCreditCard>, IE
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<PersonCreditCard>
-    public async Task<IReadOnlyList<PersonCreditCard>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.PersonCreditCard>
+    public async Task<IReadOnlyList<MILL09.Models.PersonCreditCard>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<PersonCreditCard>()
+        var dbEntities = await _dbContext.Set<PersonCreditCard>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<PersonCreditCard>
 
-    #region IEntitySaver<PersonCreditCard>
-    public async Task SaveAsync(PersonCreditCard entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.PersonCreditCard
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            CreditCardId = db.CreditCardId,
+            ModifiedDate = db.ModifiedDate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.PersonCreditCard>
+
+    #region IEntitySaver<MILL09.Models.PersonCreditCard>
+    public Task SaveAsync(MILL09.Models.PersonCreditCard entity, CancellationToken ct)
     {
-        _dbContext.Set<PersonCreditCard>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<PersonCreditCard>
+    #endregion IEntitySaver<MILL09.Models.PersonCreditCard>
 }
-

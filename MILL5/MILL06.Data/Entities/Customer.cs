@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Current customer information. Also see the Person and Store tables.
 /// </summary>
 public partial class Customer
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key.
     /// </summary>
     public int CustomerId { get; set; }
@@ -58,8 +61,9 @@ public partial class Customer
     public virtual SalesTerritory Territory { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class CustomerRepository : IEntitySetLoader<Customer>, IEntitySaver<Customer>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Customer>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Customer>), ServiceLifetime.Transient)]
+public class CustomerRepository : IEntitySetLoader<MILL09.Models.Customer>, IEntitySaver<MILL09.Models.Customer>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -68,21 +72,34 @@ public class CustomerRepository : IEntitySetLoader<Customer>, IEntitySaver<Custo
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Customer>
-    public async Task<IReadOnlyList<Customer>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Customer>
+    public async Task<IReadOnlyList<MILL09.Models.Customer>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Customer>()
+        var dbEntities = await _dbContext.Set<Customer>()
             .AsNoTracking()
+            .Take(100) // <-- Add this line back to speed up UI testing
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Customer>
 
-    #region IEntitySaver<Customer>
-    public async Task SaveAsync(Customer entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Customer
+        {
+            CustomerId = db.CustomerId,
+            AccountNumber = db.AccountNumber,
+            ModifiedDate = db.ModifiedDate,
+            PersonId = db.PersonId,
+            Rowguid = db.Rowguid,
+            StoreId = db.StoreId,
+            TerritoryId = db.TerritoryId,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Customer>
+
+    #region IEntitySaver<MILL09.Models.Customer>
+    public Task SaveAsync(MILL09.Models.Customer entity, CancellationToken ct)
     {
-        _dbContext.Set<Customer>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Customer>
+    #endregion IEntitySaver<MILL09.Models.Customer>
 }
-

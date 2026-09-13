@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Cross-reference table mapping stores, vendors, and employees to people
 /// </summary>
 public partial class BusinessEntityContact
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key. Foreign key to BusinessEntity.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -46,8 +49,9 @@ public partial class BusinessEntityContact
     public virtual Person Person { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class BusinessEntityContactRepository : IEntitySetLoader<BusinessEntityContact>, IEntitySaver<BusinessEntityContact>
+[Register(typeof(IEntitySetLoader<MILL09.Models.BusinessEntityContact>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.BusinessEntityContact>), ServiceLifetime.Transient)]
+public class BusinessEntityContactRepository : IEntitySetLoader<MILL09.Models.BusinessEntityContact>, IEntitySaver<MILL09.Models.BusinessEntityContact>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -56,21 +60,31 @@ public class BusinessEntityContactRepository : IEntitySetLoader<BusinessEntityCo
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<BusinessEntityContact>
-    public async Task<IReadOnlyList<BusinessEntityContact>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.BusinessEntityContact>
+    public async Task<IReadOnlyList<MILL09.Models.BusinessEntityContact>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<BusinessEntityContact>()
+        var dbEntities = await _dbContext.Set<BusinessEntityContact>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<BusinessEntityContact>
 
-    #region IEntitySaver<BusinessEntityContact>
-    public async Task SaveAsync(BusinessEntityContact entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.BusinessEntityContact
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            PersonId = db.PersonId,
+            ContactTypeId = db.ContactTypeId,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.BusinessEntityContact>
+
+    #region IEntitySaver<MILL09.Models.BusinessEntityContact>
+    public Task SaveAsync(MILL09.Models.BusinessEntityContact entity, CancellationToken ct)
     {
-        _dbContext.Set<BusinessEntityContact>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<BusinessEntityContact>
+    #endregion IEntitySaver<MILL09.Models.BusinessEntityContact>
 }
-

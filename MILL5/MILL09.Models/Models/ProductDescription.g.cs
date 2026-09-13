@@ -61,6 +61,9 @@ public partial class ProductDescription : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ProductDescriptionId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsProductDescriptionsLoaded = true;
         OnRefreshed();
     }
 
@@ -97,21 +100,24 @@ public partial class MainModel
     public ObservableCollection<ProductDescription> ProductDescriptions
     {
         get { if (_productDescriptions == null) ProductDescriptions = new ObservableCollection<ProductDescription>(); return _productDescriptions!; }
-        private set
-        {
-            SetProperty(ref _productDescriptions, value);
-            OnPropertyChanged(nameof(IsProductDescriptionsLoaded));
-        }
+        private set => SetProperty(ref _productDescriptions, value);
     }
 
-    public bool IsProductDescriptionsLoaded => _productDescriptions != null;
+    private bool _isProductDescriptionsLoaded;
+    public bool IsProductDescriptionsLoaded
+    {
+        get => _isProductDescriptionsLoaded;
+        internal set => SetProperty(ref _isProductDescriptionsLoaded, value);
+    }
 
     internal void UnloadProductDescriptionsStorage()
     {
         if (_productDescriptions == null) return;
         _productDescriptions = null;
         OnPropertyChanged(nameof(ProductDescriptions));
-        OnPropertyChanged(nameof(IsProductDescriptionsLoaded));
+
+        // Reset the load state flag
+        IsProductDescriptionsLoaded = false;
     }
 }
 }

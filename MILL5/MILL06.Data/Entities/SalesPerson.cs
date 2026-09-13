@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Sales representative current information.
 /// </summary>
 public partial class SalesPerson
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for SalesPerson records. Foreign key to Employee.BusinessEntityID
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -72,8 +75,9 @@ public partial class SalesPerson
     public virtual SalesTerritory Territory { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class SalesPersonRepository : IEntitySetLoader<SalesPerson>, IEntitySaver<SalesPerson>
+[Register(typeof(IEntitySetLoader<MILL09.Models.SalesPerson>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.SalesPerson>), ServiceLifetime.Transient)]
+public class SalesPersonRepository : IEntitySetLoader<MILL09.Models.SalesPerson>, IEntitySaver<MILL09.Models.SalesPerson>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -82,21 +86,35 @@ public class SalesPersonRepository : IEntitySetLoader<SalesPerson>, IEntitySaver
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<SalesPerson>
-    public async Task<IReadOnlyList<SalesPerson>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.SalesPerson>
+    public async Task<IReadOnlyList<MILL09.Models.SalesPerson>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<SalesPerson>()
+        var dbEntities = await _dbContext.Set<SalesPerson>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<SalesPerson>
 
-    #region IEntitySaver<SalesPerson>
-    public async Task SaveAsync(SalesPerson entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.SalesPerson
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            Bonus = db.Bonus,
+            CommissionPct = db.CommissionPct,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+            SalesLastYear = db.SalesLastYear,
+            SalesQuota = db.SalesQuota,
+            SalesYtd = db.SalesYtd,
+            TerritoryId = db.TerritoryId,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.SalesPerson>
+
+    #region IEntitySaver<MILL09.Models.SalesPerson>
+    public Task SaveAsync(MILL09.Models.SalesPerson entity, CancellationToken ct)
     {
-        _dbContext.Set<SalesPerson>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<SalesPerson>
+    #endregion IEntitySaver<MILL09.Models.SalesPerson>
 }
-

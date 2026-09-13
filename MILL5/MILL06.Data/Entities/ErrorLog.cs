@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Audit table tracking errors in the the AdventureWorks database that are caught by the CATCH block of a TRY...CATCH construct. Data is inserted by stored procedure dbo.uspLogError when it is executed from inside the CATCH block of a TRY...CATCH construct.
 /// </summary>
 public partial class ErrorLog
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ErrorLog records.
     /// </summary>
     public int ErrorLogId { get; set; }
@@ -60,8 +63,9 @@ public partial class ErrorLog
     public string ErrorMessage { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ErrorLogRepository : IEntitySetLoader<ErrorLog>, IEntitySaver<ErrorLog>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ErrorLog>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ErrorLog>), ServiceLifetime.Transient)]
+public class ErrorLogRepository : IEntitySetLoader<MILL09.Models.ErrorLog>, IEntitySaver<MILL09.Models.ErrorLog>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -70,21 +74,35 @@ public class ErrorLogRepository : IEntitySetLoader<ErrorLog>, IEntitySaver<Error
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ErrorLog>
-    public async Task<IReadOnlyList<ErrorLog>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ErrorLog>
+    public async Task<IReadOnlyList<MILL09.Models.ErrorLog>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ErrorLog>()
+        var dbEntities = await _dbContext.Set<ErrorLog>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ErrorLog>
 
-    #region IEntitySaver<ErrorLog>
-    public async Task SaveAsync(ErrorLog entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ErrorLog
+        {
+            ErrorLogId = db.ErrorLogId,
+            ErrorLine = db.ErrorLine,
+            ErrorMessage = db.ErrorMessage,
+            ErrorNumber = db.ErrorNumber,
+            ErrorProcedure = db.ErrorProcedure,
+            ErrorSeverity = db.ErrorSeverity,
+            ErrorState = db.ErrorState,
+            ErrorTime = db.ErrorTime,
+            UserName = db.UserName,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ErrorLog>
+
+    #region IEntitySaver<MILL09.Models.ErrorLog>
+    public Task SaveAsync(MILL09.Models.ErrorLog entity, CancellationToken ct)
     {
-        _dbContext.Set<ErrorLog>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ErrorLog>
+    #endregion IEntitySaver<MILL09.Models.ErrorLog>
 }
-

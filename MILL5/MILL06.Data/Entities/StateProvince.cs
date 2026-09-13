@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// State and province lookup table.
 /// </summary>
 public partial class StateProvince
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for StateProvince records.
     /// </summary>
     public int StateProvinceId { get; set; }
@@ -63,8 +66,9 @@ public partial class StateProvince
     public virtual SalesTerritory Territory { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class StateProvinceRepository : IEntitySetLoader<StateProvince>, IEntitySaver<StateProvince>
+[Register(typeof(IEntitySetLoader<MILL09.Models.StateProvince>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.StateProvince>), ServiceLifetime.Transient)]
+public class StateProvinceRepository : IEntitySetLoader<MILL09.Models.StateProvince>, IEntitySaver<MILL09.Models.StateProvince>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -73,21 +77,34 @@ public class StateProvinceRepository : IEntitySetLoader<StateProvince>, IEntityS
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<StateProvince>
-    public async Task<IReadOnlyList<StateProvince>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.StateProvince>
+    public async Task<IReadOnlyList<MILL09.Models.StateProvince>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<StateProvince>()
+        var dbEntities = await _dbContext.Set<StateProvince>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<StateProvince>
 
-    #region IEntitySaver<StateProvince>
-    public async Task SaveAsync(StateProvince entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.StateProvince
+        {
+            StateProvinceId = db.StateProvinceId,
+            CountryRegionCode = db.CountryRegionCode,
+            IsOnlyStateProvinceFlag = db.IsOnlyStateProvinceFlag,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            Rowguid = db.Rowguid,
+            StateProvinceCode = db.StateProvinceCode,
+            TerritoryId = db.TerritoryId,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.StateProvince>
+
+    #region IEntitySaver<MILL09.Models.StateProvince>
+    public Task SaveAsync(MILL09.Models.StateProvince entity, CancellationToken ct)
     {
-        _dbContext.Set<StateProvince>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<StateProvince>
+    #endregion IEntitySaver<MILL09.Models.StateProvince>
 }
-

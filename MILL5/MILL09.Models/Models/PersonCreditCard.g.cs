@@ -57,6 +57,9 @@ public partial class PersonCreditCard : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsPersonCreditCardsLoaded = true;
         OnRefreshed();
     }
 
@@ -92,21 +95,24 @@ public partial class MainModel
     public ObservableCollection<PersonCreditCard> PersonCreditCards
     {
         get { if (_personCreditCards == null) PersonCreditCards = new ObservableCollection<PersonCreditCard>(); return _personCreditCards!; }
-        private set
-        {
-            SetProperty(ref _personCreditCards, value);
-            OnPropertyChanged(nameof(IsPersonCreditCardsLoaded));
-        }
+        private set => SetProperty(ref _personCreditCards, value);
     }
 
-    public bool IsPersonCreditCardsLoaded => _personCreditCards != null;
+    private bool _isPersonCreditCardsLoaded;
+    public bool IsPersonCreditCardsLoaded
+    {
+        get => _isPersonCreditCardsLoaded;
+        internal set => SetProperty(ref _isPersonCreditCardsLoaded, value);
+    }
 
     internal void UnloadPersonCreditCardsStorage()
     {
         if (_personCreditCards == null) return;
         _personCreditCards = null;
         OnPropertyChanged(nameof(PersonCreditCards));
-        OnPropertyChanged(nameof(IsPersonCreditCardsLoaded));
+
+        // Reset the load state flag
+        IsPersonCreditCardsLoaded = false;
     }
 }
 }

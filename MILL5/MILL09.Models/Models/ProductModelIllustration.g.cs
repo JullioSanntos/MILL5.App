@@ -55,6 +55,9 @@ public partial class ProductModelIllustration : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ProductModelId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsProductModelIllustrationsLoaded = true;
         OnRefreshed();
     }
 
@@ -90,21 +93,24 @@ public partial class MainModel
     public ObservableCollection<ProductModelIllustration> ProductModelIllustrations
     {
         get { if (_productModelIllustrations == null) ProductModelIllustrations = new ObservableCollection<ProductModelIllustration>(); return _productModelIllustrations!; }
-        private set
-        {
-            SetProperty(ref _productModelIllustrations, value);
-            OnPropertyChanged(nameof(IsProductModelIllustrationsLoaded));
-        }
+        private set => SetProperty(ref _productModelIllustrations, value);
     }
 
-    public bool IsProductModelIllustrationsLoaded => _productModelIllustrations != null;
+    private bool _isProductModelIllustrationsLoaded;
+    public bool IsProductModelIllustrationsLoaded
+    {
+        get => _isProductModelIllustrationsLoaded;
+        internal set => SetProperty(ref _isProductModelIllustrationsLoaded, value);
+    }
 
     internal void UnloadProductModelIllustrationsStorage()
     {
         if (_productModelIllustrations == null) return;
         _productModelIllustrations = null;
         OnPropertyChanged(nameof(ProductModelIllustrations));
-        OnPropertyChanged(nameof(IsProductModelIllustrationsLoaded));
+
+        // Reset the load state flag
+        IsProductModelIllustrationsLoaded = false;
     }
 }
 }

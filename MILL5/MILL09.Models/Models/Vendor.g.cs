@@ -86,6 +86,9 @@ public partial class Vendor : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsVendorsLoaded = true;
         OnRefreshed();
     }
 
@@ -126,21 +129,24 @@ public partial class MainModel
     public ObservableCollection<Vendor> Vendors
     {
         get { if (_vendors == null) Vendors = new ObservableCollection<Vendor>(); return _vendors!; }
-        private set
-        {
-            SetProperty(ref _vendors, value);
-            OnPropertyChanged(nameof(IsVendorsLoaded));
-        }
+        private set => SetProperty(ref _vendors, value);
     }
 
-    public bool IsVendorsLoaded => _vendors != null;
+    private bool _isVendorsLoaded;
+    public bool IsVendorsLoaded
+    {
+        get => _isVendorsLoaded;
+        internal set => SetProperty(ref _isVendorsLoaded, value);
+    }
 
     internal void UnloadVendorsStorage()
     {
         if (_vendors == null) return;
         _vendors = null;
         OnPropertyChanged(nameof(Vendors));
-        OnPropertyChanged(nameof(IsVendorsLoaded));
+
+        // Reset the load state flag
+        IsVendorsLoaded = false;
     }
 }
 }

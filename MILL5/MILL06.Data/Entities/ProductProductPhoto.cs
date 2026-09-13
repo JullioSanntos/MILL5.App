@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Cross-reference table mapping products and product photos.
 /// </summary>
 public partial class ProductProductPhoto
-{    /// <summary>
+{
+    /// <summary>
     /// Product identification number. Foreign key to Product.ProductID.
     /// </summary>
     public int ProductId { get; set; }
@@ -39,8 +42,9 @@ public partial class ProductProductPhoto
     public virtual ProductPhoto ProductPhoto { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ProductProductPhotoRepository : IEntitySetLoader<ProductProductPhoto>, IEntitySaver<ProductProductPhoto>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ProductProductPhoto>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ProductProductPhoto>), ServiceLifetime.Transient)]
+public class ProductProductPhotoRepository : IEntitySetLoader<MILL09.Models.ProductProductPhoto>, IEntitySaver<MILL09.Models.ProductProductPhoto>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -49,21 +53,30 @@ public class ProductProductPhotoRepository : IEntitySetLoader<ProductProductPhot
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ProductProductPhoto>
-    public async Task<IReadOnlyList<ProductProductPhoto>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ProductProductPhoto>
+    public async Task<IReadOnlyList<MILL09.Models.ProductProductPhoto>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ProductProductPhoto>()
+        var dbEntities = await _dbContext.Set<ProductProductPhoto>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ProductProductPhoto>
 
-    #region IEntitySaver<ProductProductPhoto>
-    public async Task SaveAsync(ProductProductPhoto entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ProductProductPhoto
+        {
+            ProductId = db.ProductId,
+            ProductPhotoId = db.ProductPhotoId,
+            ModifiedDate = db.ModifiedDate,
+            Primary = db.Primary,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ProductProductPhoto>
+
+    #region IEntitySaver<MILL09.Models.ProductProductPhoto>
+    public Task SaveAsync(MILL09.Models.ProductProductPhoto entity, CancellationToken ct)
     {
-        _dbContext.Set<ProductProductPhoto>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ProductProductPhoto>
+    #endregion IEntitySaver<MILL09.Models.ProductProductPhoto>
 }
-

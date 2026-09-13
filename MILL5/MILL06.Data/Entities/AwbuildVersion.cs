@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Current version number of the AdventureWorks 2016 sample database. 
 /// </summary>
 public partial class AwbuildVersion
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for AWBuildVersion records.
     /// </summary>
     public byte SystemInformationId { get; set; }
@@ -35,8 +38,9 @@ public partial class AwbuildVersion
     public DateTime ModifiedDate { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class AwbuildVersionRepository : IEntitySetLoader<AwbuildVersion>, IEntitySaver<AwbuildVersion>
+[Register(typeof(IEntitySetLoader<MILL09.Models.AwbuildVersion>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.AwbuildVersion>), ServiceLifetime.Transient)]
+public class AwbuildVersionRepository : IEntitySetLoader<MILL09.Models.AwbuildVersion>, IEntitySaver<MILL09.Models.AwbuildVersion>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -45,21 +49,30 @@ public class AwbuildVersionRepository : IEntitySetLoader<AwbuildVersion>, IEntit
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<AwbuildVersion>
-    public async Task<IReadOnlyList<AwbuildVersion>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.AwbuildVersion>
+    public async Task<IReadOnlyList<MILL09.Models.AwbuildVersion>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<AwbuildVersion>()
+        var dbEntities = await _dbContext.Set<AwbuildVersion>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<AwbuildVersion>
 
-    #region IEntitySaver<AwbuildVersion>
-    public async Task SaveAsync(AwbuildVersion entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.AwbuildVersion
+        {
+            SystemInformationId = db.SystemInformationId,
+            DatabaseVersion = db.DatabaseVersion,
+            ModifiedDate = db.ModifiedDate,
+            VersionDate = db.VersionDate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.AwbuildVersion>
+
+    #region IEntitySaver<MILL09.Models.AwbuildVersion>
+    public Task SaveAsync(MILL09.Models.AwbuildVersion entity, CancellationToken ct)
     {
-        _dbContext.Set<AwbuildVersion>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<AwbuildVersion>
+    #endregion IEntitySaver<MILL09.Models.AwbuildVersion>
 }
-

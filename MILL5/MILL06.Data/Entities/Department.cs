@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Lookup table containing the departments within the Adventure Works Cycles company.
 /// </summary>
 public partial class Department
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Department records.
     /// </summary>
     public short DepartmentId { get; set; }
@@ -37,8 +40,9 @@ public partial class Department
     public virtual ICollection<EmployeeDepartmentHistory> EmployeeDepartmentHistories { get; set; } = new List<EmployeeDepartmentHistory>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class DepartmentRepository : IEntitySetLoader<Department>, IEntitySaver<Department>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Department>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Department>), ServiceLifetime.Transient)]
+public class DepartmentRepository : IEntitySetLoader<MILL09.Models.Department>, IEntitySaver<MILL09.Models.Department>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -47,21 +51,30 @@ public class DepartmentRepository : IEntitySetLoader<Department>, IEntitySaver<D
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Department>
-    public async Task<IReadOnlyList<Department>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Department>
+    public async Task<IReadOnlyList<MILL09.Models.Department>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Department>()
+        var dbEntities = await _dbContext.Set<Department>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Department>
 
-    #region IEntitySaver<Department>
-    public async Task SaveAsync(Department entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Department
+        {
+            DepartmentId = db.DepartmentId,
+            GroupName = db.GroupName,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Department>
+
+    #region IEntitySaver<MILL09.Models.Department>
+    public Task SaveAsync(MILL09.Models.Department entity, CancellationToken ct)
     {
-        _dbContext.Set<Department>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Department>
+    #endregion IEntitySaver<MILL09.Models.Department>
 }
-

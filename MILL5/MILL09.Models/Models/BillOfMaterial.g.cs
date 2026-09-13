@@ -79,6 +79,9 @@ public partial class BillOfMaterial : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BillOfMaterialsId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsBillOfMaterialsLoaded = true;
         OnRefreshed();
     }
 
@@ -120,21 +123,24 @@ public partial class MainModel
     public ObservableCollection<BillOfMaterial> BillOfMaterials
     {
         get { if (_billOfMaterials == null) BillOfMaterials = new ObservableCollection<BillOfMaterial>(); return _billOfMaterials!; }
-        private set
-        {
-            SetProperty(ref _billOfMaterials, value);
-            OnPropertyChanged(nameof(IsBillOfMaterialsLoaded));
-        }
+        private set => SetProperty(ref _billOfMaterials, value);
     }
 
-    public bool IsBillOfMaterialsLoaded => _billOfMaterials != null;
+    private bool _isBillOfMaterialsLoaded;
+    public bool IsBillOfMaterialsLoaded
+    {
+        get => _isBillOfMaterialsLoaded;
+        internal set => SetProperty(ref _isBillOfMaterialsLoaded, value);
+    }
 
     internal void UnloadBillOfMaterialsStorage()
     {
         if (_billOfMaterials == null) return;
         _billOfMaterials = null;
         OnPropertyChanged(nameof(BillOfMaterials));
-        OnPropertyChanged(nameof(IsBillOfMaterialsLoaded));
+
+        // Reset the load state flag
+        IsBillOfMaterialsLoaded = false;
     }
 }
 }

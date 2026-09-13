@@ -66,6 +66,9 @@ public partial class ProductSubcategory : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ProductSubcategoryId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsProductSubcategoriesLoaded = true;
         OnRefreshed();
     }
 
@@ -103,21 +106,24 @@ public partial class MainModel
     public ObservableCollection<ProductSubcategory> ProductSubcategories
     {
         get { if (_productSubcategories == null) ProductSubcategories = new ObservableCollection<ProductSubcategory>(); return _productSubcategories!; }
-        private set
-        {
-            SetProperty(ref _productSubcategories, value);
-            OnPropertyChanged(nameof(IsProductSubcategoriesLoaded));
-        }
+        private set => SetProperty(ref _productSubcategories, value);
     }
 
-    public bool IsProductSubcategoriesLoaded => _productSubcategories != null;
+    private bool _isProductSubcategoriesLoaded;
+    public bool IsProductSubcategoriesLoaded
+    {
+        get => _isProductSubcategoriesLoaded;
+        internal set => SetProperty(ref _isProductSubcategoriesLoaded, value);
+    }
 
     internal void UnloadProductSubcategoriesStorage()
     {
         if (_productSubcategories == null) return;
         _productSubcategories = null;
         OnPropertyChanged(nameof(ProductSubcategories));
-        OnPropertyChanged(nameof(IsProductSubcategoriesLoaded));
+
+        // Reset the load state flag
+        IsProductSubcategoriesLoaded = false;
     }
 }
 }

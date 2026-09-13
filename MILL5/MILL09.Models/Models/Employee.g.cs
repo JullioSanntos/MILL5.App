@@ -131,6 +131,9 @@ public partial class Employee : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsEmployeesLoaded = true;
         OnRefreshed();
     }
 
@@ -178,21 +181,24 @@ public partial class MainModel
     public ObservableCollection<Employee> Employees
     {
         get { if (_employees == null) Employees = new ObservableCollection<Employee>(); return _employees!; }
-        private set
-        {
-            SetProperty(ref _employees, value);
-            OnPropertyChanged(nameof(IsEmployeesLoaded));
-        }
+        private set => SetProperty(ref _employees, value);
     }
 
-    public bool IsEmployeesLoaded => _employees != null;
+    private bool _isEmployeesLoaded;
+    public bool IsEmployeesLoaded
+    {
+        get => _isEmployeesLoaded;
+        internal set => SetProperty(ref _isEmployeesLoaded, value);
+    }
 
     internal void UnloadEmployeesStorage()
     {
         if (_employees == null) return;
         _employees = null;
         OnPropertyChanged(nameof(Employees));
-        OnPropertyChanged(nameof(IsEmployeesLoaded));
+
+        // Reset the load state flag
+        IsEmployeesLoaded = false;
     }
 }
 }

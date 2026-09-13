@@ -93,6 +93,9 @@ public partial class Address : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].AddressId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsAddressesLoaded = true;
         OnRefreshed();
     }
 
@@ -133,21 +136,24 @@ public partial class MainModel
     public ObservableCollection<Address> Addresses
     {
         get { if (_addresses == null) Addresses = new ObservableCollection<Address>(); return _addresses!; }
-        private set
-        {
-            SetProperty(ref _addresses, value);
-            OnPropertyChanged(nameof(IsAddressesLoaded));
-        }
+        private set => SetProperty(ref _addresses, value);
     }
 
-    public bool IsAddressesLoaded => _addresses != null;
+    private bool _isAddressesLoaded;
+    public bool IsAddressesLoaded
+    {
+        get => _isAddressesLoaded;
+        internal set => SetProperty(ref _isAddressesLoaded, value);
+    }
 
     internal void UnloadAddressesStorage()
     {
         if (_addresses == null) return;
         _addresses = null;
         OnPropertyChanged(nameof(Addresses));
-        OnPropertyChanged(nameof(IsAddressesLoaded));
+
+        // Reset the load state flag
+        IsAddressesLoaded = false;
     }
 }
 }

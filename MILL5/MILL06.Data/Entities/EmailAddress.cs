@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Where to send a person email.
 /// </summary>
 public partial class EmailAddress
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key. Person associated with this email address.  Foreign key to Person.BusinessEntityID
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -42,8 +45,9 @@ public partial class EmailAddress
     public virtual Person BusinessEntity { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class EmailAddressRepository : IEntitySetLoader<EmailAddress>, IEntitySaver<EmailAddress>
+[Register(typeof(IEntitySetLoader<MILL09.Models.EmailAddress>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.EmailAddress>), ServiceLifetime.Transient)]
+public class EmailAddressRepository : IEntitySetLoader<MILL09.Models.EmailAddress>, IEntitySaver<MILL09.Models.EmailAddress>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -52,21 +56,31 @@ public class EmailAddressRepository : IEntitySetLoader<EmailAddress>, IEntitySav
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<EmailAddress>
-    public async Task<IReadOnlyList<EmailAddress>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.EmailAddress>
+    public async Task<IReadOnlyList<MILL09.Models.EmailAddress>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<EmailAddress>()
+        var dbEntities = await _dbContext.Set<EmailAddress>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<EmailAddress>
 
-    #region IEntitySaver<EmailAddress>
-    public async Task SaveAsync(EmailAddress entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.EmailAddress
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            EmailAddressId = db.EmailAddressId,
+            EmailAddress1 = db.EmailAddress1,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.EmailAddress>
+
+    #region IEntitySaver<MILL09.Models.EmailAddress>
+    public Task SaveAsync(MILL09.Models.EmailAddress entity, CancellationToken ct)
     {
-        _dbContext.Set<EmailAddress>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<EmailAddress>
+    #endregion IEntitySaver<MILL09.Models.EmailAddress>
 }
-

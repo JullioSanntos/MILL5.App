@@ -83,6 +83,9 @@ public partial class WorkOrder : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].WorkOrderId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsWorkOrdersLoaded = true;
         OnRefreshed();
     }
 
@@ -125,21 +128,24 @@ public partial class MainModel
     public ObservableCollection<WorkOrder> WorkOrders
     {
         get { if (_workOrders == null) WorkOrders = new ObservableCollection<WorkOrder>(); return _workOrders!; }
-        private set
-        {
-            SetProperty(ref _workOrders, value);
-            OnPropertyChanged(nameof(IsWorkOrdersLoaded));
-        }
+        private set => SetProperty(ref _workOrders, value);
     }
 
-    public bool IsWorkOrdersLoaded => _workOrders != null;
+    private bool _isWorkOrdersLoaded;
+    public bool IsWorkOrdersLoaded
+    {
+        get => _isWorkOrdersLoaded;
+        internal set => SetProperty(ref _isWorkOrdersLoaded, value);
+    }
 
     internal void UnloadWorkOrdersStorage()
     {
         if (_workOrders == null) return;
         _workOrders = null;
         OnPropertyChanged(nameof(WorkOrders));
-        OnPropertyChanged(nameof(IsWorkOrdersLoaded));
+
+        // Reset the load state flag
+        IsWorkOrdersLoaded = false;
     }
 }
 }

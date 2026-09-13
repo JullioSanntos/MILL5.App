@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// One way hashed authentication information
 /// </summary>
 public partial class Password
-{    public int BusinessEntityId { get; set; }
+{
+    public int BusinessEntityId { get; set; }
 
     /// <summary>
     /// Password for the e-mail account.
@@ -39,8 +42,9 @@ public partial class Password
     public virtual Person BusinessEntity { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class PasswordRepository : IEntitySetLoader<Password>, IEntitySaver<Password>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Password>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Password>), ServiceLifetime.Transient)]
+public class PasswordRepository : IEntitySetLoader<MILL09.Models.Password>, IEntitySaver<MILL09.Models.Password>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -49,21 +53,31 @@ public class PasswordRepository : IEntitySetLoader<Password>, IEntitySaver<Passw
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Password>
-    public async Task<IReadOnlyList<Password>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Password>
+    public async Task<IReadOnlyList<MILL09.Models.Password>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Password>()
+        var dbEntities = await _dbContext.Set<Password>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Password>
 
-    #region IEntitySaver<Password>
-    public async Task SaveAsync(Password entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Password
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            ModifiedDate = db.ModifiedDate,
+            PasswordHash = db.PasswordHash,
+            PasswordSalt = db.PasswordSalt,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Password>
+
+    #region IEntitySaver<MILL09.Models.Password>
+    public Task SaveAsync(MILL09.Models.Password entity, CancellationToken ct)
     {
-        _dbContext.Set<Password>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Password>
+    #endregion IEntitySaver<MILL09.Models.Password>
 }
-

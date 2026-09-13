@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Customer reviews of products they have purchased.
 /// </summary>
 public partial class ProductReview
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ProductReview records.
     /// </summary>
     public int ProductReviewId { get; set; }
@@ -57,8 +60,9 @@ public partial class ProductReview
     public virtual Product Product { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ProductReviewRepository : IEntitySetLoader<ProductReview>, IEntitySaver<ProductReview>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ProductReview>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ProductReview>), ServiceLifetime.Transient)]
+public class ProductReviewRepository : IEntitySetLoader<MILL09.Models.ProductReview>, IEntitySaver<MILL09.Models.ProductReview>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -67,21 +71,34 @@ public class ProductReviewRepository : IEntitySetLoader<ProductReview>, IEntityS
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ProductReview>
-    public async Task<IReadOnlyList<ProductReview>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ProductReview>
+    public async Task<IReadOnlyList<MILL09.Models.ProductReview>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ProductReview>()
+        var dbEntities = await _dbContext.Set<ProductReview>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ProductReview>
 
-    #region IEntitySaver<ProductReview>
-    public async Task SaveAsync(ProductReview entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ProductReview
+        {
+            ProductReviewId = db.ProductReviewId,
+            Comments = db.Comments,
+            EmailAddress = db.EmailAddress,
+            ModifiedDate = db.ModifiedDate,
+            ProductId = db.ProductId,
+            Rating = db.Rating,
+            ReviewDate = db.ReviewDate,
+            ReviewerName = db.ReviewerName,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ProductReview>
+
+    #region IEntitySaver<MILL09.Models.ProductReview>
+    public Task SaveAsync(MILL09.Models.ProductReview entity, CancellationToken ct)
     {
-        _dbContext.Set<ProductReview>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ProductReview>
+    #endregion IEntitySaver<MILL09.Models.ProductReview>
 }
-

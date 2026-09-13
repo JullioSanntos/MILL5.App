@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Manufacturing failure reasons lookup table.
 /// </summary>
 public partial class ScrapReason
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ScrapReason records.
     /// </summary>
     public short ScrapReasonId { get; set; }
@@ -32,8 +35,9 @@ public partial class ScrapReason
     public virtual ICollection<WorkOrder> WorkOrders { get; set; } = new List<WorkOrder>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ScrapReasonRepository : IEntitySetLoader<ScrapReason>, IEntitySaver<ScrapReason>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ScrapReason>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ScrapReason>), ServiceLifetime.Transient)]
+public class ScrapReasonRepository : IEntitySetLoader<MILL09.Models.ScrapReason>, IEntitySaver<MILL09.Models.ScrapReason>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -42,21 +46,29 @@ public class ScrapReasonRepository : IEntitySetLoader<ScrapReason>, IEntitySaver
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ScrapReason>
-    public async Task<IReadOnlyList<ScrapReason>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ScrapReason>
+    public async Task<IReadOnlyList<MILL09.Models.ScrapReason>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ScrapReason>()
+        var dbEntities = await _dbContext.Set<ScrapReason>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ScrapReason>
 
-    #region IEntitySaver<ScrapReason>
-    public async Task SaveAsync(ScrapReason entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ScrapReason
+        {
+            ScrapReasonId = db.ScrapReasonId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ScrapReason>
+
+    #region IEntitySaver<MILL09.Models.ScrapReason>
+    public Task SaveAsync(MILL09.Models.ScrapReason entity, CancellationToken ct)
     {
-        _dbContext.Set<ScrapReason>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ScrapReason>
+    #endregion IEntitySaver<MILL09.Models.ScrapReason>
 }
-

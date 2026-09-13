@@ -81,6 +81,9 @@ public partial class PurchaseOrderDetail : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].PurchaseOrderId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsPurchaseOrderDetailsLoaded = true;
         OnRefreshed();
     }
 
@@ -124,21 +127,24 @@ public partial class MainModel
     public ObservableCollection<PurchaseOrderDetail> PurchaseOrderDetails
     {
         get { if (_purchaseOrderDetails == null) PurchaseOrderDetails = new ObservableCollection<PurchaseOrderDetail>(); return _purchaseOrderDetails!; }
-        private set
-        {
-            SetProperty(ref _purchaseOrderDetails, value);
-            OnPropertyChanged(nameof(IsPurchaseOrderDetailsLoaded));
-        }
+        private set => SetProperty(ref _purchaseOrderDetails, value);
     }
 
-    public bool IsPurchaseOrderDetailsLoaded => _purchaseOrderDetails != null;
+    private bool _isPurchaseOrderDetailsLoaded;
+    public bool IsPurchaseOrderDetailsLoaded
+    {
+        get => _isPurchaseOrderDetailsLoaded;
+        internal set => SetProperty(ref _isPurchaseOrderDetailsLoaded, value);
+    }
 
     internal void UnloadPurchaseOrderDetailsStorage()
     {
         if (_purchaseOrderDetails == null) return;
         _purchaseOrderDetails = null;
         OnPropertyChanged(nameof(PurchaseOrderDetails));
-        OnPropertyChanged(nameof(IsPurchaseOrderDetailsLoaded));
+
+        // Reset the load state flag
+        IsPurchaseOrderDetailsLoaded = false;
     }
 }
 }

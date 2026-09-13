@@ -55,6 +55,9 @@ public partial class CountryRegionCurrency : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].CountryRegionCode)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsCountryRegionCurrenciesLoaded = true;
         OnRefreshed();
     }
 
@@ -90,21 +93,24 @@ public partial class MainModel
     public ObservableCollection<CountryRegionCurrency> CountryRegionCurrencies
     {
         get { if (_countryRegionCurrencies == null) CountryRegionCurrencies = new ObservableCollection<CountryRegionCurrency>(); return _countryRegionCurrencies!; }
-        private set
-        {
-            SetProperty(ref _countryRegionCurrencies, value);
-            OnPropertyChanged(nameof(IsCountryRegionCurrenciesLoaded));
-        }
+        private set => SetProperty(ref _countryRegionCurrencies, value);
     }
 
-    public bool IsCountryRegionCurrenciesLoaded => _countryRegionCurrencies != null;
+    private bool _isCountryRegionCurrenciesLoaded;
+    public bool IsCountryRegionCurrenciesLoaded
+    {
+        get => _isCountryRegionCurrenciesLoaded;
+        internal set => SetProperty(ref _isCountryRegionCurrenciesLoaded, value);
+    }
 
     internal void UnloadCountryRegionCurrenciesStorage()
     {
         if (_countryRegionCurrencies == null) return;
         _countryRegionCurrencies = null;
         OnPropertyChanged(nameof(CountryRegionCurrencies));
-        OnPropertyChanged(nameof(IsCountryRegionCurrenciesLoaded));
+
+        // Reset the load state flag
+        IsCountryRegionCurrenciesLoaded = false;
     }
 }
 }

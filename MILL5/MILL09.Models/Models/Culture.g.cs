@@ -58,6 +58,9 @@ public partial class Culture : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].CultureId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsCulturesLoaded = true;
         OnRefreshed();
     }
 
@@ -93,21 +96,24 @@ public partial class MainModel
     public ObservableCollection<Culture> Cultures
     {
         get { if (_cultures == null) Cultures = new ObservableCollection<Culture>(); return _cultures!; }
-        private set
-        {
-            SetProperty(ref _cultures, value);
-            OnPropertyChanged(nameof(IsCulturesLoaded));
-        }
+        private set => SetProperty(ref _cultures, value);
     }
 
-    public bool IsCulturesLoaded => _cultures != null;
+    private bool _isCulturesLoaded;
+    public bool IsCulturesLoaded
+    {
+        get => _isCulturesLoaded;
+        internal set => SetProperty(ref _isCulturesLoaded, value);
+    }
 
     internal void UnloadCulturesStorage()
     {
         if (_cultures == null) return;
         _cultures = null;
         OnPropertyChanged(nameof(Cultures));
-        OnPropertyChanged(nameof(IsCulturesLoaded));
+
+        // Reset the load state flag
+        IsCulturesLoaded = false;
     }
 }
 }

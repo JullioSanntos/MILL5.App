@@ -113,6 +113,9 @@ public partial class SalesPerson : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesPersonsLoaded = true;
         OnRefreshed();
     }
 
@@ -154,21 +157,24 @@ public partial class MainModel
     public ObservableCollection<SalesPerson> SalesPersons
     {
         get { if (_salesPersons == null) SalesPersons = new ObservableCollection<SalesPerson>(); return _salesPersons!; }
-        private set
-        {
-            SetProperty(ref _salesPersons, value);
-            OnPropertyChanged(nameof(IsSalesPersonsLoaded));
-        }
+        private set => SetProperty(ref _salesPersons, value);
     }
 
-    public bool IsSalesPersonsLoaded => _salesPersons != null;
+    private bool _isSalesPersonsLoaded;
+    public bool IsSalesPersonsLoaded
+    {
+        get => _isSalesPersonsLoaded;
+        internal set => SetProperty(ref _isSalesPersonsLoaded, value);
+    }
 
     internal void UnloadSalesPersonsStorage()
     {
         if (_salesPersons == null) return;
         _salesPersons = null;
         OnPropertyChanged(nameof(SalesPersons));
-        OnPropertyChanged(nameof(IsSalesPersonsLoaded));
+
+        // Reset the load state flag
+        IsSalesPersonsLoaded = false;
     }
 }
 }

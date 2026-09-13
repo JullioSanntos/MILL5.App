@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Lookup table containing the types of business entity contacts.
 /// </summary>
 public partial class ContactType
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ContactType records.
     /// </summary>
     public int ContactTypeId { get; set; }
@@ -32,8 +35,9 @@ public partial class ContactType
     public virtual ICollection<BusinessEntityContact> BusinessEntityContacts { get; set; } = new List<BusinessEntityContact>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ContactTypeRepository : IEntitySetLoader<ContactType>, IEntitySaver<ContactType>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ContactType>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ContactType>), ServiceLifetime.Transient)]
+public class ContactTypeRepository : IEntitySetLoader<MILL09.Models.ContactType>, IEntitySaver<MILL09.Models.ContactType>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -42,21 +46,29 @@ public class ContactTypeRepository : IEntitySetLoader<ContactType>, IEntitySaver
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ContactType>
-    public async Task<IReadOnlyList<ContactType>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ContactType>
+    public async Task<IReadOnlyList<MILL09.Models.ContactType>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ContactType>()
+        var dbEntities = await _dbContext.Set<ContactType>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ContactType>
 
-    #region IEntitySaver<ContactType>
-    public async Task SaveAsync(ContactType entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ContactType
+        {
+            ContactTypeId = db.ContactTypeId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ContactType>
+
+    #region IEntitySaver<MILL09.Models.ContactType>
+    public Task SaveAsync(MILL09.Models.ContactType entity, CancellationToken ct)
     {
-        _dbContext.Set<ContactType>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ContactType>
+    #endregion IEntitySaver<MILL09.Models.ContactType>
 }
-

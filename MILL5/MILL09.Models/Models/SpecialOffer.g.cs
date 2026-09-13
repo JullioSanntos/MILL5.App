@@ -82,6 +82,9 @@ public partial class SpecialOffer : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].SpecialOfferId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSpecialOffersLoaded = true;
         OnRefreshed();
     }
 
@@ -125,21 +128,24 @@ public partial class MainModel
     public ObservableCollection<SpecialOffer> SpecialOffers
     {
         get { if (_specialOffers == null) SpecialOffers = new ObservableCollection<SpecialOffer>(); return _specialOffers!; }
-        private set
-        {
-            SetProperty(ref _specialOffers, value);
-            OnPropertyChanged(nameof(IsSpecialOffersLoaded));
-        }
+        private set => SetProperty(ref _specialOffers, value);
     }
 
-    public bool IsSpecialOffersLoaded => _specialOffers != null;
+    private bool _isSpecialOffersLoaded;
+    public bool IsSpecialOffersLoaded
+    {
+        get => _isSpecialOffersLoaded;
+        internal set => SetProperty(ref _isSpecialOffersLoaded, value);
+    }
 
     internal void UnloadSpecialOffersStorage()
     {
         if (_specialOffers == null) return;
         _specialOffers = null;
         OnPropertyChanged(nameof(SpecialOffers));
-        OnPropertyChanged(nameof(IsSpecialOffersLoaded));
+
+        // Reset the load state flag
+        IsSpecialOffersLoaded = false;
     }
 }
 }

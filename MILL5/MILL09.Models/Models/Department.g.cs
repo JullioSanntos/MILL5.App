@@ -61,6 +61,9 @@ public partial class Department : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].DepartmentId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsDepartmentsLoaded = true;
         OnRefreshed();
     }
 
@@ -97,21 +100,24 @@ public partial class MainModel
     public ObservableCollection<Department> Departments
     {
         get { if (_departments == null) Departments = new ObservableCollection<Department>(); return _departments!; }
-        private set
-        {
-            SetProperty(ref _departments, value);
-            OnPropertyChanged(nameof(IsDepartmentsLoaded));
-        }
+        private set => SetProperty(ref _departments, value);
     }
 
-    public bool IsDepartmentsLoaded => _departments != null;
+    private bool _isDepartmentsLoaded;
+    public bool IsDepartmentsLoaded
+    {
+        get => _isDepartmentsLoaded;
+        internal set => SetProperty(ref _isDepartmentsLoaded, value);
+    }
 
     internal void UnloadDepartmentsStorage()
     {
         if (_departments == null) return;
         _departments = null;
         OnPropertyChanged(nameof(Departments));
-        OnPropertyChanged(nameof(IsDepartmentsLoaded));
+
+        // Reset the load state flag
+        IsDepartmentsLoaded = false;
     }
 }
 }

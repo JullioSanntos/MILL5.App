@@ -82,6 +82,9 @@ public partial class WorkOrderRouting : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].WorkOrderId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsWorkOrderRoutingsLoaded = true;
         OnRefreshed();
     }
 
@@ -126,21 +129,24 @@ public partial class MainModel
     public ObservableCollection<WorkOrderRouting> WorkOrderRoutings
     {
         get { if (_workOrderRoutings == null) WorkOrderRoutings = new ObservableCollection<WorkOrderRouting>(); return _workOrderRoutings!; }
-        private set
-        {
-            SetProperty(ref _workOrderRoutings, value);
-            OnPropertyChanged(nameof(IsWorkOrderRoutingsLoaded));
-        }
+        private set => SetProperty(ref _workOrderRoutings, value);
     }
 
-    public bool IsWorkOrderRoutingsLoaded => _workOrderRoutings != null;
+    private bool _isWorkOrderRoutingsLoaded;
+    public bool IsWorkOrderRoutingsLoaded
+    {
+        get => _isWorkOrderRoutingsLoaded;
+        internal set => SetProperty(ref _isWorkOrderRoutingsLoaded, value);
+    }
 
     internal void UnloadWorkOrderRoutingsStorage()
     {
         if (_workOrderRoutings == null) return;
         _workOrderRoutings = null;
         OnPropertyChanged(nameof(WorkOrderRoutings));
-        OnPropertyChanged(nameof(IsWorkOrderRoutingsLoaded));
+
+        // Reset the load state flag
+        IsWorkOrderRoutingsLoaded = false;
     }
 }
 }

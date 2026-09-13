@@ -61,6 +61,9 @@ public partial class AddressType : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].AddressTypeId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsAddressTypesLoaded = true;
         OnRefreshed();
     }
 
@@ -97,21 +100,24 @@ public partial class MainModel
     public ObservableCollection<AddressType> AddressTypes
     {
         get { if (_addressTypes == null) AddressTypes = new ObservableCollection<AddressType>(); return _addressTypes!; }
-        private set
-        {
-            SetProperty(ref _addressTypes, value);
-            OnPropertyChanged(nameof(IsAddressTypesLoaded));
-        }
+        private set => SetProperty(ref _addressTypes, value);
     }
 
-    public bool IsAddressTypesLoaded => _addressTypes != null;
+    private bool _isAddressTypesLoaded;
+    public bool IsAddressTypesLoaded
+    {
+        get => _isAddressTypesLoaded;
+        internal set => SetProperty(ref _isAddressTypesLoaded, value);
+    }
 
     internal void UnloadAddressTypesStorage()
     {
         if (_addressTypes == null) return;
         _addressTypes = null;
         OnPropertyChanged(nameof(AddressTypes));
-        OnPropertyChanged(nameof(IsAddressTypesLoaded));
+
+        // Reset the load state flag
+        IsAddressTypesLoaded = false;
     }
 }
 }

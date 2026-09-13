@@ -2,6 +2,7 @@
 // edit freely.
 
 using Microsoft.Extensions.DependencyInjection;
+using MILL06.Data.Entities.Entities;
 using MILL80.Infrastructure;
 
 namespace MILL06.Data;
@@ -42,5 +43,6 @@ public static partial class ServiceCollectionExtensions {
 
         // Example — delete or replace:
         // services.AddSingleton<SomeType>(_ => new SomeType());
+        services.AddTransient<AdventureWorks2019Context>();
     }
 }

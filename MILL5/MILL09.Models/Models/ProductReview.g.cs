@@ -68,6 +68,9 @@ public partial class ProductReview : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ProductReviewId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsProductReviewsLoaded = true;
         OnRefreshed();
     }
 
@@ -108,21 +111,24 @@ public partial class MainModel
     public ObservableCollection<ProductReview> ProductReviews
     {
         get { if (_productReviews == null) ProductReviews = new ObservableCollection<ProductReview>(); return _productReviews!; }
-        private set
-        {
-            SetProperty(ref _productReviews, value);
-            OnPropertyChanged(nameof(IsProductReviewsLoaded));
-        }
+        private set => SetProperty(ref _productReviews, value);
     }
 
-    public bool IsProductReviewsLoaded => _productReviews != null;
+    private bool _isProductReviewsLoaded;
+    public bool IsProductReviewsLoaded
+    {
+        get => _isProductReviewsLoaded;
+        internal set => SetProperty(ref _isProductReviewsLoaded, value);
+    }
 
     internal void UnloadProductReviewsStorage()
     {
         if (_productReviews == null) return;
         _productReviews = null;
         OnPropertyChanged(nameof(ProductReviews));
-        OnPropertyChanged(nameof(IsProductReviewsLoaded));
+
+        // Reset the load state flag
+        IsProductReviewsLoaded = false;
     }
 }
 }

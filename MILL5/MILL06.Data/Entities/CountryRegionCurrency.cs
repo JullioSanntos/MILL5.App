@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Cross-reference table mapping ISO currency codes to a country or region.
 /// </summary>
 public partial class CountryRegionCurrency
-{    /// <summary>
+{
+    /// <summary>
     /// ISO code for countries and regions. Foreign key to CountryRegion.CountryRegionCode.
     /// </summary>
     public string CountryRegionCode { get; set; }
@@ -34,8 +37,9 @@ public partial class CountryRegionCurrency
     public virtual Currency CurrencyCodeNavigation { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class CountryRegionCurrencyRepository : IEntitySetLoader<CountryRegionCurrency>, IEntitySaver<CountryRegionCurrency>
+[Register(typeof(IEntitySetLoader<MILL09.Models.CountryRegionCurrency>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.CountryRegionCurrency>), ServiceLifetime.Transient)]
+public class CountryRegionCurrencyRepository : IEntitySetLoader<MILL09.Models.CountryRegionCurrency>, IEntitySaver<MILL09.Models.CountryRegionCurrency>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -44,21 +48,29 @@ public class CountryRegionCurrencyRepository : IEntitySetLoader<CountryRegionCur
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<CountryRegionCurrency>
-    public async Task<IReadOnlyList<CountryRegionCurrency>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.CountryRegionCurrency>
+    public async Task<IReadOnlyList<MILL09.Models.CountryRegionCurrency>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<CountryRegionCurrency>()
+        var dbEntities = await _dbContext.Set<CountryRegionCurrency>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<CountryRegionCurrency>
 
-    #region IEntitySaver<CountryRegionCurrency>
-    public async Task SaveAsync(CountryRegionCurrency entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.CountryRegionCurrency
+        {
+            CountryRegionCode = db.CountryRegionCode,
+            CurrencyCode = db.CurrencyCode,
+            ModifiedDate = db.ModifiedDate,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.CountryRegionCurrency>
+
+    #region IEntitySaver<MILL09.Models.CountryRegionCurrency>
+    public Task SaveAsync(MILL09.Models.CountryRegionCurrency entity, CancellationToken ct)
     {
-        _dbContext.Set<CountryRegionCurrency>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<CountryRegionCurrency>
+    #endregion IEntitySaver<MILL09.Models.CountryRegionCurrency>
 }
-

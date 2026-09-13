@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Cross-reference table mapping customers, vendors, and employees to their addresses.
 /// </summary>
 public partial class BusinessEntityAddress
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key. Foreign key to BusinessEntity.BusinessEntityID.
     /// </summary>
     public int BusinessEntityId { get; set; }
@@ -46,8 +49,9 @@ public partial class BusinessEntityAddress
     public virtual BusinessEntity BusinessEntity { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class BusinessEntityAddressRepository : IEntitySetLoader<BusinessEntityAddress>, IEntitySaver<BusinessEntityAddress>
+[Register(typeof(IEntitySetLoader<MILL09.Models.BusinessEntityAddress>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.BusinessEntityAddress>), ServiceLifetime.Transient)]
+public class BusinessEntityAddressRepository : IEntitySetLoader<MILL09.Models.BusinessEntityAddress>, IEntitySaver<MILL09.Models.BusinessEntityAddress>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -56,21 +60,31 @@ public class BusinessEntityAddressRepository : IEntitySetLoader<BusinessEntityAd
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<BusinessEntityAddress>
-    public async Task<IReadOnlyList<BusinessEntityAddress>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.BusinessEntityAddress>
+    public async Task<IReadOnlyList<MILL09.Models.BusinessEntityAddress>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<BusinessEntityAddress>()
+        var dbEntities = await _dbContext.Set<BusinessEntityAddress>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<BusinessEntityAddress>
 
-    #region IEntitySaver<BusinessEntityAddress>
-    public async Task SaveAsync(BusinessEntityAddress entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.BusinessEntityAddress
+        {
+            BusinessEntityId = db.BusinessEntityId,
+            AddressId = db.AddressId,
+            AddressTypeId = db.AddressTypeId,
+            ModifiedDate = db.ModifiedDate,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.BusinessEntityAddress>
+
+    #region IEntitySaver<MILL09.Models.BusinessEntityAddress>
+    public Task SaveAsync(MILL09.Models.BusinessEntityAddress entity, CancellationToken ct)
     {
-        _dbContext.Set<BusinessEntityAddress>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<BusinessEntityAddress>
+    #endregion IEntitySaver<MILL09.Models.BusinessEntityAddress>
 }
-

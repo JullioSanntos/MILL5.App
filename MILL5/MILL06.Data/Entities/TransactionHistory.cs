@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Record of each purchase order, sales order, or work order transaction year to date.
 /// </summary>
 public partial class TransactionHistory
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for TransactionHistory records.
     /// </summary>
     public int TransactionId { get; set; }
@@ -62,8 +65,9 @@ public partial class TransactionHistory
     public virtual Product Product { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class TransactionHistoryRepository : IEntitySetLoader<TransactionHistory>, IEntitySaver<TransactionHistory>
+[Register(typeof(IEntitySetLoader<MILL09.Models.TransactionHistory>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.TransactionHistory>), ServiceLifetime.Transient)]
+public class TransactionHistoryRepository : IEntitySetLoader<MILL09.Models.TransactionHistory>, IEntitySaver<MILL09.Models.TransactionHistory>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -72,21 +76,35 @@ public class TransactionHistoryRepository : IEntitySetLoader<TransactionHistory>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<TransactionHistory>
-    public async Task<IReadOnlyList<TransactionHistory>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.TransactionHistory>
+    public async Task<IReadOnlyList<MILL09.Models.TransactionHistory>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<TransactionHistory>()
+        var dbEntities = await _dbContext.Set<TransactionHistory>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<TransactionHistory>
 
-    #region IEntitySaver<TransactionHistory>
-    public async Task SaveAsync(TransactionHistory entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.TransactionHistory
+        {
+            TransactionId = db.TransactionId,
+            ActualCost = db.ActualCost,
+            ModifiedDate = db.ModifiedDate,
+            ProductId = db.ProductId,
+            Quantity = db.Quantity,
+            ReferenceOrderId = db.ReferenceOrderId,
+            ReferenceOrderLineId = db.ReferenceOrderLineId,
+            TransactionDate = db.TransactionDate,
+            TransactionType = db.TransactionType,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.TransactionHistory>
+
+    #region IEntitySaver<MILL09.Models.TransactionHistory>
+    public Task SaveAsync(MILL09.Models.TransactionHistory entity, CancellationToken ct)
     {
-        _dbContext.Set<TransactionHistory>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<TransactionHistory>
+    #endregion IEntitySaver<MILL09.Models.TransactionHistory>
 }
-

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Individual products associated with a specific purchase order. See PurchaseOrderHeader.
 /// </summary>
 public partial class PurchaseOrderDetail
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key. Foreign key to PurchaseOrderHeader.PurchaseOrderID.
     /// </summary>
     public int PurchaseOrderId { get; set; }
@@ -74,8 +77,9 @@ public partial class PurchaseOrderDetail
     public virtual PurchaseOrderHeader PurchaseOrder { get; set; }
 }
 
-[Register(ServiceLifetime.Transient)]
-public class PurchaseOrderDetailRepository : IEntitySetLoader<PurchaseOrderDetail>, IEntitySaver<PurchaseOrderDetail>
+[Register(typeof(IEntitySetLoader<MILL09.Models.PurchaseOrderDetail>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.PurchaseOrderDetail>), ServiceLifetime.Transient)]
+public class PurchaseOrderDetailRepository : IEntitySetLoader<MILL09.Models.PurchaseOrderDetail>, IEntitySaver<MILL09.Models.PurchaseOrderDetail>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -84,21 +88,37 @@ public class PurchaseOrderDetailRepository : IEntitySetLoader<PurchaseOrderDetai
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<PurchaseOrderDetail>
-    public async Task<IReadOnlyList<PurchaseOrderDetail>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.PurchaseOrderDetail>
+    public async Task<IReadOnlyList<MILL09.Models.PurchaseOrderDetail>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<PurchaseOrderDetail>()
+        var dbEntities = await _dbContext.Set<PurchaseOrderDetail>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<PurchaseOrderDetail>
 
-    #region IEntitySaver<PurchaseOrderDetail>
-    public async Task SaveAsync(PurchaseOrderDetail entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.PurchaseOrderDetail
+        {
+            PurchaseOrderId = db.PurchaseOrderId,
+            PurchaseOrderDetailId = db.PurchaseOrderDetailId,
+            DueDate = db.DueDate,
+            LineTotal = db.LineTotal,
+            ModifiedDate = db.ModifiedDate,
+            OrderQty = db.OrderQty,
+            ProductId = db.ProductId,
+            ReceivedQty = db.ReceivedQty,
+            RejectedQty = db.RejectedQty,
+            StockedQty = db.StockedQty,
+            UnitPrice = db.UnitPrice,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.PurchaseOrderDetail>
+
+    #region IEntitySaver<MILL09.Models.PurchaseOrderDetail>
+    public Task SaveAsync(MILL09.Models.PurchaseOrderDetail entity, CancellationToken ct)
     {
-        _dbContext.Set<PurchaseOrderDetail>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<PurchaseOrderDetail>
+    #endregion IEntitySaver<MILL09.Models.PurchaseOrderDetail>
 }
-

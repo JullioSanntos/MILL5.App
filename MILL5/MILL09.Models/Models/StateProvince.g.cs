@@ -86,6 +86,9 @@ public partial class StateProvince : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].StateProvinceId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsStateProvincesLoaded = true;
         OnRefreshed();
     }
 
@@ -126,21 +129,24 @@ public partial class MainModel
     public ObservableCollection<StateProvince> StateProvinces
     {
         get { if (_stateProvinces == null) StateProvinces = new ObservableCollection<StateProvince>(); return _stateProvinces!; }
-        private set
-        {
-            SetProperty(ref _stateProvinces, value);
-            OnPropertyChanged(nameof(IsStateProvincesLoaded));
-        }
+        private set => SetProperty(ref _stateProvinces, value);
     }
 
-    public bool IsStateProvincesLoaded => _stateProvinces != null;
+    private bool _isStateProvincesLoaded;
+    public bool IsStateProvincesLoaded
+    {
+        get => _isStateProvincesLoaded;
+        internal set => SetProperty(ref _isStateProvincesLoaded, value);
+    }
 
     internal void UnloadStateProvincesStorage()
     {
         if (_stateProvinces == null) return;
         _stateProvinces = null;
         OnPropertyChanged(nameof(StateProvinces));
-        OnPropertyChanged(nameof(IsStateProvincesLoaded));
+
+        // Reset the load state flag
+        IsStateProvincesLoaded = false;
     }
 }
 }

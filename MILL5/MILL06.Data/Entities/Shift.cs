@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Work shift lookup table.
 /// </summary>
 public partial class Shift
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Shift records.
     /// </summary>
     public byte ShiftId { get; set; }
@@ -42,8 +45,9 @@ public partial class Shift
     public virtual ICollection<EmployeeDepartmentHistory> EmployeeDepartmentHistories { get; set; } = new List<EmployeeDepartmentHistory>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ShiftRepository : IEntitySetLoader<Shift>, IEntitySaver<Shift>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Shift>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Shift>), ServiceLifetime.Transient)]
+public class ShiftRepository : IEntitySetLoader<MILL09.Models.Shift>, IEntitySaver<MILL09.Models.Shift>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -52,21 +56,31 @@ public class ShiftRepository : IEntitySetLoader<Shift>, IEntitySaver<Shift>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Shift>
-    public async Task<IReadOnlyList<Shift>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Shift>
+    public async Task<IReadOnlyList<MILL09.Models.Shift>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Shift>()
+        var dbEntities = await _dbContext.Set<Shift>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Shift>
 
-    #region IEntitySaver<Shift>
-    public async Task SaveAsync(Shift entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Shift
+        {
+            ShiftId = db.ShiftId,
+            EndTime = db.EndTime,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            StartTime = db.StartTime,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Shift>
+
+    #region IEntitySaver<MILL09.Models.Shift>
+    public Task SaveAsync(MILL09.Models.Shift entity, CancellationToken ct)
     {
-        _dbContext.Set<Shift>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Shift>
+    #endregion IEntitySaver<MILL09.Models.Shift>
 }
-

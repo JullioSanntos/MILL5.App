@@ -69,6 +69,9 @@ public partial class ErrorLog : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ErrorLogId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsErrorLogsLoaded = true;
         OnRefreshed();
     }
 
@@ -110,21 +113,24 @@ public partial class MainModel
     public ObservableCollection<ErrorLog> ErrorLogs
     {
         get { if (_errorLogs == null) ErrorLogs = new ObservableCollection<ErrorLog>(); return _errorLogs!; }
-        private set
-        {
-            SetProperty(ref _errorLogs, value);
-            OnPropertyChanged(nameof(IsErrorLogsLoaded));
-        }
+        private set => SetProperty(ref _errorLogs, value);
     }
 
-    public bool IsErrorLogsLoaded => _errorLogs != null;
+    private bool _isErrorLogsLoaded;
+    public bool IsErrorLogsLoaded
+    {
+        get => _isErrorLogsLoaded;
+        internal set => SetProperty(ref _isErrorLogsLoaded, value);
+    }
 
     internal void UnloadErrorLogsStorage()
     {
         if (_errorLogs == null) return;
         _errorLogs = null;
         OnPropertyChanged(nameof(ErrorLogs));
-        OnPropertyChanged(nameof(IsErrorLogsLoaded));
+
+        // Reset the load state flag
+        IsErrorLogsLoaded = false;
     }
 }
 }

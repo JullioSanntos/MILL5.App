@@ -62,6 +62,9 @@ public partial class ShoppingCartItem : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].ShoppingCartItemId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsShoppingCartItemsLoaded = true;
         OnRefreshed();
     }
 
@@ -100,21 +103,24 @@ public partial class MainModel
     public ObservableCollection<ShoppingCartItem> ShoppingCartItems
     {
         get { if (_shoppingCartItems == null) ShoppingCartItems = new ObservableCollection<ShoppingCartItem>(); return _shoppingCartItems!; }
-        private set
-        {
-            SetProperty(ref _shoppingCartItems, value);
-            OnPropertyChanged(nameof(IsShoppingCartItemsLoaded));
-        }
+        private set => SetProperty(ref _shoppingCartItems, value);
     }
 
-    public bool IsShoppingCartItemsLoaded => _shoppingCartItems != null;
+    private bool _isShoppingCartItemsLoaded;
+    public bool IsShoppingCartItemsLoaded
+    {
+        get => _isShoppingCartItemsLoaded;
+        internal set => SetProperty(ref _isShoppingCartItemsLoaded, value);
+    }
 
     internal void UnloadShoppingCartItemsStorage()
     {
         if (_shoppingCartItems == null) return;
         _shoppingCartItems = null;
         OnPropertyChanged(nameof(ShoppingCartItems));
-        OnPropertyChanged(nameof(IsShoppingCartItemsLoaded));
+
+        // Reset the load state flag
+        IsShoppingCartItemsLoaded = false;
     }
 }
 }

@@ -61,6 +61,9 @@ public partial class EmployeePayHistory : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsEmployeePayHistoriesLoaded = true;
         OnRefreshed();
     }
 
@@ -98,21 +101,24 @@ public partial class MainModel
     public ObservableCollection<EmployeePayHistory> EmployeePayHistories
     {
         get { if (_employeePayHistories == null) EmployeePayHistories = new ObservableCollection<EmployeePayHistory>(); return _employeePayHistories!; }
-        private set
-        {
-            SetProperty(ref _employeePayHistories, value);
-            OnPropertyChanged(nameof(IsEmployeePayHistoriesLoaded));
-        }
+        private set => SetProperty(ref _employeePayHistories, value);
     }
 
-    public bool IsEmployeePayHistoriesLoaded => _employeePayHistories != null;
+    private bool _isEmployeePayHistoriesLoaded;
+    public bool IsEmployeePayHistoriesLoaded
+    {
+        get => _isEmployeePayHistoriesLoaded;
+        internal set => SetProperty(ref _isEmployeePayHistoriesLoaded, value);
+    }
 
     internal void UnloadEmployeePayHistoriesStorage()
     {
         if (_employeePayHistories == null) return;
         _employeePayHistories = null;
         OnPropertyChanged(nameof(EmployeePayHistories));
-        OnPropertyChanged(nameof(IsEmployeePayHistoriesLoaded));
+
+        // Reset the load state flag
+        IsEmployeePayHistoriesLoaded = false;
     }
 }
 }

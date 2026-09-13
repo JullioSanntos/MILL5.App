@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Lookup table containing the languages in which some AdventureWorks data is stored.
 /// </summary>
 public partial class Culture
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for Culture records.
     /// </summary>
     public string CultureId { get; set; }
@@ -32,8 +35,9 @@ public partial class Culture
     public virtual ICollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCultures { get; set; } = new List<ProductModelProductDescriptionCulture>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class CultureRepository : IEntitySetLoader<Culture>, IEntitySaver<Culture>
+[Register(typeof(IEntitySetLoader<MILL09.Models.Culture>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.Culture>), ServiceLifetime.Transient)]
+public class CultureRepository : IEntitySetLoader<MILL09.Models.Culture>, IEntitySaver<MILL09.Models.Culture>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -42,21 +46,29 @@ public class CultureRepository : IEntitySetLoader<Culture>, IEntitySaver<Culture
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<Culture>
-    public async Task<IReadOnlyList<Culture>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.Culture>
+    public async Task<IReadOnlyList<MILL09.Models.Culture>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<Culture>()
+        var dbEntities = await _dbContext.Set<Culture>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<Culture>
 
-    #region IEntitySaver<Culture>
-    public async Task SaveAsync(Culture entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.Culture
+        {
+            CultureId = db.CultureId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.Culture>
+
+    #region IEntitySaver<MILL09.Models.Culture>
+    public Task SaveAsync(MILL09.Models.Culture entity, CancellationToken ct)
     {
-        _dbContext.Set<Culture>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<Culture>
+    #endregion IEntitySaver<MILL09.Models.Culture>
 }
-

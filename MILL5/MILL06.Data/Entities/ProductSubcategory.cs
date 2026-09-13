@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Product subcategories. See ProductCategory table.
 /// </summary>
 public partial class ProductSubcategory
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for ProductSubcategory records.
     /// </summary>
     public int ProductSubcategoryId { get; set; }
@@ -44,8 +47,9 @@ public partial class ProductSubcategory
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class ProductSubcategoryRepository : IEntitySetLoader<ProductSubcategory>, IEntitySaver<ProductSubcategory>
+[Register(typeof(IEntitySetLoader<MILL09.Models.ProductSubcategory>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.ProductSubcategory>), ServiceLifetime.Transient)]
+public class ProductSubcategoryRepository : IEntitySetLoader<MILL09.Models.ProductSubcategory>, IEntitySaver<MILL09.Models.ProductSubcategory>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -54,21 +58,31 @@ public class ProductSubcategoryRepository : IEntitySetLoader<ProductSubcategory>
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<ProductSubcategory>
-    public async Task<IReadOnlyList<ProductSubcategory>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.ProductSubcategory>
+    public async Task<IReadOnlyList<MILL09.Models.ProductSubcategory>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<ProductSubcategory>()
+        var dbEntities = await _dbContext.Set<ProductSubcategory>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<ProductSubcategory>
 
-    #region IEntitySaver<ProductSubcategory>
-    public async Task SaveAsync(ProductSubcategory entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.ProductSubcategory
+        {
+            ProductSubcategoryId = db.ProductSubcategoryId,
+            ModifiedDate = db.ModifiedDate,
+            Name = db.Name,
+            ProductCategoryId = db.ProductCategoryId,
+            Rowguid = db.Rowguid,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.ProductSubcategory>
+
+    #region IEntitySaver<MILL09.Models.ProductSubcategory>
+    public Task SaveAsync(MILL09.Models.ProductSubcategory entity, CancellationToken ct)
     {
-        _dbContext.Set<ProductSubcategory>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<ProductSubcategory>
+    #endregion IEntitySaver<MILL09.Models.ProductSubcategory>
 }
-

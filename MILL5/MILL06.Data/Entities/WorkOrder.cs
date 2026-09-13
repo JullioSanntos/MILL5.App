@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MILL09.Models.Interfaces;
@@ -10,11 +11,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MILL06.Data.Entities.Entities;
+
 /// <summary>
 /// Manufacturing work orders.
 /// </summary>
 public partial class WorkOrder
-{    /// <summary>
+{
+    /// <summary>
     /// Primary key for WorkOrder records.
     /// </summary>
     public int WorkOrderId { get; set; }
@@ -71,8 +74,9 @@ public partial class WorkOrder
     public virtual ICollection<WorkOrderRouting> WorkOrderRoutings { get; set; } = new List<WorkOrderRouting>();
 }
 
-[Register(ServiceLifetime.Transient)]
-public class WorkOrderRepository : IEntitySetLoader<WorkOrder>, IEntitySaver<WorkOrder>
+[Register(typeof(IEntitySetLoader<MILL09.Models.WorkOrder>), ServiceLifetime.Transient)]
+[Register(typeof(IEntitySaver<MILL09.Models.WorkOrder>), ServiceLifetime.Transient)]
+public class WorkOrderRepository : IEntitySetLoader<MILL09.Models.WorkOrder>, IEntitySaver<MILL09.Models.WorkOrder>
 {
     private readonly AdventureWorks2019Context _dbContext;
 
@@ -81,21 +85,36 @@ public class WorkOrderRepository : IEntitySetLoader<WorkOrder>, IEntitySaver<Wor
         _dbContext = dbContext;
     }
 
-    #region IEntitySetLoader<WorkOrder>
-    public async Task<IReadOnlyList<WorkOrder>> LoadAllAsync(CancellationToken ct)
+    #region IEntitySetLoader<MILL09.Models.WorkOrder>
+    public async Task<IReadOnlyList<MILL09.Models.WorkOrder>> LoadAllAsync(CancellationToken ct)
     {
-        return await _dbContext.Set<WorkOrder>()
+        var dbEntities = await _dbContext.Set<WorkOrder>()
             .AsNoTracking()
             .ToListAsync(ct);
-    }
-    #endregion IEntitySetLoader<WorkOrder>
 
-    #region IEntitySaver<WorkOrder>
-    public async Task SaveAsync(WorkOrder entity, CancellationToken ct)
+        var uiEntities = dbEntities.Select(db => new MILL09.Models.WorkOrder
+        {
+            WorkOrderId = db.WorkOrderId,
+            DueDate = db.DueDate,
+            EndDate = db.EndDate,
+            ModifiedDate = db.ModifiedDate,
+            OrderQty = db.OrderQty,
+            ProductId = db.ProductId,
+            ScrapReasonId = db.ScrapReasonId,
+            ScrappedQty = db.ScrappedQty,
+            StartDate = db.StartDate,
+            StockedQty = db.StockedQty,
+        }).ToList();
+
+        return uiEntities;
+    }
+    #endregion IEntitySetLoader<MILL09.Models.WorkOrder>
+
+    #region IEntitySaver<MILL09.Models.WorkOrder>
+    public Task SaveAsync(MILL09.Models.WorkOrder entity, CancellationToken ct)
     {
-        _dbContext.Set<WorkOrder>().Update(entity);
-        await _dbContext.SaveChangesAsync(ct);
+        // Stubbed until write operations are implemented
+        throw new NotImplementedException();
     }
-    #endregion IEntitySaver<WorkOrder>
+    #endregion IEntitySaver<MILL09.Models.WorkOrder>
 }
-

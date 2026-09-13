@@ -65,6 +65,9 @@ public partial class SalesTaxRate : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].SalesTaxRateId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesTaxRatesLoaded = true;
         OnRefreshed();
     }
 
@@ -104,21 +107,24 @@ public partial class MainModel
     public ObservableCollection<SalesTaxRate> SalesTaxRates
     {
         get { if (_salesTaxRates == null) SalesTaxRates = new ObservableCollection<SalesTaxRate>(); return _salesTaxRates!; }
-        private set
-        {
-            SetProperty(ref _salesTaxRates, value);
-            OnPropertyChanged(nameof(IsSalesTaxRatesLoaded));
-        }
+        private set => SetProperty(ref _salesTaxRates, value);
     }
 
-    public bool IsSalesTaxRatesLoaded => _salesTaxRates != null;
+    private bool _isSalesTaxRatesLoaded;
+    public bool IsSalesTaxRatesLoaded
+    {
+        get => _isSalesTaxRatesLoaded;
+        internal set => SetProperty(ref _isSalesTaxRatesLoaded, value);
+    }
 
     internal void UnloadSalesTaxRatesStorage()
     {
         if (_salesTaxRates == null) return;
         _salesTaxRates = null;
         OnPropertyChanged(nameof(SalesTaxRates));
-        OnPropertyChanged(nameof(IsSalesTaxRatesLoaded));
+
+        // Reset the load state flag
+        IsSalesTaxRatesLoaded = false;
     }
 }
 }

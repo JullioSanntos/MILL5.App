@@ -58,6 +58,9 @@ public partial class JobCandidate : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].JobCandidateId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsJobCandidatesLoaded = true;
         OnRefreshed();
     }
 
@@ -94,21 +97,24 @@ public partial class MainModel
     public ObservableCollection<JobCandidate> JobCandidates
     {
         get { if (_jobCandidates == null) JobCandidates = new ObservableCollection<JobCandidate>(); return _jobCandidates!; }
-        private set
-        {
-            SetProperty(ref _jobCandidates, value);
-            OnPropertyChanged(nameof(IsJobCandidatesLoaded));
-        }
+        private set => SetProperty(ref _jobCandidates, value);
     }
 
-    public bool IsJobCandidatesLoaded => _jobCandidates != null;
+    private bool _isJobCandidatesLoaded;
+    public bool IsJobCandidatesLoaded
+    {
+        get => _isJobCandidatesLoaded;
+        internal set => SetProperty(ref _isJobCandidatesLoaded, value);
+    }
 
     internal void UnloadJobCandidatesStorage()
     {
         if (_jobCandidates == null) return;
         _jobCandidates = null;
         OnPropertyChanged(nameof(JobCandidates));
-        OnPropertyChanged(nameof(IsJobCandidatesLoaded));
+
+        // Reset the load state flag
+        IsJobCandidatesLoaded = false;
     }
 }
 }

@@ -61,6 +61,9 @@ public partial class Password : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsPasswordsLoaded = true;
         OnRefreshed();
     }
 
@@ -98,21 +101,24 @@ public partial class MainModel
     public ObservableCollection<Password> Passwords
     {
         get { if (_passwords == null) Passwords = new ObservableCollection<Password>(); return _passwords!; }
-        private set
-        {
-            SetProperty(ref _passwords, value);
-            OnPropertyChanged(nameof(IsPasswordsLoaded));
-        }
+        private set => SetProperty(ref _passwords, value);
     }
 
-    public bool IsPasswordsLoaded => _passwords != null;
+    private bool _isPasswordsLoaded;
+    public bool IsPasswordsLoaded
+    {
+        get => _isPasswordsLoaded;
+        internal set => SetProperty(ref _isPasswordsLoaded, value);
+    }
 
     internal void UnloadPasswordsStorage()
     {
         if (_passwords == null) return;
         _passwords = null;
         OnPropertyChanged(nameof(Passwords));
-        OnPropertyChanged(nameof(IsPasswordsLoaded));
+
+        // Reset the load state flag
+        IsPasswordsLoaded = false;
     }
 }
 }

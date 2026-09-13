@@ -74,6 +74,9 @@ public partial class CreditCard : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].CreditCardId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsCreditCardsLoaded = true;
         OnRefreshed();
     }
 
@@ -112,21 +115,24 @@ public partial class MainModel
     public ObservableCollection<CreditCard> CreditCards
     {
         get { if (_creditCards == null) CreditCards = new ObservableCollection<CreditCard>(); return _creditCards!; }
-        private set
-        {
-            SetProperty(ref _creditCards, value);
-            OnPropertyChanged(nameof(IsCreditCardsLoaded));
-        }
+        private set => SetProperty(ref _creditCards, value);
     }
 
-    public bool IsCreditCardsLoaded => _creditCards != null;
+    private bool _isCreditCardsLoaded;
+    public bool IsCreditCardsLoaded
+    {
+        get => _isCreditCardsLoaded;
+        internal set => SetProperty(ref _isCreditCardsLoaded, value);
+    }
 
     internal void UnloadCreditCardsStorage()
     {
         if (_creditCards == null) return;
         _creditCards = null;
         OnPropertyChanged(nameof(CreditCards));
-        OnPropertyChanged(nameof(IsCreditCardsLoaded));
+
+        // Reset the load state flag
+        IsCreditCardsLoaded = false;
     }
 }
 }

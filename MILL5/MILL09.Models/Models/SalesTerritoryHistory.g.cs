@@ -68,6 +68,9 @@ public partial class SalesTerritoryHistory : ModelEntityBase
         }
         for (int i = collection.Count - 1; i >= 0; i--)
             if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
+
+        // Explicitly flag the collection as loaded after a successful database query
+        MainModel.Instance.IsSalesTerritoryHistoriesLoaded = true;
         OnRefreshed();
     }
 
@@ -106,21 +109,24 @@ public partial class MainModel
     public ObservableCollection<SalesTerritoryHistory> SalesTerritoryHistories
     {
         get { if (_salesTerritoryHistories == null) SalesTerritoryHistories = new ObservableCollection<SalesTerritoryHistory>(); return _salesTerritoryHistories!; }
-        private set
-        {
-            SetProperty(ref _salesTerritoryHistories, value);
-            OnPropertyChanged(nameof(IsSalesTerritoryHistoriesLoaded));
-        }
+        private set => SetProperty(ref _salesTerritoryHistories, value);
     }
 
-    public bool IsSalesTerritoryHistoriesLoaded => _salesTerritoryHistories != null;
+    private bool _isSalesTerritoryHistoriesLoaded;
+    public bool IsSalesTerritoryHistoriesLoaded
+    {
+        get => _isSalesTerritoryHistoriesLoaded;
+        internal set => SetProperty(ref _isSalesTerritoryHistoriesLoaded, value);
+    }
 
     internal void UnloadSalesTerritoryHistoriesStorage()
     {
         if (_salesTerritoryHistories == null) return;
         _salesTerritoryHistories = null;
         OnPropertyChanged(nameof(SalesTerritoryHistories));
-        OnPropertyChanged(nameof(IsSalesTerritoryHistoriesLoaded));
+
+        // Reset the load state flag
+        IsSalesTerritoryHistoriesLoaded = false;
     }
 }
 }
