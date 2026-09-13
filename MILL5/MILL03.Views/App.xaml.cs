@@ -8,9 +8,9 @@ public partial class App : Application {
     }
 
     protected override Window CreateWindow(IActivationState? activationState) {
-        // Spawns a dedicated OS Window with its own isolated MainView instance
-        return new Window(new MainView()) {
-            Title = "Enterprise Dashboard"
+        // Spawns a dedicated OS Window with the SplashView as the initial content
+        return new Window(new SplashView()) {
+            Title = "MILL5 Dashboard"
         };
     }
 }
