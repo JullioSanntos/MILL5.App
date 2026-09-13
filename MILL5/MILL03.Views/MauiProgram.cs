@@ -1,21 +1,31 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace MILL03.Views {
-    public static class MauiProgram {
-        public static MauiApp CreateMauiApp() {
-            var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .ConfigureFonts(fonts => {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
+namespace MILL03.Views; 
+public static class MauiProgram {
+    public static MauiApp CreateMauiApp() {
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .ConfigureFonts(fonts => {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
-        }
+        // 1. Pass MAUI's native ServiceCollection to your Coder-generated extension
+        global::MILL03.Views.ServiceCollectionExtensions.AddRegistrations(builder.Services);
+
+        var app = builder.Build();
+
+        // 2. Pass the framework-built provider into your ServiceLocator
+        global::MILL80.Infrastructure.ServiceLocator.Initialize(app.Services);
+
+
+
+
+        return app;
     }
 }

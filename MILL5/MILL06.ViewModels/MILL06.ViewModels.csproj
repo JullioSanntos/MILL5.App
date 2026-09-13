@@ -10,7 +10,11 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="MILL90.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
     <ProjectReference Include="..\MILL09.Models\MILL09.Models.csproj" />
     <ProjectReference Include="..\MILL80.Infrastructure\MILL80.Infrastructure.csproj" />
   </ItemGroup>

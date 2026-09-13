@@ -1,14 +1,37 @@
-﻿namespace MILL09.Models; 
-public class MainModel : ModelBase {
+﻿using Microsoft.Extensions.DependencyInjection;
+using MILL80.Infrastructure;
+using System;
 
-    #region singleton
-    private static readonly Lazy<MainModel> _instance =
-        new Lazy<MainModel>(() => new MainModel());
+namespace MILL09.Models;
 
-    // Global access point
-    public static MainModel Instance => _instance.Value;
-
+public class MainModel : IDisposable {
     protected internal MainModel() { }
-    #endregion singleton
 
+    #region MainModel's Instance Singleton
+    public static MainModel Instance =>
+        global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<MainModel>();
+    #endregion MainModel's Instance Singleton
+
+    #region CurrentContext
+    private string? _currentContext;
+    public string CurrentContext {
+        get {
+            if (_currentContext == null) {
+                _currentContext = "DefaultContext";
+            }
+            return _currentContext;
+        }
+        set {
+            if (_currentContext != value) {
+                _currentContext = value;
+            }
+        }
+    }
+    #endregion CurrentContext
+
+    #region IDisposable
+    public void Dispose() {
+        GC.SuppressFinalize(this);
+    }
+    #endregion IDisposable
 }
