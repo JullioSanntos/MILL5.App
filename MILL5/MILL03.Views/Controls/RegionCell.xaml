@@ -10,12 +10,15 @@
         <BoxView WidthRequest="5" HorizontalOptions="Start" BackgroundColor="Transparent" />
         <BoxView WidthRequest="5" HorizontalOptions="End" BackgroundColor="Transparent" />
 
-        <!-- The Anticipation Line -->
-        <BoxView StyleId="AnticipationLine" BackgroundColor="White" InputTransparent="True" 
-                 IsVisible="False" Opacity="0.5" ZIndex="98" />
+        <BoxView StyleId="AnticipationLine" BackgroundColor="White" Opacity="0.5" InputTransparent="True" IsVisible="False" ZIndex="98" />
 
         <Label Text="+" FontSize="Small" TextColor="White" FontAttributes="Bold"
                HorizontalOptions="Start" VerticalOptions="Start"
                IsVisible="False" InputTransparent="True" ZIndex="99" />
+
+        <!-- The Close Button -->
+        <Label StyleId="CloseBtn" Text="✕" FontSize="12" TextColor="White" FontAttributes="Bold"
+               BackgroundColor="Black" Padding="8,4" Opacity="0.7"
+               HorizontalOptions="End" VerticalOptions="Start" Margin="0" ZIndex="101" />
     </Grid>
 </ContentView>

@@ -105,6 +105,18 @@ public partial class RegionCell : ContentView {
 
             adorner.GestureRecognizers.Add(tapGesture);
         }
+
+        // Wire up the Close Button
+        if (internalGrid.Children.FirstOrDefault(c => c is Label l && l.StyleId == "CloseBtn") is Label closeBtn) {
+            var pointerGesture = new PointerGestureRecognizer();
+            pointerGesture.PointerEntered += (s, e) => closeBtn.Opacity = 1.0; // Snaps to solid black
+            pointerGesture.PointerExited += (s, e) => closeBtn.Opacity = 0.7;  // Returns to subtle transparency
+            closeBtn.GestureRecognizers.Add(pointerGesture);
+
+            var tapGesture = new TapGestureRecognizer();
+            tapGesture.Tapped += (s, e) => HandleClose();
+            closeBtn.GestureRecognizers.Add(tapGesture);
+        }
     }
 
     private void TrackInteractions(Grid grid, PointerEventArgs e, SplitDirection direction) {
@@ -201,5 +213,32 @@ public partial class RegionCell : ContentView {
         splitGrid.Children.Add(splitter);
         splitGrid.Children.Add(cell2);
         internalGrid.Children.Add(splitGrid);
+    }
+
+    private void HandleClose() {
+        if (this.Parent is Grid parentGrid) {
+            // 1. Find and remove the adjacent splitter
+            var splitter = parentGrid.Children.OfType<GridSplitter>().FirstOrDefault();
+            if (splitter != null) {
+                parentGrid.Children.Remove(splitter);
+            }
+
+            // 2. Remove the closed cell from the visual tree
+            parentGrid.Children.Remove(this);
+
+            // 3. Force the surviving sibling cell to absorb the space
+            var sibling = parentGrid.Children.OfType<RegionCell>().FirstOrDefault();
+            if (sibling != null) {
+                // Erase the split boundaries
+                parentGrid.ColumnDefinitions.Clear();
+                parentGrid.RowDefinitions.Clear();
+
+                // Reset the sibling to the top-left of the now-empty layout
+                Grid.SetColumn(sibling, 0);
+                Grid.SetRow(sibling, 0);
+                Grid.SetColumnSpan(sibling, 1);
+                Grid.SetRowSpan(sibling, 1);
+            }
+        }
     }
 }
