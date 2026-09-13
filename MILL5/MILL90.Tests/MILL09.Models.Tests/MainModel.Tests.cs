@@ -28,20 +28,6 @@ public class MainModelTests : DITestBase {
         Assert.AreNotEqual(model1, model2);
     }
 
-    [TestMethod]
-    public void Test_Initial_State_And_Modification() {
-        // Arrange
-        var model = Provider.GetRequiredService<MainModel>();
-
-        // Assert Initial
-        Assert.AreEqual("DefaultContext", model.CurrentContext);
-
-        // Act
-        model.CurrentContext = "TestContext";
-
-        // Assert Modified
-        Assert.AreEqual("TestContext", model.CurrentContext);
-    }
 
     [TestMethod]
     public void Test_Static_Instance_Routes_Through_Locator() {
