@@ -74,7 +74,7 @@ public partial class RegionCell : ContentView {
         }
 
         if (cell.Content is Grid internalGrid) {
-            if (internalGrid.Children.FirstOrDefault(c => c is Label) is Label indicator)
+            if (internalGrid.Children.FirstOrDefault(c => c is Label l && l.StyleId != "CloseBtn") is Label indicator)
                 indicator.IsVisible = isSplitting;
 
             if (internalGrid.Children.FirstOrDefault(c => c is BoxView b && b.StyleId == "AnticipationLine") is BoxView line)
@@ -106,13 +106,8 @@ public partial class RegionCell : ContentView {
             adorner.GestureRecognizers.Add(tapGesture);
         }
 
-        // Wire up the Close Button
+        // Wire up the Close Button strictly for the tap event (hover is now handled by XAML VSM)
         if (internalGrid.Children.FirstOrDefault(c => c is Label l && l.StyleId == "CloseBtn") is Label closeBtn) {
-            var pointerGesture = new PointerGestureRecognizer();
-            pointerGesture.PointerEntered += (s, e) => closeBtn.Opacity = 1.0; // Snaps to solid black
-            pointerGesture.PointerExited += (s, e) => closeBtn.Opacity = 0.7;  // Returns to subtle transparency
-            closeBtn.GestureRecognizers.Add(pointerGesture);
-
             var tapGesture = new TapGestureRecognizer();
             tapGesture.Tapped += (s, e) => HandleClose();
             closeBtn.GestureRecognizers.Add(tapGesture);
@@ -123,17 +118,15 @@ public partial class RegionCell : ContentView {
         var position = e.GetPosition(grid);
         if (!position.HasValue) return;
 
-        // 1. Move the indicator (Locked to your calibrated offsets)
-        if (grid.Children.FirstOrDefault(c => c is Label) is Label indicator && indicator.IsVisible) {
+        if (grid.Children.FirstOrDefault(c => c is Label l && l.StyleId != "CloseBtn") is Label indicator && indicator.IsVisible) {
             indicator.TranslationX = position.Value.X + 8;
             indicator.TranslationY = position.Value.Y - 9;
         }
 
-        // 2. Shape and move the anticipation line
         if (grid.Children.FirstOrDefault(c => c is BoxView b && b.StyleId == "AnticipationLine") is BoxView line && line.IsVisible) {
             if (direction == SplitDirection.Top || direction == SplitDirection.Bottom) {
                 line.WidthRequest = 2;
-                line.HeightRequest = -1; // Fill available height
+                line.HeightRequest = -1;
                 line.HorizontalOptions = LayoutOptions.Start;
                 line.VerticalOptions = LayoutOptions.Fill;
                 line.TranslationX = position.Value.X;
@@ -141,7 +134,7 @@ public partial class RegionCell : ContentView {
             }
             else {
                 line.HeightRequest = 2;
-                line.WidthRequest = -1; // Fill available width
+                line.WidthRequest = -1;
                 line.VerticalOptions = LayoutOptions.Start;
                 line.HorizontalOptions = LayoutOptions.Fill;
                 line.TranslationY = position.Value.Y;
@@ -217,23 +210,18 @@ public partial class RegionCell : ContentView {
 
     private void HandleClose() {
         if (this.Parent is Grid parentGrid) {
-            // 1. Find and remove the adjacent splitter
             var splitter = parentGrid.Children.OfType<GridSplitter>().FirstOrDefault();
             if (splitter != null) {
                 parentGrid.Children.Remove(splitter);
             }
 
-            // 2. Remove the closed cell from the visual tree
             parentGrid.Children.Remove(this);
 
-            // 3. Force the surviving sibling cell to absorb the space
             var sibling = parentGrid.Children.OfType<RegionCell>().FirstOrDefault();
             if (sibling != null) {
-                // Erase the split boundaries
                 parentGrid.ColumnDefinitions.Clear();
                 parentGrid.RowDefinitions.Clear();
 
-                // Reset the sibling to the top-left of the now-empty layout
                 Grid.SetColumn(sibling, 0);
                 Grid.SetRow(sibling, 0);
                 Grid.SetColumnSpan(sibling, 1);

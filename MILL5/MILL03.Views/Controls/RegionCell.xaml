@@ -17,8 +17,7 @@
                IsVisible="False" InputTransparent="True" ZIndex="99" />
 
         <!-- The Close Button -->
-        <Label StyleId="CloseBtn" Text="✕" FontSize="12" TextColor="White" FontAttributes="Bold"
-               BackgroundColor="Black" Padding="8,4" Opacity="0.7"
-               HorizontalOptions="End" VerticalOptions="Start" Margin="0" ZIndex="101" />
+        <!-- The refactored Close Button -->
+        <Label StyleId="CloseBtn" Style="{StaticResource RegionCloseButtonStyle}" />
     </Grid>
 </ContentView>
