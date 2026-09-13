@@ -52,7 +52,6 @@ public partial class RegionCell : ContentView {
         var dict = new Dictionary<SplitDirection, BoxView>();
         if (this.Content is Grid internalGrid) {
             foreach (var child in internalGrid.Children) {
-                // Ensure we only cache the perimeter hit-boxes, not the anticipation line
                 if (child is BoxView adorner && adorner.StyleId != "AnticipationLine") {
                     if (adorner.VerticalOptions == LayoutOptions.Start) dict[SplitDirection.Top] = adorner;
                     else if (adorner.VerticalOptions == LayoutOptions.End) dict[SplitDirection.Bottom] = adorner;
@@ -112,7 +111,7 @@ public partial class RegionCell : ContentView {
         var position = e.GetPosition(grid);
         if (!position.HasValue) return;
 
-        // 1. Move the indicator
+        // 1. Move the indicator (Locked to your calibrated offsets)
         if (grid.Children.FirstOrDefault(c => c is Label) is Label indicator && indicator.IsVisible) {
             indicator.TranslationX = position.Value.X + 8;
             indicator.TranslationY = position.Value.Y - 9;
@@ -154,7 +153,6 @@ public partial class RegionCell : ContentView {
         var payloadContainer = internalGrid.Children.FirstOrDefault(c => c is not BoxView && c is not Label) as View;
         if (payloadContainer == null) return;
 
-        // Strip the cell of its interactive overlay elements permanently
         var uiElementsToRemove = internalGrid.Children.Where(c => c is BoxView || c is Label).ToList();
         foreach (var el in uiElementsToRemove) {
             internalGrid.Children.Remove(el);
@@ -166,26 +164,41 @@ public partial class RegionCell : ContentView {
         cell1.InjectPayload(payloadContainer);
         var cell2 = new RegionCell();
 
+        var splitter = new GridSplitter {
+            Orientation = isTopBottomClick ? GridSplitter.SplitOrientation.Vertical : GridSplitter.SplitOrientation.Horizontal,
+            WidthRequest = isTopBottomClick ? 5 : -1,
+            HeightRequest = isTopBottomClick ? -1 : 5,
+            HorizontalOptions = isTopBottomClick ? LayoutOptions.Center : LayoutOptions.Fill,
+            VerticalOptions = isTopBottomClick ? LayoutOptions.Fill : LayoutOptions.Center
+        };
+
         if (isTopBottomClick) {
             double star1 = clickX / internalGrid.Width;
             double star2 = 1.0 - star1;
 
             splitGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(star1, GridUnitType.Star)));
+            splitGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
             splitGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(star2, GridUnitType.Star)));
+
             Grid.SetColumn(cell1, 0);
-            Grid.SetColumn(cell2, 1);
+            Grid.SetColumn(splitter, 1);
+            Grid.SetColumn(cell2, 2);
         }
         else {
             double star1 = clickY / internalGrid.Height;
             double star2 = 1.0 - star1;
 
             splitGrid.RowDefinitions.Add(new RowDefinition(new GridLength(star1, GridUnitType.Star)));
+            splitGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
             splitGrid.RowDefinitions.Add(new RowDefinition(new GridLength(star2, GridUnitType.Star)));
+
             Grid.SetRow(cell1, 0);
-            Grid.SetRow(cell2, 1);
+            Grid.SetRow(splitter, 1);
+            Grid.SetRow(cell2, 2);
         }
 
         splitGrid.Children.Add(cell1);
+        splitGrid.Children.Add(splitter);
         splitGrid.Children.Add(cell2);
         internalGrid.Children.Add(splitGrid);
     }

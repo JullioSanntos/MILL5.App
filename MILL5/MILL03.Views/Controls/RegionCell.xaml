@@ -14,7 +14,7 @@
         <BoxView StyleId="AnticipationLine" BackgroundColor="White" InputTransparent="True" 
                  IsVisible="False" Opacity="0.5" ZIndex="98" />
 
-        <Label Text="+" FontSize="small" TextColor="White" FontAttributes="Bold"
+        <Label Text="+" FontSize="Small" TextColor="White" FontAttributes="Bold"
                HorizontalOptions="Start" VerticalOptions="Start"
                IsVisible="False" InputTransparent="True" ZIndex="99" />
     </Grid>
