@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Controls;
+using System;
 
 namespace MILL03.Views.Controls;
 
@@ -16,12 +17,12 @@ public class GridSplitter : BoxView {
         set => SetValue(OrientationProperty, value);
     }
 
-    private double _initialSize1;
-    private double _initialSize2;
-    private View? _element1;
-    private View? _element2;
+    private double _initialStar1;
+    private double _initialStar2;
+    private bool _isDragging;
 
     public GridSplitter() {
+        // Apply styling directly to the BoxView to guarantee hit-testing
         BackgroundColor = Color.FromArgb("#80808080");
         ZIndex = 100;
 
@@ -29,8 +30,62 @@ public class GridSplitter : BoxView {
         panGesture.PanUpdated += OnPanUpdated;
         GestureRecognizers.Add(panGesture);
 
-        // Hook into the native platform view to change the cursor
         this.HandlerChanged += OnHandlerChanged;
+    }
+
+    private void OnPanUpdated(object? sender, PanUpdatedEventArgs e) {
+        if (Parent is not Grid parentGrid) return;
+
+        bool isVertical = Orientation == SplitOrientation.Vertical;
+        int index = isVertical ? Grid.GetColumn(this) : Grid.GetRow(this);
+
+        if (isVertical && (index <= 0 || index >= parentGrid.ColumnDefinitions.Count - 1)) return;
+        if (!isVertical && (index <= 0 || index >= parentGrid.RowDefinitions.Count - 1)) return;
+
+        if (e.StatusType == GestureStatus.Started) {
+            _isDragging = true;
+
+            if (isVertical) {
+                _initialStar1 = parentGrid.ColumnDefinitions[index - 1].Width.Value;
+                _initialStar2 = parentGrid.ColumnDefinitions[index + 1].Width.Value;
+            }
+            else {
+                _initialStar1 = parentGrid.RowDefinitions[index - 1].Height.Value;
+                _initialStar2 = parentGrid.RowDefinitions[index + 1].Height.Value;
+            }
+        }
+        else if (e.StatusType == GestureStatus.Running) {
+            if (isVertical) {
+                double gridWidth = parentGrid.Width;
+                if (gridWidth <= 0) return;
+
+                double percentMove = e.TotalX / gridWidth;
+                double starDelta = percentMove * (_initialStar1 + _initialStar2);
+
+                double newStar1 = Math.Max(0.01, _initialStar1 + starDelta);
+                double newStar2 = Math.Max(0.01, _initialStar2 - starDelta);
+
+                parentGrid.ColumnDefinitions[index - 1].Width = new GridLength(newStar1, GridUnitType.Star);
+                parentGrid.ColumnDefinitions[index + 1].Width = new GridLength(newStar2, GridUnitType.Star);
+            }
+            else {
+                double gridHeight = parentGrid.Height;
+                if (gridHeight <= 0) return;
+
+                double percentMove = e.TotalY / gridHeight;
+                double starDelta = percentMove * (_initialStar1 + _initialStar2);
+
+                double newStar1 = Math.Max(0.01, _initialStar1 + starDelta);
+                double newStar2 = Math.Max(0.01, _initialStar2 - starDelta);
+
+                parentGrid.RowDefinitions[index - 1].Height = new GridLength(newStar1, GridUnitType.Star);
+                parentGrid.RowDefinitions[index + 1].Height = new GridLength(newStar2, GridUnitType.Star);
+            }
+        }
+        else if (e.StatusType == GestureStatus.Completed || e.StatusType == GestureStatus.Canceled) {
+            _isDragging = false;
+            ResetCursor();
+        }
     }
 
     private void OnHandlerChanged(object? sender, EventArgs e) {
@@ -41,70 +96,21 @@ public class GridSplitter : BoxView {
                     ? Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast
                     : Microsoft.UI.Input.InputSystemCursorShape.SizeNorthSouth;
 
-                var cursor = Microsoft.UI.Input.InputSystemCursor.Create(shape);
-
-                // Use reflection to bypass the "protected" access modifier in WinUI 3
-                typeof(Microsoft.UI.Xaml.UIElement).InvokeMember(
-                    "ProtectedCursor",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance,
-                    null,
-                    platformView,
-                    new object[] { cursor });
+                platformView.ForceSetCursor(shape);
             };
 
             platformView.PointerExited += (s, args) => {
-                var cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
-
-                typeof(Microsoft.UI.Xaml.UIElement).InvokeMember(
-                    "ProtectedCursor",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance,
-                    null,
-                    platformView,
-                    new object[] { cursor });
+                if (!_isDragging) ResetCursor();
             };
         }
 #endif
     }
 
-
-    private void OnPanUpdated(object? sender, PanUpdatedEventArgs e) {
-        if (Parent is not Grid parentGrid) return;
-
-        bool isVertical = Orientation == SplitOrientation.Vertical;
-        int index = isVertical ? Grid.GetColumn(this) : Grid.GetRow(this);
-
-        // Prevent crashes if the splitter is misplaced
-        if (isVertical && (index <= 0 || index >= parentGrid.ColumnDefinitions.Count - 1)) return;
-        if (!isVertical && (index <= 0 || index >= parentGrid.RowDefinitions.Count - 1)) return;
-
-        if (e.StatusType == GestureStatus.Started) {
-            // Interrogate the visual tree to find the adjacent payload containers
-            _element1 = parentGrid.Children.OfType<View>().FirstOrDefault(c =>
-                (isVertical ? Grid.GetColumn(c) : Grid.GetRow(c)) == index - 1);
-
-            _element2 = parentGrid.Children.OfType<View>().FirstOrDefault(c =>
-                (isVertical ? Grid.GetColumn(c) : Grid.GetRow(c)) == index + 1);
-
-            if (_element1 != null && _element2 != null) {
-                _initialSize1 = isVertical ? _element1.Width : _element1.Height;
-                _initialSize2 = isVertical ? _element2.Width : _element2.Height;
-            }
+    private void ResetCursor() {
+#if WINDOWS
+        if (this.Handler?.PlatformView is Microsoft.UI.Xaml.UIElement platformView) {
+            platformView.ForceSetCursor(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
         }
-        else if (e.StatusType == GestureStatus.Running && _element1 != null && _element2 != null) {
-            if (isVertical) {
-                double newSize1 = Math.Max(20, _initialSize1 + e.TotalX);
-                double newSize2 = Math.Max(20, _initialSize2 - e.TotalX);
-
-                parentGrid.ColumnDefinitions[index - 1].Width = new GridLength(newSize1, GridUnitType.Star);
-                parentGrid.ColumnDefinitions[index + 1].Width = new GridLength(newSize2, GridUnitType.Star);
-            }
-            else {
-                double newSize1 = Math.Max(20, _initialSize1 + e.TotalY);
-                double newSize2 = Math.Max(20, _initialSize2 - e.TotalY);
-
-                parentGrid.RowDefinitions[index - 1].Height = new GridLength(newSize1, GridUnitType.Star);
-                parentGrid.RowDefinitions[index + 1].Height = new GridLength(newSize2, GridUnitType.Star);
-            }
-        }
+#endif
     }
 }
