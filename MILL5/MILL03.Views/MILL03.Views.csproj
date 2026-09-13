@@ -57,8 +57,8 @@
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\mill5_cloud_only.png" Color="#FFFFFF" />
 
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\mill5_logo_full.png" Color="#404040" BaseSize="128,128" />
+		<!-- Splash Screen --><!--
+		<MauiSplashScreen Include="Resources\Splash\mill5_logo_full.png" Color="#404040" BaseSize="128,128" />-->
 
 		<!-- App Icon --><!--
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />

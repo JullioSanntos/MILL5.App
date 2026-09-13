@@ -9,7 +9,7 @@ public partial class SplashView : ContentPage {
         base.OnAppearing();
 
         // Non-blocking delay to keep the splash screen visible
-        await Task.Delay(2000);
+        await Task.Delay(2500);
 
         // Since you override CreateWindow, swap the Page directly on the active Window
         if (this.Window != null) {
