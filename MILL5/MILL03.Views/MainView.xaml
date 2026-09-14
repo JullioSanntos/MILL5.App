@@ -12,7 +12,8 @@
         <!--<controls:RegionCell />-->
         <controls:RegionCell>
             <controls:RegionCell.Payload>
-                <views:CustomersView />
+                <!--<views:CustomersView />-->
+                <views:CustomersSyncFusion />
             </controls:RegionCell.Payload>
         </controls:RegionCell>
     </Grid>
