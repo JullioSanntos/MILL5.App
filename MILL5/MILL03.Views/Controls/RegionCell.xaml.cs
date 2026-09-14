@@ -25,7 +25,7 @@ public partial class RegionCell : ContentView {
         set => SetValue(PayloadProperty, value);
     }
 
-    private static readonly Color[] RegionColors = {
+    private static readonly Color[] RegionColors = { Colors.White,
         Colors.LightBlue, Colors.LightCoral, Colors.LightGreen, Colors.LightGoldenrodYellow,
         Colors.LightPink, Colors.MediumPurple, Colors.LightSeaGreen, Colors.Orange,
         Colors.LightSkyBlue, Colors.Plum
@@ -35,9 +35,12 @@ public partial class RegionCell : ContentView {
 
     public static Color GetNextColor() {
         int nextIndex;
-        do {
-            nextIndex = _random.Next(RegionColors.Length);
-        } while (nextIndex == _lastColorIndex);
+        if (_lastColorIndex == -1) { nextIndex = 0; }
+        else {
+            do {
+                nextIndex = _random.Next(RegionColors.Length);
+            } while (nextIndex == _lastColorIndex);
+        }
 
         _lastColorIndex = nextIndex;
         return RegionColors[nextIndex];

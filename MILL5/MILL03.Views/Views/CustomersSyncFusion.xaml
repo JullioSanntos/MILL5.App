@@ -30,8 +30,9 @@
             </VisualStateManager.VisualStateGroups>
         </Button>
 
-        <syncfusion:SfDataGrid Grid.Row="1" ItemsSource="{Binding Customers, Source={x:Static models:MainModel.Instance}}" />
-        
+        <syncfusion:SfDataGrid Grid.Row="1" GridLinesVisibility="Both" HeaderGridLinesVisibility="Both"
+                AutoGeneratingColumn="SfDataGrid_OnAutoGeneratingColumn" ColumnWidthMode="Fill" RowHeight="30" 
+                ItemsSource="{Binding Customers, Source={x:Static models:MainModel.Instance}}" />
 
     </Grid>
 </ContentView>
