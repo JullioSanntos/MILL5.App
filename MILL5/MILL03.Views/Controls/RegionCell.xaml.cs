@@ -4,18 +4,43 @@ namespace MILL03.Views.Controls;
 
 public enum SplitDirection { Top, Bottom, Left, Right }
 
+// 1. Tell MAUI that anything nested in XAML belongs in the Payload property
+//[ContentProperty(nameof(Payload))]
 public partial class RegionCell : ContentView {
+
+    // 2. Catch the nested view and route it to our existing Inject method
+    public static readonly BindableProperty PayloadProperty = BindableProperty.Create(
+        nameof(Payload),
+        typeof(View),
+        typeof(RegionCell),
+        null,
+        propertyChanged: (bindable, oldValue, newValue) => {
+            if (newValue is View newView) {
+                ((RegionCell)bindable).InjectPayload(newView);
+            }
+        });
+
+    public View Payload {
+        get => (View)GetValue(PayloadProperty);
+        set => SetValue(PayloadProperty, value);
+    }
+
     private static readonly Color[] RegionColors = {
         Colors.LightBlue, Colors.LightCoral, Colors.LightGreen, Colors.LightGoldenrodYellow,
         Colors.LightPink, Colors.MediumPurple, Colors.LightSeaGreen, Colors.Orange,
         Colors.LightSkyBlue, Colors.Plum
     };
-    private static int _colorIndex = 0;
+    private static readonly Random _random = new Random();
+    private static int _lastColorIndex = -1;
 
     public static Color GetNextColor() {
-        var color = RegionColors[_colorIndex % RegionColors.Length];
-        _colorIndex++;
-        return color;
+        int nextIndex;
+        do {
+            nextIndex = _random.Next(RegionColors.Length);
+        } while (nextIndex == _lastColorIndex);
+
+        _lastColorIndex = nextIndex;
+        return RegionColors[nextIndex];
     }
 
     public static readonly BindableProperty IsSplittingProperty = BindableProperty.Create(
@@ -36,55 +61,31 @@ public partial class RegionCell : ContentView {
     public RegionCell() {
         InitializeComponent();
 
-        _adorners = new Lazy<Dictionary<SplitDirection, BoxView>>(InitializeAdornerCache);
+        // Map directly to XAML elements — no more guessing spans or UI-tree hunting
+        _adorners = new Lazy<Dictionary<SplitDirection, BoxView>>(() => new Dictionary<SplitDirection, BoxView> {
+            { SplitDirection.Top, TopAdorner },
+            { SplitDirection.Bottom, BottomAdorner },
+            { SplitDirection.Left, LeftAdorner },
+            { SplitDirection.Right, RightAdorner }
+        });
 
         WireUpAutonomousLogic();
-
-        if (this.Content is Grid internalGrid) {
-            var rootPayload = internalGrid.Children.FirstOrDefault(c => c is not BoxView && c is not Label) as ContentView;
-            if (rootPayload != null && rootPayload.BackgroundColor == null) {
-                rootPayload.BackgroundColor = GetNextColor();
-            }
-        }
-    }
-
-    private Dictionary<SplitDirection, BoxView> InitializeAdornerCache() {
-        var dict = new Dictionary<SplitDirection, BoxView>();
-        if (this.Content is Grid internalGrid) {
-            foreach (var child in internalGrid.Children) {
-                if (child is BoxView adorner && adorner.StyleId != "AnticipationLine") {
-                    if (adorner.VerticalOptions == LayoutOptions.Start) dict[SplitDirection.Top] = adorner;
-                    else if (adorner.VerticalOptions == LayoutOptions.End) dict[SplitDirection.Bottom] = adorner;
-                    else if (adorner.HorizontalOptions == LayoutOptions.Start) dict[SplitDirection.Left] = adorner;
-                    else if (adorner.HorizontalOptions == LayoutOptions.End) dict[SplitDirection.Right] = adorner;
-                }
-            }
-        }
-        return dict;
     }
 
     private static void OnIsSplittingStateChanged(BindableObject bindable, object oldValue, object newValue) {
         var cell = (RegionCell)bindable;
         bool isSplitting = (bool)newValue;
-
         var targetColor = isSplitting ? Color.FromArgb("#80808080") : Colors.Transparent;
 
         foreach (var adorner in cell._adorners.Value.Values) {
             adorner.BackgroundColor = targetColor;
         }
 
-        if (cell.Content is Grid internalGrid) {
-            if (internalGrid.Children.FirstOrDefault(c => c is Label l && l.StyleId != "CloseBtn") is Label indicator)
-                indicator.IsVisible = isSplitting;
-
-            if (internalGrid.Children.FirstOrDefault(c => c is BoxView b && b.StyleId == "AnticipationLine") is BoxView line)
-                line.IsVisible = isSplitting;
-        }
+        cell.IndicatorLabel.IsVisible = isSplitting;
+        cell.AnticipationLineBox.IsVisible = isSplitting;
     }
 
     private void WireUpAutonomousLogic() {
-        if (this.Content is not Grid internalGrid) return;
-
         foreach (var kvp in _adorners.Value) {
             var direction = kvp.Key;
             var adorner = kvp.Value;
@@ -92,82 +93,72 @@ public partial class RegionCell : ContentView {
             var pointerGesture = new PointerGestureRecognizer();
             pointerGesture.PointerEntered += (s, e) => this.IsSplitting = true;
             pointerGesture.PointerExited += (s, e) => this.IsSplitting = false;
-            pointerGesture.PointerMoved += (s, e) => TrackInteractions(internalGrid, e, direction);
+            pointerGesture.PointerMoved += (s, e) => TrackInteractions(e, direction);
             adorner.GestureRecognizers.Add(pointerGesture);
 
             var tapGesture = new TapGestureRecognizer();
             bool isTopBottom = direction == SplitDirection.Top || direction == SplitDirection.Bottom;
 
             tapGesture.Tapped += (s, e) => {
-                var pos = e.GetPosition(internalGrid);
+                var pos = e.GetPosition(RootGrid);
                 if (pos.HasValue) PerformSplit(isTopBottom, pos.Value.X, pos.Value.Y);
             };
 
             adorner.GestureRecognizers.Add(tapGesture);
         }
-
-        // Wire up the Close Button strictly for the tap event (hover is now handled by XAML VSM)
-        if (internalGrid.Children.FirstOrDefault(c => c is Label l && l.StyleId == "CloseBtn") is Label closeBtn) {
-            var tapGesture = new TapGestureRecognizer();
-            tapGesture.Tapped += (s, e) => HandleClose();
-            closeBtn.GestureRecognizers.Add(tapGesture);
-        }
     }
 
-    private void TrackInteractions(Grid grid, PointerEventArgs e, SplitDirection direction) {
-        var position = e.GetPosition(grid);
+    private void TrackInteractions(PointerEventArgs e, SplitDirection direction) {
+        var position = e.GetPosition(RootGrid);
         if (!position.HasValue) return;
 
-        if (grid.Children.FirstOrDefault(c => c is Label l && l.StyleId != "CloseBtn") is Label indicator && indicator.IsVisible) {
-            indicator.TranslationX = position.Value.X + 8;
-            indicator.TranslationY = position.Value.Y - 9;
+        if (IndicatorLabel.IsVisible) {
+            // Reverted to your exact custom offset
+            IndicatorLabel.TranslationX = position.Value.X + 8;
+            IndicatorLabel.TranslationY = position.Value.Y - 9;
         }
 
-        if (grid.Children.FirstOrDefault(c => c is BoxView b && b.StyleId == "AnticipationLine") is BoxView line && line.IsVisible) {
+        if (AnticipationLineBox.IsVisible) {
             if (direction == SplitDirection.Top || direction == SplitDirection.Bottom) {
-                line.WidthRequest = 2;
-                line.HeightRequest = -1;
-                line.HorizontalOptions = LayoutOptions.Start;
-                line.VerticalOptions = LayoutOptions.Fill;
-                line.TranslationX = position.Value.X;
-                line.TranslationY = 0;
+                AnticipationLineBox.WidthRequest = 2;
+                AnticipationLineBox.HeightRequest = -1;
+                AnticipationLineBox.HorizontalOptions = LayoutOptions.Start;
+                AnticipationLineBox.VerticalOptions = LayoutOptions.Fill;
+                AnticipationLineBox.TranslationX = position.Value.X;
+                AnticipationLineBox.TranslationY = 0;
             }
             else {
-                line.HeightRequest = 2;
-                line.WidthRequest = -1;
-                line.VerticalOptions = LayoutOptions.Start;
-                line.HorizontalOptions = LayoutOptions.Fill;
-                line.TranslationY = position.Value.Y;
-                line.TranslationX = 0;
+                AnticipationLineBox.HeightRequest = 2;
+                AnticipationLineBox.WidthRequest = -1;
+                AnticipationLineBox.VerticalOptions = LayoutOptions.Start;
+                AnticipationLineBox.HorizontalOptions = LayoutOptions.Fill;
+                AnticipationLineBox.TranslationY = position.Value.Y;
+                AnticipationLineBox.TranslationX = 0;
             }
         }
     }
 
     public void InjectPayload(View payload) {
-        if (this.Content is not Grid internalGrid) return;
-        var existingPayload = internalGrid.Children.FirstOrDefault(c => c is not BoxView && c is not Label);
-        if (existingPayload != null) {
-            internalGrid.Children.Remove(existingPayload);
+        PayloadContainer.Content = payload;
+        if (payload != null && payload.BackgroundColor == null) {
+            payload.BackgroundColor = GetNextColor();
         }
-        internalGrid.Children.Insert(0, payload);
     }
 
     private void PerformSplit(bool isTopBottomClick, double clickX, double clickY) {
-        if (this.Content is not Grid internalGrid) return;
+        var extractedPayload = PayloadContainer.Content ?? new ContentView { BackgroundColor = GetNextColor() };
+        PayloadContainer.Content = null;
 
-        var payloadContainer = internalGrid.Children.FirstOrDefault(c => c is not BoxView && c is not Label) as View;
-        if (payloadContainer == null) return;
-
-        var uiElementsToRemove = internalGrid.Children.Where(c => c is BoxView || c is Label).ToList();
-        foreach (var el in uiElementsToRemove) {
-            internalGrid.Children.Remove(el);
-        }
-        internalGrid.Children.Remove(payloadContainer);
+        RootGrid.Children.Clear();
+        RootGrid.RowDefinitions.Clear();
+        RootGrid.ColumnDefinitions.Clear();
 
         var splitGrid = new Grid();
         var cell1 = new RegionCell();
-        cell1.InjectPayload(payloadContainer);
+        cell1.InjectPayload(extractedPayload);
+
         var cell2 = new RegionCell();
+        cell2.InjectPayload(new ContentView { BackgroundColor = GetNextColor() });
 
         var splitter = new GridSplitter {
             Orientation = isTopBottomClick ? GridSplitter.SplitOrientation.Vertical : GridSplitter.SplitOrientation.Horizontal,
@@ -178,7 +169,7 @@ public partial class RegionCell : ContentView {
         };
 
         if (isTopBottomClick) {
-            double star1 = clickX / internalGrid.Width;
+            double star1 = clickX / RootGrid.Width;
             double star2 = 1.0 - star1;
 
             splitGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(star1, GridUnitType.Star)));
@@ -190,7 +181,7 @@ public partial class RegionCell : ContentView {
             Grid.SetColumn(cell2, 2);
         }
         else {
-            double star1 = clickY / internalGrid.Height;
+            double star1 = clickY / RootGrid.Height;
             double star2 = 1.0 - star1;
 
             splitGrid.RowDefinitions.Add(new RowDefinition(new GridLength(star1, GridUnitType.Star)));
@@ -205,10 +196,11 @@ public partial class RegionCell : ContentView {
         splitGrid.Children.Add(cell1);
         splitGrid.Children.Add(splitter);
         splitGrid.Children.Add(cell2);
-        internalGrid.Children.Add(splitGrid);
+
+        RootGrid.Children.Add(splitGrid);
     }
 
-    private void HandleClose() {
+    private void OnCloseButtonTapped(object sender, TappedEventArgs e) {
         if (this.Parent is Grid parentGrid) {
             var splitter = parentGrid.Children.OfType<GridSplitter>().FirstOrDefault();
             if (splitter != null) {

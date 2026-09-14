@@ -2,22 +2,39 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MILL03.Views.Controls.RegionCell">
-    <Grid>
-        <ContentView />
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="5" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="5" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="5" />
+        </Grid.ColumnDefinitions>
 
-        <BoxView HeightRequest="5" VerticalOptions="Start" BackgroundColor="Transparent" />
-        <BoxView HeightRequest="5" VerticalOptions="End" BackgroundColor="Transparent" />
-        <BoxView WidthRequest="5" HorizontalOptions="Start" BackgroundColor="Transparent" />
-        <BoxView WidthRequest="5" HorizontalOptions="End" BackgroundColor="Transparent" />
+        <!-- Payload spans the entire grid to eliminate internal padding -->
+        <ContentView x:Name="PayloadContainer" Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" />
 
-        <BoxView StyleId="AnticipationLine" BackgroundColor="White" Opacity="0.5" InputTransparent="True" IsVisible="False" ZIndex="98" />
+        <!-- Hit areas locked to the 5px structural tracks -->
+        <BoxView x:Name="TopAdorner" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="Transparent" ZIndex="10" />
+        <BoxView x:Name="BottomAdorner" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="Transparent" ZIndex="10" />
+        <BoxView x:Name="LeftAdorner" Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" BackgroundColor="Transparent" ZIndex="10" />
+        <BoxView x:Name="RightAdorner" Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" BackgroundColor="Transparent" ZIndex="10" />
 
-        <Label Text="+" FontSize="Small" TextColor="White" FontAttributes="Bold"
-               HorizontalOptions="Start" VerticalOptions="Start"
+        <!-- Overlays spanning the whole grid to match absolute coordinates -->
+        <BoxView x:Name="AnticipationLineBox" Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3" 
+                 BackgroundColor="White" Opacity="0.5" InputTransparent="True" IsVisible="False" ZIndex="98" />
+
+        <Label x:Name="IndicatorLabel" Text="+" FontSize="Medium" TextColor="Red" FontAttributes="Bold" 
+               HorizontalOptions="Start" VerticalOptions="Start" Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="3"
                IsVisible="False" InputTransparent="True" ZIndex="99" />
 
-        <!-- The Close Button -->
-        <!-- The refactored Close Button -->
-        <Label StyleId="CloseBtn" Style="{StaticResource RegionCloseButtonStyle}" />
+        <Label x:Name="CloseBtnLabel" Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource RegionCloseButtonStyle}" ZIndex="100">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnCloseButtonTapped" />
+            </Label.GestureRecognizers>
+        </Label>
     </Grid>
 </ContentView>

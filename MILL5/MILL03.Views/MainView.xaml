@@ -8,10 +8,12 @@
 
     <Grid x:Name="RootGrid" BackgroundColor="Transparent">
 
-        <!-- The foundational cell that initializes the recursive grid --><!--
-        <controls:RegionCell />-->
-        <controls:RegionCell Grid.Row="0" Grid.Column="0">
-            <views:CustomersView />
+        <!-- The foundational cell that initializes the recursive grid -->
+        <!--<controls:RegionCell />-->
+        <controls:RegionCell>
+            <controls:RegionCell.Payload>
+                <views:CustomersView />
+            </controls:RegionCell.Payload>
         </controls:RegionCell>
     </Grid>
 
