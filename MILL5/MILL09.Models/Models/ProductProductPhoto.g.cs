@@ -48,18 +48,9 @@ public partial class ProductProductPhoto : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductProductPhoto>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductId).ToHashSet();
-        var collection = MainModel.Instance.ProductProductPhotos;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductId, freshItem.ProductId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductProductPhoto>)MainModel.Instance.ProductProductPhotos).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductProductPhotosLoaded = true;
         OnRefreshed();
     }
@@ -93,10 +84,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductProductPhoto>? _productProductPhotos;
-    public ObservableCollection<ProductProductPhoto> ProductProductPhotos
+    private ObservableRangeCollection<ProductProductPhoto>? _productProductPhotos;
+    public ObservableRangeCollection<ProductProductPhoto> ProductProductPhotos
     {
-        get { if (_productProductPhotos == null) ProductProductPhotos = new ObservableCollection<ProductProductPhoto>(); return _productProductPhotos!; }
+        get { if (_productProductPhotos == null) ProductProductPhotos = new ObservableRangeCollection<ProductProductPhoto>(); return _productProductPhotos!; }
         private set => SetProperty(ref _productProductPhotos, value);
     }
 
@@ -113,7 +104,6 @@ public partial class MainModel
         _productProductPhotos = null;
         OnPropertyChanged(nameof(ProductProductPhotos));
 
-        // Reset the load state flag
         IsProductProductPhotosLoaded = false;
     }
 }

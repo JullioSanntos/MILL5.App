@@ -51,18 +51,9 @@ public partial class SalesPersonQuotaHistory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesPersonQuotaHistory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.SalesPersonQuotaHistories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesPersonQuotaHistory>)MainModel.Instance.SalesPersonQuotaHistories).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesPersonQuotaHistoriesLoaded = true;
         OnRefreshed();
     }
@@ -97,10 +88,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesPersonQuotaHistory>? _salesPersonQuotaHistories;
-    public ObservableCollection<SalesPersonQuotaHistory> SalesPersonQuotaHistories
+    private ObservableRangeCollection<SalesPersonQuotaHistory>? _salesPersonQuotaHistories;
+    public ObservableRangeCollection<SalesPersonQuotaHistory> SalesPersonQuotaHistories
     {
-        get { if (_salesPersonQuotaHistories == null) SalesPersonQuotaHistories = new ObservableCollection<SalesPersonQuotaHistory>(); return _salesPersonQuotaHistories!; }
+        get { if (_salesPersonQuotaHistories == null) SalesPersonQuotaHistories = new ObservableRangeCollection<SalesPersonQuotaHistory>(); return _salesPersonQuotaHistories!; }
         private set => SetProperty(ref _salesPersonQuotaHistories, value);
     }
 
@@ -117,7 +108,6 @@ public partial class MainModel
         _salesPersonQuotaHistories = null;
         OnPropertyChanged(nameof(SalesPersonQuotaHistories));
 
-        // Reset the load state flag
         IsSalesPersonQuotaHistoriesLoaded = false;
     }
 }

@@ -49,18 +49,9 @@ public partial class ProductCostHistory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductCostHistory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductId).ToHashSet();
-        var collection = MainModel.Instance.ProductCostHistories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductId, freshItem.ProductId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductCostHistory>)MainModel.Instance.ProductCostHistories).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductCostHistoriesLoaded = true;
         OnRefreshed();
     }
@@ -95,10 +86,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductCostHistory>? _productCostHistories;
-    public ObservableCollection<ProductCostHistory> ProductCostHistories
+    private ObservableRangeCollection<ProductCostHistory>? _productCostHistories;
+    public ObservableRangeCollection<ProductCostHistory> ProductCostHistories
     {
-        get { if (_productCostHistories == null) ProductCostHistories = new ObservableCollection<ProductCostHistory>(); return _productCostHistories!; }
+        get { if (_productCostHistories == null) ProductCostHistories = new ObservableRangeCollection<ProductCostHistory>(); return _productCostHistories!; }
         private set => SetProperty(ref _productCostHistories, value);
     }
 
@@ -115,7 +106,6 @@ public partial class MainModel
         _productCostHistories = null;
         OnPropertyChanged(nameof(ProductCostHistories));
 
-        // Reset the load state flag
         IsProductCostHistoriesLoaded = false;
     }
 }

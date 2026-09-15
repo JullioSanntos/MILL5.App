@@ -58,18 +58,9 @@ public partial class SalesTerritoryHistory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesTerritoryHistory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.SalesTerritoryHistories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesTerritoryHistory>)MainModel.Instance.SalesTerritoryHistories).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesTerritoryHistoriesLoaded = true;
         OnRefreshed();
     }
@@ -105,10 +96,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesTerritoryHistory>? _salesTerritoryHistories;
-    public ObservableCollection<SalesTerritoryHistory> SalesTerritoryHistories
+    private ObservableRangeCollection<SalesTerritoryHistory>? _salesTerritoryHistories;
+    public ObservableRangeCollection<SalesTerritoryHistory> SalesTerritoryHistories
     {
-        get { if (_salesTerritoryHistories == null) SalesTerritoryHistories = new ObservableCollection<SalesTerritoryHistory>(); return _salesTerritoryHistories!; }
+        get { if (_salesTerritoryHistories == null) SalesTerritoryHistories = new ObservableRangeCollection<SalesTerritoryHistory>(); return _salesTerritoryHistories!; }
         private set => SetProperty(ref _salesTerritoryHistories, value);
     }
 
@@ -125,7 +116,6 @@ public partial class MainModel
         _salesTerritoryHistories = null;
         OnPropertyChanged(nameof(SalesTerritoryHistories));
 
-        // Reset the load state flag
         IsSalesTerritoryHistoriesLoaded = false;
     }
 }

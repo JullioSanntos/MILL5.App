@@ -48,18 +48,9 @@ public partial class ContactType : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ContactType>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ContactTypeId).ToHashSet();
-        var collection = MainModel.Instance.ContactTypes;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ContactTypeId, freshItem.ContactTypeId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ContactTypeId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ContactType>)MainModel.Instance.ContactTypes).ReplaceRange(fresh);
+
         MainModel.Instance.IsContactTypesLoaded = true;
         OnRefreshed();
     }
@@ -92,10 +83,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ContactType>? _contactTypes;
-    public ObservableCollection<ContactType> ContactTypes
+    private ObservableRangeCollection<ContactType>? _contactTypes;
+    public ObservableRangeCollection<ContactType> ContactTypes
     {
-        get { if (_contactTypes == null) ContactTypes = new ObservableCollection<ContactType>(); return _contactTypes!; }
+        get { if (_contactTypes == null) ContactTypes = new ObservableRangeCollection<ContactType>(); return _contactTypes!; }
         private set => SetProperty(ref _contactTypes, value);
     }
 
@@ -112,7 +103,6 @@ public partial class MainModel
         _contactTypes = null;
         OnPropertyChanged(nameof(ContactTypes));
 
-        // Reset the load state flag
         IsContactTypesLoaded = false;
     }
 }

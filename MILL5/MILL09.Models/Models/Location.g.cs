@@ -61,18 +61,9 @@ public partial class Location : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Location>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.LocationId).ToHashSet();
-        var collection = MainModel.Instance.Locations;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.LocationId, freshItem.LocationId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].LocationId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Location>)MainModel.Instance.Locations).ReplaceRange(fresh);
+
         MainModel.Instance.IsLocationsLoaded = true;
         OnRefreshed();
     }
@@ -107,10 +98,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Location>? _locations;
-    public ObservableCollection<Location> Locations
+    private ObservableRangeCollection<Location>? _locations;
+    public ObservableRangeCollection<Location> Locations
     {
-        get { if (_locations == null) Locations = new ObservableCollection<Location>(); return _locations!; }
+        get { if (_locations == null) Locations = new ObservableRangeCollection<Location>(); return _locations!; }
         private set => SetProperty(ref _locations, value);
     }
 
@@ -127,7 +118,6 @@ public partial class MainModel
         _locations = null;
         OnPropertyChanged(nameof(Locations));
 
-        // Reset the load state flag
         IsLocationsLoaded = false;
     }
 }

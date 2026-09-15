@@ -64,18 +64,9 @@ public partial class CreditCard : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<CreditCard>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.CreditCardId).ToHashSet();
-        var collection = MainModel.Instance.CreditCards;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.CreditCardId, freshItem.CreditCardId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].CreditCardId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<CreditCard>)MainModel.Instance.CreditCards).ReplaceRange(fresh);
+
         MainModel.Instance.IsCreditCardsLoaded = true;
         OnRefreshed();
     }
@@ -111,10 +102,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<CreditCard>? _creditCards;
-    public ObservableCollection<CreditCard> CreditCards
+    private ObservableRangeCollection<CreditCard>? _creditCards;
+    public ObservableRangeCollection<CreditCard> CreditCards
     {
-        get { if (_creditCards == null) CreditCards = new ObservableCollection<CreditCard>(); return _creditCards!; }
+        get { if (_creditCards == null) CreditCards = new ObservableRangeCollection<CreditCard>(); return _creditCards!; }
         private set => SetProperty(ref _creditCards, value);
     }
 
@@ -131,7 +122,6 @@ public partial class MainModel
         _creditCards = null;
         OnPropertyChanged(nameof(CreditCards));
 
-        // Reset the load state flag
         IsCreditCardsLoaded = false;
     }
 }

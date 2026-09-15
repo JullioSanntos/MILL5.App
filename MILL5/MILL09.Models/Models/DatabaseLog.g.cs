@@ -56,18 +56,9 @@ public partial class DatabaseLog : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<DatabaseLog>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.DatabaseLogId).ToHashSet();
-        var collection = MainModel.Instance.DatabaseLogs;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.DatabaseLogId, freshItem.DatabaseLogId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].DatabaseLogId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<DatabaseLog>)MainModel.Instance.DatabaseLogs).ReplaceRange(fresh);
+
         MainModel.Instance.IsDatabaseLogsLoaded = true;
         OnRefreshed();
     }
@@ -105,10 +96,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<DatabaseLog>? _databaseLogs;
-    public ObservableCollection<DatabaseLog> DatabaseLogs
+    private ObservableRangeCollection<DatabaseLog>? _databaseLogs;
+    public ObservableRangeCollection<DatabaseLog> DatabaseLogs
     {
-        get { if (_databaseLogs == null) DatabaseLogs = new ObservableCollection<DatabaseLog>(); return _databaseLogs!; }
+        get { if (_databaseLogs == null) DatabaseLogs = new ObservableRangeCollection<DatabaseLog>(); return _databaseLogs!; }
         private set => SetProperty(ref _databaseLogs, value);
     }
 
@@ -125,7 +116,6 @@ public partial class MainModel
         _databaseLogs = null;
         OnPropertyChanged(nameof(DatabaseLogs));
 
-        // Reset the load state flag
         IsDatabaseLogsLoaded = false;
     }
 }

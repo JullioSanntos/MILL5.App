@@ -59,18 +59,9 @@ public partial class ErrorLog : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ErrorLog>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ErrorLogId).ToHashSet();
-        var collection = MainModel.Instance.ErrorLogs;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ErrorLogId, freshItem.ErrorLogId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ErrorLogId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ErrorLog>)MainModel.Instance.ErrorLogs).ReplaceRange(fresh);
+
         MainModel.Instance.IsErrorLogsLoaded = true;
         OnRefreshed();
     }
@@ -109,10 +100,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ErrorLog>? _errorLogs;
-    public ObservableCollection<ErrorLog> ErrorLogs
+    private ObservableRangeCollection<ErrorLog>? _errorLogs;
+    public ObservableRangeCollection<ErrorLog> ErrorLogs
     {
-        get { if (_errorLogs == null) ErrorLogs = new ObservableCollection<ErrorLog>(); return _errorLogs!; }
+        get { if (_errorLogs == null) ErrorLogs = new ObservableRangeCollection<ErrorLog>(); return _errorLogs!; }
         private set => SetProperty(ref _errorLogs, value);
     }
 
@@ -129,7 +120,6 @@ public partial class MainModel
         _errorLogs = null;
         OnPropertyChanged(nameof(ErrorLogs));
 
-        // Reset the load state flag
         IsErrorLogsLoaded = false;
     }
 }

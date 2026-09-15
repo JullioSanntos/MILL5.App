@@ -55,18 +55,9 @@ public partial class BusinessEntityContact : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<BusinessEntityContact>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.BusinessEntityContacts;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<BusinessEntityContact>)MainModel.Instance.BusinessEntityContacts).ReplaceRange(fresh);
+
         MainModel.Instance.IsBusinessEntityContactsLoaded = true;
         OnRefreshed();
     }
@@ -101,10 +92,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<BusinessEntityContact>? _businessEntityContacts;
-    public ObservableCollection<BusinessEntityContact> BusinessEntityContacts
+    private ObservableRangeCollection<BusinessEntityContact>? _businessEntityContacts;
+    public ObservableRangeCollection<BusinessEntityContact> BusinessEntityContacts
     {
-        get { if (_businessEntityContacts == null) BusinessEntityContacts = new ObservableCollection<BusinessEntityContact>(); return _businessEntityContacts!; }
+        get { if (_businessEntityContacts == null) BusinessEntityContacts = new ObservableRangeCollection<BusinessEntityContact>(); return _businessEntityContacts!; }
         private set => SetProperty(ref _businessEntityContacts, value);
     }
 
@@ -121,7 +112,6 @@ public partial class MainModel
         _businessEntityContacts = null;
         OnPropertyChanged(nameof(BusinessEntityContacts));
 
-        // Reset the load state flag
         IsBusinessEntityContactsLoaded = false;
     }
 }

@@ -72,18 +72,9 @@ public partial class SpecialOffer : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SpecialOffer>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SpecialOfferId).ToHashSet();
-        var collection = MainModel.Instance.SpecialOffers;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SpecialOfferId, freshItem.SpecialOfferId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SpecialOfferId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SpecialOffer>)MainModel.Instance.SpecialOffers).ReplaceRange(fresh);
+
         MainModel.Instance.IsSpecialOffersLoaded = true;
         OnRefreshed();
     }
@@ -124,10 +115,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SpecialOffer>? _specialOffers;
-    public ObservableCollection<SpecialOffer> SpecialOffers
+    private ObservableRangeCollection<SpecialOffer>? _specialOffers;
+    public ObservableRangeCollection<SpecialOffer> SpecialOffers
     {
-        get { if (_specialOffers == null) SpecialOffers = new ObservableCollection<SpecialOffer>(); return _specialOffers!; }
+        get { if (_specialOffers == null) SpecialOffers = new ObservableRangeCollection<SpecialOffer>(); return _specialOffers!; }
         private set => SetProperty(ref _specialOffers, value);
     }
 
@@ -144,7 +135,6 @@ public partial class MainModel
         _specialOffers = null;
         OnPropertyChanged(nameof(SpecialOffers));
 
-        // Reset the load state flag
         IsSpecialOffersLoaded = false;
     }
 }

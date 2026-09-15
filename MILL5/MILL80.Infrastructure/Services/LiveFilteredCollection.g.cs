@@ -13,22 +13,6 @@ using System.ComponentModel;
 
 namespace MILL80.Infrastructure.Services;
 
-/// <summary>
-/// An ObservableCollection holding the subset of a source collection that matches a
-/// filter, kept current as the source changes and as items' watched properties change.
-///
-/// This is what CollectionViewSource does, without the PresentationFramework dependency
-/// that rules it out below the UI tier. LINQ is not an alternative: Where returns a
-/// snapshot, this raises CollectionChanged as the projection changes.
-///
-/// Pass the property names to watch. Passing none means only additions and removals are
-/// tracked — an item that starts matching the filter after a property change is missed.
-///
-/// DISPOSE IT when the projection outlives its usefulness. The constructor subscribes to
-/// the source and to every item in it, so an undisposed instance stays alive — and keeps
-/// receiving events — for as long as the source does. A lazy property on a long-lived
-/// object is fine; one created per selection change is not.
-/// </summary>
 public sealed class LiveFilteredCollection<T> : ObservableCollection<T>, IDisposable where T : INotifyPropertyChanged {
 
     private readonly ObservableCollection<T> _source;
@@ -48,7 +32,7 @@ public sealed class LiveFilteredCollection<T> : ObservableCollection<T>, IDispos
         _source.CollectionChanged += OnSourceCollectionChanged;
     }
 
-    private void OnSourceCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+    private void OnSourceCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
         if (e.NewItems != null) {
             foreach (T item in e.NewItems) {
                 item.PropertyChanged += OnSourceItemPropertyChanged;
@@ -63,7 +47,7 @@ public sealed class LiveFilteredCollection<T> : ObservableCollection<T>, IDispos
         }
     }
 
-    private void OnSourceItemPropertyChanged(object? sender, PropertyChangedEventArgs e) {
+    private void OnSourceItemPropertyChanged(object sender, PropertyChangedEventArgs e) {
         if (sender is not T item) return;
         if (e.PropertyName != null && !_watchedProperties.Contains(e.PropertyName)) return;
 
@@ -73,9 +57,6 @@ public sealed class LiveFilteredCollection<T> : ObservableCollection<T>, IDispos
         else if (!matches && currentlyIncluded) Remove(item);
     }
 
-    /// <summary>Unsubscribes from the source and from every item in it. Without this the
-    /// instance stays reachable through those event handlers for as long as the source
-    /// lives, still doing filter work nobody reads.</summary>
     public void Dispose() {
         if (_disposed) return;
         _disposed = true;

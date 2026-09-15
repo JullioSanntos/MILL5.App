@@ -48,18 +48,9 @@ public partial class PhoneNumberType : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<PhoneNumberType>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.PhoneNumberTypeId).ToHashSet();
-        var collection = MainModel.Instance.PhoneNumberTypes;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.PhoneNumberTypeId, freshItem.PhoneNumberTypeId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].PhoneNumberTypeId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<PhoneNumberType>)MainModel.Instance.PhoneNumberTypes).ReplaceRange(fresh);
+
         MainModel.Instance.IsPhoneNumberTypesLoaded = true;
         OnRefreshed();
     }
@@ -92,10 +83,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<PhoneNumberType>? _phoneNumberTypes;
-    public ObservableCollection<PhoneNumberType> PhoneNumberTypes
+    private ObservableRangeCollection<PhoneNumberType>? _phoneNumberTypes;
+    public ObservableRangeCollection<PhoneNumberType> PhoneNumberTypes
     {
-        get { if (_phoneNumberTypes == null) PhoneNumberTypes = new ObservableCollection<PhoneNumberType>(); return _phoneNumberTypes!; }
+        get { if (_phoneNumberTypes == null) PhoneNumberTypes = new ObservableRangeCollection<PhoneNumberType>(); return _phoneNumberTypes!; }
         private set => SetProperty(ref _phoneNumberTypes, value);
     }
 
@@ -112,7 +103,6 @@ public partial class MainModel
         _phoneNumberTypes = null;
         OnPropertyChanged(nameof(PhoneNumberTypes));
 
-        // Reset the load state flag
         IsPhoneNumberTypesLoaded = false;
     }
 }

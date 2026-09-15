@@ -51,18 +51,9 @@ public partial class ProductDescription : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductDescription>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductDescriptionId).ToHashSet();
-        var collection = MainModel.Instance.ProductDescriptions;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductDescriptionId, freshItem.ProductDescriptionId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductDescriptionId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductDescription>)MainModel.Instance.ProductDescriptions).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductDescriptionsLoaded = true;
         OnRefreshed();
     }
@@ -96,10 +87,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductDescription>? _productDescriptions;
-    public ObservableCollection<ProductDescription> ProductDescriptions
+    private ObservableRangeCollection<ProductDescription>? _productDescriptions;
+    public ObservableRangeCollection<ProductDescription> ProductDescriptions
     {
-        get { if (_productDescriptions == null) ProductDescriptions = new ObservableCollection<ProductDescription>(); return _productDescriptions!; }
+        get { if (_productDescriptions == null) ProductDescriptions = new ObservableRangeCollection<ProductDescription>(); return _productDescriptions!; }
         private set => SetProperty(ref _productDescriptions, value);
     }
 
@@ -116,7 +107,6 @@ public partial class MainModel
         _productDescriptions = null;
         OnPropertyChanged(nameof(ProductDescriptions));
 
-        // Reset the load state flag
         IsProductDescriptionsLoaded = false;
     }
 }

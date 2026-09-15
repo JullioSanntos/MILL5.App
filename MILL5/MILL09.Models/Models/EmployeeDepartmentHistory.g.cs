@@ -58,18 +58,9 @@ public partial class EmployeeDepartmentHistory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<EmployeeDepartmentHistory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.EmployeeDepartmentHistories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<EmployeeDepartmentHistory>)MainModel.Instance.EmployeeDepartmentHistories).ReplaceRange(fresh);
+
         MainModel.Instance.IsEmployeeDepartmentHistoriesLoaded = true;
         OnRefreshed();
     }
@@ -105,10 +96,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<EmployeeDepartmentHistory>? _employeeDepartmentHistories;
-    public ObservableCollection<EmployeeDepartmentHistory> EmployeeDepartmentHistories
+    private ObservableRangeCollection<EmployeeDepartmentHistory>? _employeeDepartmentHistories;
+    public ObservableRangeCollection<EmployeeDepartmentHistory> EmployeeDepartmentHistories
     {
-        get { if (_employeeDepartmentHistories == null) EmployeeDepartmentHistories = new ObservableCollection<EmployeeDepartmentHistory>(); return _employeeDepartmentHistories!; }
+        get { if (_employeeDepartmentHistories == null) EmployeeDepartmentHistories = new ObservableRangeCollection<EmployeeDepartmentHistory>(); return _employeeDepartmentHistories!; }
         private set => SetProperty(ref _employeeDepartmentHistories, value);
     }
 
@@ -125,7 +116,6 @@ public partial class MainModel
         _employeeDepartmentHistories = null;
         OnPropertyChanged(nameof(EmployeeDepartmentHistories));
 
-        // Reset the load state flag
         IsEmployeeDepartmentHistoriesLoaded = false;
     }
 }

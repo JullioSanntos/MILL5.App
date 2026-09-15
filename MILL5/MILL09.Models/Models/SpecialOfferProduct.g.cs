@@ -57,18 +57,9 @@ public partial class SpecialOfferProduct : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SpecialOfferProduct>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SpecialOfferId).ToHashSet();
-        var collection = MainModel.Instance.SpecialOfferProducts;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SpecialOfferId, freshItem.SpecialOfferId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SpecialOfferId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SpecialOfferProduct>)MainModel.Instance.SpecialOfferProducts).ReplaceRange(fresh);
+
         MainModel.Instance.IsSpecialOfferProductsLoaded = true;
         OnRefreshed();
     }
@@ -102,10 +93,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SpecialOfferProduct>? _specialOfferProducts;
-    public ObservableCollection<SpecialOfferProduct> SpecialOfferProducts
+    private ObservableRangeCollection<SpecialOfferProduct>? _specialOfferProducts;
+    public ObservableRangeCollection<SpecialOfferProduct> SpecialOfferProducts
     {
-        get { if (_specialOfferProducts == null) SpecialOfferProducts = new ObservableCollection<SpecialOfferProduct>(); return _specialOfferProducts!; }
+        get { if (_specialOfferProducts == null) SpecialOfferProducts = new ObservableRangeCollection<SpecialOfferProduct>(); return _specialOfferProducts!; }
         private set => SetProperty(ref _specialOfferProducts, value);
     }
 
@@ -122,7 +113,6 @@ public partial class MainModel
         _specialOfferProducts = null;
         OnPropertyChanged(nameof(SpecialOfferProducts));
 
-        // Reset the load state flag
         IsSpecialOfferProductsLoaded = false;
     }
 }

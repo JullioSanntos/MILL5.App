@@ -73,18 +73,9 @@ public partial class ProductVendor : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductVendor>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductId).ToHashSet();
-        var collection = MainModel.Instance.ProductVendors;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductId, freshItem.ProductId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductVendor>)MainModel.Instance.ProductVendors).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductVendorsLoaded = true;
         OnRefreshed();
     }
@@ -125,10 +116,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductVendor>? _productVendors;
-    public ObservableCollection<ProductVendor> ProductVendors
+    private ObservableRangeCollection<ProductVendor>? _productVendors;
+    public ObservableRangeCollection<ProductVendor> ProductVendors
     {
-        get { if (_productVendors == null) ProductVendors = new ObservableCollection<ProductVendor>(); return _productVendors!; }
+        get { if (_productVendors == null) ProductVendors = new ObservableRangeCollection<ProductVendor>(); return _productVendors!; }
         private set => SetProperty(ref _productVendors, value);
     }
 
@@ -145,7 +136,6 @@ public partial class MainModel
         _productVendors = null;
         OnPropertyChanged(nameof(ProductVendors));
 
-        // Reset the load state flag
         IsProductVendorsLoaded = false;
     }
 }

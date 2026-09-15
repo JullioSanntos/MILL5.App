@@ -47,18 +47,9 @@ public partial class SalesOrderHeaderSalesReason : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesOrderHeaderSalesReason>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SalesOrderId).ToHashSet();
-        var collection = MainModel.Instance.SalesOrderHeaderSalesReasons;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SalesOrderId, freshItem.SalesOrderId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SalesOrderId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesOrderHeaderSalesReason>)MainModel.Instance.SalesOrderHeaderSalesReasons).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesOrderHeaderSalesReasonsLoaded = true;
         OnRefreshed();
     }
@@ -91,10 +82,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesOrderHeaderSalesReason>? _salesOrderHeaderSalesReasons;
-    public ObservableCollection<SalesOrderHeaderSalesReason> SalesOrderHeaderSalesReasons
+    private ObservableRangeCollection<SalesOrderHeaderSalesReason>? _salesOrderHeaderSalesReasons;
+    public ObservableRangeCollection<SalesOrderHeaderSalesReason> SalesOrderHeaderSalesReasons
     {
-        get { if (_salesOrderHeaderSalesReasons == null) SalesOrderHeaderSalesReasons = new ObservableCollection<SalesOrderHeaderSalesReason>(); return _salesOrderHeaderSalesReasons!; }
+        get { if (_salesOrderHeaderSalesReasons == null) SalesOrderHeaderSalesReasons = new ObservableRangeCollection<SalesOrderHeaderSalesReason>(); return _salesOrderHeaderSalesReasons!; }
         private set => SetProperty(ref _salesOrderHeaderSalesReasons, value);
     }
 
@@ -111,7 +102,6 @@ public partial class MainModel
         _salesOrderHeaderSalesReasons = null;
         OnPropertyChanged(nameof(SalesOrderHeaderSalesReasons));
 
-        // Reset the load state flag
         IsSalesOrderHeaderSalesReasonsLoaded = false;
     }
 }

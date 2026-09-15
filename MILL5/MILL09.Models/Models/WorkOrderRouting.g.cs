@@ -72,18 +72,9 @@ public partial class WorkOrderRouting : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<WorkOrderRouting>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.WorkOrderId).ToHashSet();
-        var collection = MainModel.Instance.WorkOrderRoutings;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.WorkOrderId, freshItem.WorkOrderId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].WorkOrderId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<WorkOrderRouting>)MainModel.Instance.WorkOrderRoutings).ReplaceRange(fresh);
+
         MainModel.Instance.IsWorkOrderRoutingsLoaded = true;
         OnRefreshed();
     }
@@ -125,10 +116,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<WorkOrderRouting>? _workOrderRoutings;
-    public ObservableCollection<WorkOrderRouting> WorkOrderRoutings
+    private ObservableRangeCollection<WorkOrderRouting>? _workOrderRoutings;
+    public ObservableRangeCollection<WorkOrderRouting> WorkOrderRoutings
     {
-        get { if (_workOrderRoutings == null) WorkOrderRoutings = new ObservableCollection<WorkOrderRouting>(); return _workOrderRoutings!; }
+        get { if (_workOrderRoutings == null) WorkOrderRoutings = new ObservableRangeCollection<WorkOrderRouting>(); return _workOrderRoutings!; }
         private set => SetProperty(ref _workOrderRoutings, value);
     }
 
@@ -145,7 +136,6 @@ public partial class MainModel
         _workOrderRoutings = null;
         OnPropertyChanged(nameof(WorkOrderRoutings));
 
-        // Reset the load state flag
         IsWorkOrderRoutingsLoaded = false;
     }
 }

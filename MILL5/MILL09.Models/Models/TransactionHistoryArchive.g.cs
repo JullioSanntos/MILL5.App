@@ -59,18 +59,9 @@ public partial class TransactionHistoryArchive : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<TransactionHistoryArchive>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.TransactionId).ToHashSet();
-        var collection = MainModel.Instance.TransactionHistoryArchives;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.TransactionId, freshItem.TransactionId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].TransactionId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<TransactionHistoryArchive>)MainModel.Instance.TransactionHistoryArchives).ReplaceRange(fresh);
+
         MainModel.Instance.IsTransactionHistoryArchivesLoaded = true;
         OnRefreshed();
     }
@@ -109,10 +100,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<TransactionHistoryArchive>? _transactionHistoryArchives;
-    public ObservableCollection<TransactionHistoryArchive> TransactionHistoryArchives
+    private ObservableRangeCollection<TransactionHistoryArchive>? _transactionHistoryArchives;
+    public ObservableRangeCollection<TransactionHistoryArchive> TransactionHistoryArchives
     {
-        get { if (_transactionHistoryArchives == null) TransactionHistoryArchives = new ObservableCollection<TransactionHistoryArchive>(); return _transactionHistoryArchives!; }
+        get { if (_transactionHistoryArchives == null) TransactionHistoryArchives = new ObservableRangeCollection<TransactionHistoryArchive>(); return _transactionHistoryArchives!; }
         private set => SetProperty(ref _transactionHistoryArchives, value);
     }
 
@@ -129,7 +120,6 @@ public partial class MainModel
         _transactionHistoryArchives = null;
         OnPropertyChanged(nameof(TransactionHistoryArchives));
 
-        // Reset the load state flag
         IsTransactionHistoryArchivesLoaded = false;
     }
 }

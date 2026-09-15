@@ -18,7 +18,8 @@ using MILL09.Models.Interfaces;
 using MILL80.Infrastructure.Services;
 using MILL80.Infrastructure;
 
-namespace MILL09.Models {
+namespace MILL09.Models
+{
 public partial class AddressType : ModelEntityBase
 {
     [ObservableProperty]
@@ -50,18 +51,9 @@ public partial class AddressType : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<AddressType>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.AddressTypeId).ToHashSet();
-        var collection = MainModel.Instance.AddressTypes;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.AddressTypeId, freshItem.AddressTypeId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].AddressTypeId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<AddressType>)MainModel.Instance.AddressTypes).ReplaceRange(fresh);
+
         MainModel.Instance.IsAddressTypesLoaded = true;
         OnRefreshed();
     }
@@ -95,10 +87,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<AddressType>? _addressTypes;
-    public ObservableCollection<AddressType> AddressTypes
+    private ObservableRangeCollection<AddressType>? _addressTypes;
+    public ObservableRangeCollection<AddressType> AddressTypes
     {
-        get { if (_addressTypes == null) AddressTypes = new ObservableCollection<AddressType>(); return _addressTypes!; }
+        get { if (_addressTypes == null) AddressTypes = new ObservableRangeCollection<AddressType>(); return _addressTypes!; }
         private set => SetProperty(ref _addressTypes, value);
     }
 
@@ -115,7 +107,6 @@ public partial class MainModel
         _addressTypes = null;
         OnPropertyChanged(nameof(AddressTypes));
 
-        // Reset the load state flag
         IsAddressTypesLoaded = false;
     }
 }

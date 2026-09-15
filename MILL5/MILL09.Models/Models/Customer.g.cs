@@ -72,18 +72,9 @@ public partial class Customer : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Customer>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.CustomerId).ToHashSet();
-        var collection = MainModel.Instance.Customers;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.CustomerId, freshItem.CustomerId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].CustomerId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Customer>)MainModel.Instance.Customers).ReplaceRange(fresh);
+
         MainModel.Instance.IsCustomersLoaded = true;
         OnRefreshed();
     }
@@ -120,10 +111,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Customer>? _customers;
-    public ObservableCollection<Customer> Customers
+    private ObservableRangeCollection<Customer>? _customers;
+    public ObservableRangeCollection<Customer> Customers
     {
-        get { if (_customers == null) Customers = new ObservableCollection<Customer>(); return _customers!; }
+        get { if (_customers == null) Customers = new ObservableRangeCollection<Customer>(); return _customers!; }
         private set => SetProperty(ref _customers, value);
     }
 
@@ -140,7 +131,6 @@ public partial class MainModel
         _customers = null;
         OnPropertyChanged(nameof(Customers));
 
-        // Reset the load state flag
         IsCustomersLoaded = false;
     }
 }

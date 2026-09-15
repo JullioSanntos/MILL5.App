@@ -56,18 +56,9 @@ public partial class ProductSubcategory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductSubcategory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductSubcategoryId).ToHashSet();
-        var collection = MainModel.Instance.ProductSubcategories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductSubcategoryId, freshItem.ProductSubcategoryId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductSubcategoryId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductSubcategory>)MainModel.Instance.ProductSubcategories).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductSubcategoriesLoaded = true;
         OnRefreshed();
     }
@@ -102,10 +93,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductSubcategory>? _productSubcategories;
-    public ObservableCollection<ProductSubcategory> ProductSubcategories
+    private ObservableRangeCollection<ProductSubcategory>? _productSubcategories;
+    public ObservableRangeCollection<ProductSubcategory> ProductSubcategories
     {
-        get { if (_productSubcategories == null) ProductSubcategories = new ObservableCollection<ProductSubcategory>(); return _productSubcategories!; }
+        get { if (_productSubcategories == null) ProductSubcategories = new ObservableRangeCollection<ProductSubcategory>(); return _productSubcategories!; }
         private set => SetProperty(ref _productSubcategories, value);
     }
 
@@ -122,7 +113,6 @@ public partial class MainModel
         _productSubcategories = null;
         OnPropertyChanged(nameof(ProductSubcategories));
 
-        // Reset the load state flag
         IsProductSubcategoriesLoaded = false;
     }
 }

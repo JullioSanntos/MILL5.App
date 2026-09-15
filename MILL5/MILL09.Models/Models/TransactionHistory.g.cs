@@ -61,18 +61,9 @@ public partial class TransactionHistory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<TransactionHistory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.TransactionId).ToHashSet();
-        var collection = MainModel.Instance.TransactionHistories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.TransactionId, freshItem.TransactionId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].TransactionId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<TransactionHistory>)MainModel.Instance.TransactionHistories).ReplaceRange(fresh);
+
         MainModel.Instance.IsTransactionHistoriesLoaded = true;
         OnRefreshed();
     }
@@ -111,10 +102,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<TransactionHistory>? _transactionHistories;
-    public ObservableCollection<TransactionHistory> TransactionHistories
+    private ObservableRangeCollection<TransactionHistory>? _transactionHistories;
+    public ObservableRangeCollection<TransactionHistory> TransactionHistories
     {
-        get { if (_transactionHistories == null) TransactionHistories = new ObservableCollection<TransactionHistory>(); return _transactionHistories!; }
+        get { if (_transactionHistories == null) TransactionHistories = new ObservableRangeCollection<TransactionHistory>(); return _transactionHistories!; }
         private set => SetProperty(ref _transactionHistories, value);
     }
 
@@ -131,7 +122,6 @@ public partial class MainModel
         _transactionHistories = null;
         OnPropertyChanged(nameof(TransactionHistories));
 
-        // Reset the load state flag
         IsTransactionHistoriesLoaded = false;
     }
 }

@@ -18,9 +18,10 @@ using MILL09.Models.Interfaces;
 using MILL80.Infrastructure.Services;
 using MILL80.Infrastructure;
 
-
-namespace MILL09.Models {
-public partial class Address : ModelEntityBase {
+namespace MILL09.Models
+{
+public partial class Address : ModelEntityBase
+{
     [ObservableProperty]
     private int _addressId;
 
@@ -82,18 +83,9 @@ public partial class Address : ModelEntityBase {
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Address>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.AddressId).ToHashSet();
-        var collection = MainModel.Instance.Addresses;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.AddressId, freshItem.AddressId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].AddressId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Address>)MainModel.Instance.Addresses).ReplaceRange(fresh);
+
         MainModel.Instance.IsAddressesLoaded = true;
         OnRefreshed();
     }
@@ -127,12 +119,14 @@ public partial class Address : ModelEntityBase {
 }
 }
 
-namespace MILL09.Models {
-public partial class MainModel {
-    private ObservableCollection<Address>? _addresses;
-    public ObservableCollection<Address> Addresses
+namespace MILL09.Models
+{
+public partial class MainModel
+{
+    private ObservableRangeCollection<Address>? _addresses;
+    public ObservableRangeCollection<Address> Addresses
     {
-        get { if (_addresses == null) Addresses = new ObservableCollection<Address>(); return _addresses!; }
+        get { if (_addresses == null) Addresses = new ObservableRangeCollection<Address>(); return _addresses!; }
         private set => SetProperty(ref _addresses, value);
     }
 
@@ -149,7 +143,6 @@ public partial class MainModel {
         _addresses = null;
         OnPropertyChanged(nameof(Addresses));
 
-        // Reset the load state flag
         IsAddressesLoaded = false;
     }
 }

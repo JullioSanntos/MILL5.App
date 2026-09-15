@@ -51,18 +51,9 @@ public partial class EmployeePayHistory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<EmployeePayHistory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.EmployeePayHistories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<EmployeePayHistory>)MainModel.Instance.EmployeePayHistories).ReplaceRange(fresh);
+
         MainModel.Instance.IsEmployeePayHistoriesLoaded = true;
         OnRefreshed();
     }
@@ -97,10 +88,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<EmployeePayHistory>? _employeePayHistories;
-    public ObservableCollection<EmployeePayHistory> EmployeePayHistories
+    private ObservableRangeCollection<EmployeePayHistory>? _employeePayHistories;
+    public ObservableRangeCollection<EmployeePayHistory> EmployeePayHistories
     {
-        get { if (_employeePayHistories == null) EmployeePayHistories = new ObservableCollection<EmployeePayHistory>(); return _employeePayHistories!; }
+        get { if (_employeePayHistories == null) EmployeePayHistories = new ObservableRangeCollection<EmployeePayHistory>(); return _employeePayHistories!; }
         private set => SetProperty(ref _employeePayHistories, value);
     }
 
@@ -117,7 +108,6 @@ public partial class MainModel
         _employeePayHistories = null;
         OnPropertyChanged(nameof(EmployeePayHistories));
 
-        // Reset the load state flag
         IsEmployeePayHistoriesLoaded = false;
     }
 }

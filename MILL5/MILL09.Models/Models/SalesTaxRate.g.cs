@@ -55,18 +55,9 @@ public partial class SalesTaxRate : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesTaxRate>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SalesTaxRateId).ToHashSet();
-        var collection = MainModel.Instance.SalesTaxRates;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SalesTaxRateId, freshItem.SalesTaxRateId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SalesTaxRateId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesTaxRate>)MainModel.Instance.SalesTaxRates).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesTaxRatesLoaded = true;
         OnRefreshed();
     }
@@ -103,10 +94,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesTaxRate>? _salesTaxRates;
-    public ObservableCollection<SalesTaxRate> SalesTaxRates
+    private ObservableRangeCollection<SalesTaxRate>? _salesTaxRates;
+    public ObservableRangeCollection<SalesTaxRate> SalesTaxRates
     {
-        get { if (_salesTaxRates == null) SalesTaxRates = new ObservableCollection<SalesTaxRate>(); return _salesTaxRates!; }
+        get { if (_salesTaxRates == null) SalesTaxRates = new ObservableRangeCollection<SalesTaxRate>(); return _salesTaxRates!; }
         private set => SetProperty(ref _salesTaxRates, value);
     }
 
@@ -123,7 +114,6 @@ public partial class MainModel
         _salesTaxRates = null;
         OnPropertyChanged(nameof(SalesTaxRates));
 
-        // Reset the load state flag
         IsSalesTaxRatesLoaded = false;
     }
 }

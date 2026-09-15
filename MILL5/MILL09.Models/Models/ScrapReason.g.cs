@@ -48,18 +48,9 @@ public partial class ScrapReason : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ScrapReason>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ScrapReasonId).ToHashSet();
-        var collection = MainModel.Instance.ScrapReasons;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ScrapReasonId, freshItem.ScrapReasonId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ScrapReasonId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ScrapReason>)MainModel.Instance.ScrapReasons).ReplaceRange(fresh);
+
         MainModel.Instance.IsScrapReasonsLoaded = true;
         OnRefreshed();
     }
@@ -92,10 +83,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ScrapReason>? _scrapReasons;
-    public ObservableCollection<ScrapReason> ScrapReasons
+    private ObservableRangeCollection<ScrapReason>? _scrapReasons;
+    public ObservableRangeCollection<ScrapReason> ScrapReasons
     {
-        get { if (_scrapReasons == null) ScrapReasons = new ObservableCollection<ScrapReason>(); return _scrapReasons!; }
+        get { if (_scrapReasons == null) ScrapReasons = new ObservableRangeCollection<ScrapReason>(); return _scrapReasons!; }
         private set => SetProperty(ref _scrapReasons, value);
     }
 
@@ -112,7 +103,6 @@ public partial class MainModel
         _scrapReasons = null;
         OnPropertyChanged(nameof(ScrapReasons));
 
-        // Reset the load state flag
         IsScrapReasonsLoaded = false;
     }
 }

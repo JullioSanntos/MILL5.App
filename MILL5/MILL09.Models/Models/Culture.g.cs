@@ -48,18 +48,9 @@ public partial class Culture : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Culture>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.CultureId).ToHashSet();
-        var collection = MainModel.Instance.Cultures;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.CultureId, freshItem.CultureId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].CultureId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Culture>)MainModel.Instance.Cultures).ReplaceRange(fresh);
+
         MainModel.Instance.IsCulturesLoaded = true;
         OnRefreshed();
     }
@@ -92,10 +83,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Culture>? _cultures;
-    public ObservableCollection<Culture> Cultures
+    private ObservableRangeCollection<Culture>? _cultures;
+    public ObservableRangeCollection<Culture> Cultures
     {
-        get { if (_cultures == null) Cultures = new ObservableCollection<Culture>(); return _cultures!; }
+        get { if (_cultures == null) Cultures = new ObservableRangeCollection<Culture>(); return _cultures!; }
         private set => SetProperty(ref _cultures, value);
     }
 
@@ -112,7 +103,6 @@ public partial class MainModel
         _cultures = null;
         OnPropertyChanged(nameof(Cultures));
 
-        // Reset the load state flag
         IsCulturesLoaded = false;
     }
 }

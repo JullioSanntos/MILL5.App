@@ -64,18 +64,9 @@ public partial class ShipMethod : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ShipMethod>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ShipMethodId).ToHashSet();
-        var collection = MainModel.Instance.ShipMethods;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ShipMethodId, freshItem.ShipMethodId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ShipMethodId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ShipMethod>)MainModel.Instance.ShipMethods).ReplaceRange(fresh);
+
         MainModel.Instance.IsShipMethodsLoaded = true;
         OnRefreshed();
     }
@@ -111,10 +102,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ShipMethod>? _shipMethods;
-    public ObservableCollection<ShipMethod> ShipMethods
+    private ObservableRangeCollection<ShipMethod>? _shipMethods;
+    public ObservableRangeCollection<ShipMethod> ShipMethods
     {
-        get { if (_shipMethods == null) ShipMethods = new ObservableCollection<ShipMethod>(); return _shipMethods!; }
+        get { if (_shipMethods == null) ShipMethods = new ObservableRangeCollection<ShipMethod>(); return _shipMethods!; }
         private set => SetProperty(ref _shipMethods, value);
     }
 
@@ -131,7 +122,6 @@ public partial class MainModel
         _shipMethods = null;
         OnPropertyChanged(nameof(ShipMethods));
 
-        // Reset the load state flag
         IsShipMethodsLoaded = false;
     }
 }

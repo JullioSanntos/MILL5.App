@@ -45,18 +45,9 @@ public partial class CountryRegionCurrency : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<CountryRegionCurrency>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.CountryRegionCode).ToHashSet();
-        var collection = MainModel.Instance.CountryRegionCurrencies;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.CountryRegionCode, freshItem.CountryRegionCode));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].CountryRegionCode)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<CountryRegionCurrency>)MainModel.Instance.CountryRegionCurrencies).ReplaceRange(fresh);
+
         MainModel.Instance.IsCountryRegionCurrenciesLoaded = true;
         OnRefreshed();
     }
@@ -89,10 +80,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<CountryRegionCurrency>? _countryRegionCurrencies;
-    public ObservableCollection<CountryRegionCurrency> CountryRegionCurrencies
+    private ObservableRangeCollection<CountryRegionCurrency>? _countryRegionCurrencies;
+    public ObservableRangeCollection<CountryRegionCurrency> CountryRegionCurrencies
     {
-        get { if (_countryRegionCurrencies == null) CountryRegionCurrencies = new ObservableCollection<CountryRegionCurrency>(); return _countryRegionCurrencies!; }
+        get { if (_countryRegionCurrencies == null) CountryRegionCurrencies = new ObservableRangeCollection<CountryRegionCurrency>(); return _countryRegionCurrencies!; }
         private set => SetProperty(ref _countryRegionCurrencies, value);
     }
 
@@ -109,7 +100,6 @@ public partial class MainModel
         _countryRegionCurrencies = null;
         OnPropertyChanged(nameof(CountryRegionCurrencies));
 
-        // Reset the load state flag
         IsCountryRegionCurrenciesLoaded = false;
     }
 }

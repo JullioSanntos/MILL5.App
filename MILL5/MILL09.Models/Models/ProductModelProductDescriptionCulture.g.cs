@@ -50,18 +50,9 @@ public partial class ProductModelProductDescriptionCulture : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductModelProductDescriptionCulture>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductModelId).ToHashSet();
-        var collection = MainModel.Instance.ProductModelProductDescriptionCultures;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductModelId, freshItem.ProductModelId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductModelId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductModelProductDescriptionCulture>)MainModel.Instance.ProductModelProductDescriptionCultures).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductModelProductDescriptionCulturesLoaded = true;
         OnRefreshed();
     }
@@ -95,10 +86,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductModelProductDescriptionCulture>? _productModelProductDescriptionCultures;
-    public ObservableCollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCultures
+    private ObservableRangeCollection<ProductModelProductDescriptionCulture>? _productModelProductDescriptionCultures;
+    public ObservableRangeCollection<ProductModelProductDescriptionCulture> ProductModelProductDescriptionCultures
     {
-        get { if (_productModelProductDescriptionCultures == null) ProductModelProductDescriptionCultures = new ObservableCollection<ProductModelProductDescriptionCulture>(); return _productModelProductDescriptionCultures!; }
+        get { if (_productModelProductDescriptionCultures == null) ProductModelProductDescriptionCultures = new ObservableRangeCollection<ProductModelProductDescriptionCulture>(); return _productModelProductDescriptionCultures!; }
         private set => SetProperty(ref _productModelProductDescriptionCultures, value);
     }
 
@@ -115,7 +106,6 @@ public partial class MainModel
         _productModelProductDescriptionCultures = null;
         OnPropertyChanged(nameof(ProductModelProductDescriptionCultures));
 
-        // Reset the load state flag
         IsProductModelProductDescriptionCulturesLoaded = false;
     }
 }

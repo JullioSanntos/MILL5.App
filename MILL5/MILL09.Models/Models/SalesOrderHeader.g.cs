@@ -152,18 +152,9 @@ public partial class SalesOrderHeader : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesOrderHeader>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SalesOrderId).ToHashSet();
-        var collection = MainModel.Instance.SalesOrderHeaders;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SalesOrderId, freshItem.SalesOrderId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SalesOrderId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesOrderHeader>)MainModel.Instance.SalesOrderHeaders).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesOrderHeadersLoaded = true;
         OnRefreshed();
     }
@@ -219,10 +210,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesOrderHeader>? _salesOrderHeaders;
-    public ObservableCollection<SalesOrderHeader> SalesOrderHeaders
+    private ObservableRangeCollection<SalesOrderHeader>? _salesOrderHeaders;
+    public ObservableRangeCollection<SalesOrderHeader> SalesOrderHeaders
     {
-        get { if (_salesOrderHeaders == null) SalesOrderHeaders = new ObservableCollection<SalesOrderHeader>(); return _salesOrderHeaders!; }
+        get { if (_salesOrderHeaders == null) SalesOrderHeaders = new ObservableRangeCollection<SalesOrderHeader>(); return _salesOrderHeaders!; }
         private set => SetProperty(ref _salesOrderHeaders, value);
     }
 
@@ -239,7 +230,6 @@ public partial class MainModel
         _salesOrderHeaders = null;
         OnPropertyChanged(nameof(SalesOrderHeaders));
 
-        // Reset the load state flag
         IsSalesOrderHeadersLoaded = false;
     }
 }

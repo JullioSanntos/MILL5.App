@@ -71,18 +71,9 @@ public partial class PurchaseOrderDetail : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<PurchaseOrderDetail>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.PurchaseOrderId).ToHashSet();
-        var collection = MainModel.Instance.PurchaseOrderDetails;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.PurchaseOrderId, freshItem.PurchaseOrderId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].PurchaseOrderId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<PurchaseOrderDetail>)MainModel.Instance.PurchaseOrderDetails).ReplaceRange(fresh);
+
         MainModel.Instance.IsPurchaseOrderDetailsLoaded = true;
         OnRefreshed();
     }
@@ -123,10 +114,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<PurchaseOrderDetail>? _purchaseOrderDetails;
-    public ObservableCollection<PurchaseOrderDetail> PurchaseOrderDetails
+    private ObservableRangeCollection<PurchaseOrderDetail>? _purchaseOrderDetails;
+    public ObservableRangeCollection<PurchaseOrderDetail> PurchaseOrderDetails
     {
-        get { if (_purchaseOrderDetails == null) PurchaseOrderDetails = new ObservableCollection<PurchaseOrderDetail>(); return _purchaseOrderDetails!; }
+        get { if (_purchaseOrderDetails == null) PurchaseOrderDetails = new ObservableRangeCollection<PurchaseOrderDetail>(); return _purchaseOrderDetails!; }
         private set => SetProperty(ref _purchaseOrderDetails, value);
     }
 
@@ -143,7 +134,6 @@ public partial class MainModel
         _purchaseOrderDetails = null;
         OnPropertyChanged(nameof(PurchaseOrderDetails));
 
-        // Reset the load state flag
         IsPurchaseOrderDetailsLoaded = false;
     }
 }

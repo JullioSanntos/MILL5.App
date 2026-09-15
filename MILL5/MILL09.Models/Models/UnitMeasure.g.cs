@@ -73,18 +73,9 @@ public partial class UnitMeasure : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<UnitMeasure>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.UnitMeasureCode).ToHashSet();
-        var collection = MainModel.Instance.UnitMeasures;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.UnitMeasureCode, freshItem.UnitMeasureCode));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].UnitMeasureCode)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<UnitMeasure>)MainModel.Instance.UnitMeasures).ReplaceRange(fresh);
+
         MainModel.Instance.IsUnitMeasuresLoaded = true;
         OnRefreshed();
     }
@@ -117,10 +108,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<UnitMeasure>? _unitMeasures;
-    public ObservableCollection<UnitMeasure> UnitMeasures
+    private ObservableRangeCollection<UnitMeasure>? _unitMeasures;
+    public ObservableRangeCollection<UnitMeasure> UnitMeasures
     {
-        get { if (_unitMeasures == null) UnitMeasures = new ObservableCollection<UnitMeasure>(); return _unitMeasures!; }
+        get { if (_unitMeasures == null) UnitMeasures = new ObservableRangeCollection<UnitMeasure>(); return _unitMeasures!; }
         private set => SetProperty(ref _unitMeasures, value);
     }
 
@@ -137,7 +128,6 @@ public partial class MainModel
         _unitMeasures = null;
         OnPropertyChanged(nameof(UnitMeasures));
 
-        // Reset the load state flag
         IsUnitMeasuresLoaded = false;
     }
 }

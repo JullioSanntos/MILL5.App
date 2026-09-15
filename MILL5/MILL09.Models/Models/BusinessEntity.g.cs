@@ -67,18 +67,9 @@ public partial class BusinessEntity : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<BusinessEntity>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.BusinessEntities;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<BusinessEntity>)MainModel.Instance.BusinessEntities).ReplaceRange(fresh);
+
         MainModel.Instance.IsBusinessEntitiesLoaded = true;
         OnRefreshed();
     }
@@ -111,10 +102,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<BusinessEntity>? _businessEntities;
-    public ObservableCollection<BusinessEntity> BusinessEntities
+    private ObservableRangeCollection<BusinessEntity>? _businessEntities;
+    public ObservableRangeCollection<BusinessEntity> BusinessEntities
     {
-        get { if (_businessEntities == null) BusinessEntities = new ObservableCollection<BusinessEntity>(); return _businessEntities!; }
+        get { if (_businessEntities == null) BusinessEntities = new ObservableRangeCollection<BusinessEntity>(); return _businessEntities!; }
         private set => SetProperty(ref _businessEntities, value);
     }
 
@@ -131,7 +122,6 @@ public partial class MainModel
         _businessEntities = null;
         OnPropertyChanged(nameof(BusinessEntities));
 
-        // Reset the load state flag
         IsBusinessEntitiesLoaded = false;
     }
 }

@@ -73,18 +73,9 @@ public partial class SalesOrderDetail : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesOrderDetail>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SalesOrderId).ToHashSet();
-        var collection = MainModel.Instance.SalesOrderDetails;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SalesOrderId, freshItem.SalesOrderId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SalesOrderId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesOrderDetail>)MainModel.Instance.SalesOrderDetails).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesOrderDetailsLoaded = true;
         OnRefreshed();
     }
@@ -125,10 +116,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesOrderDetail>? _salesOrderDetails;
-    public ObservableCollection<SalesOrderDetail> SalesOrderDetails
+    private ObservableRangeCollection<SalesOrderDetail>? _salesOrderDetails;
+    public ObservableRangeCollection<SalesOrderDetail> SalesOrderDetails
     {
-        get { if (_salesOrderDetails == null) SalesOrderDetails = new ObservableCollection<SalesOrderDetail>(); return _salesOrderDetails!; }
+        get { if (_salesOrderDetails == null) SalesOrderDetails = new ObservableRangeCollection<SalesOrderDetail>(); return _salesOrderDetails!; }
         private set => SetProperty(ref _salesOrderDetails, value);
     }
 
@@ -145,7 +136,6 @@ public partial class MainModel
         _salesOrderDetails = null;
         OnPropertyChanged(nameof(SalesOrderDetails));
 
-        // Reset the load state flag
         IsSalesOrderDetailsLoaded = false;
     }
 }

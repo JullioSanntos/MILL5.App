@@ -57,18 +57,9 @@ public partial class ProductInventory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductInventory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductId).ToHashSet();
-        var collection = MainModel.Instance.ProductInventories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductId, freshItem.ProductId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductInventory>)MainModel.Instance.ProductInventories).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductInventoriesLoaded = true;
         OnRefreshed();
     }
@@ -105,10 +96,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductInventory>? _productInventories;
-    public ObservableCollection<ProductInventory> ProductInventories
+    private ObservableRangeCollection<ProductInventory>? _productInventories;
+    public ObservableRangeCollection<ProductInventory> ProductInventories
     {
-        get { if (_productInventories == null) ProductInventories = new ObservableCollection<ProductInventory>(); return _productInventories!; }
+        get { if (_productInventories == null) ProductInventories = new ObservableRangeCollection<ProductInventory>(); return _productInventories!; }
         private set => SetProperty(ref _productInventories, value);
     }
 
@@ -125,7 +116,6 @@ public partial class MainModel
         _productInventories = null;
         OnPropertyChanged(nameof(ProductInventories));
 
-        // Reset the load state flag
         IsProductInventoriesLoaded = false;
     }
 }

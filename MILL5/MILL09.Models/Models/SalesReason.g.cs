@@ -51,18 +51,9 @@ public partial class SalesReason : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesReason>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SalesReasonId).ToHashSet();
-        var collection = MainModel.Instance.SalesReasons;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SalesReasonId, freshItem.SalesReasonId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SalesReasonId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesReason>)MainModel.Instance.SalesReasons).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesReasonsLoaded = true;
         OnRefreshed();
     }
@@ -96,10 +87,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesReason>? _salesReasons;
-    public ObservableCollection<SalesReason> SalesReasons
+    private ObservableRangeCollection<SalesReason>? _salesReasons;
+    public ObservableRangeCollection<SalesReason> SalesReasons
     {
-        get { if (_salesReasons == null) SalesReasons = new ObservableCollection<SalesReason>(); return _salesReasons!; }
+        get { if (_salesReasons == null) SalesReasons = new ObservableRangeCollection<SalesReason>(); return _salesReasons!; }
         private set => SetProperty(ref _salesReasons, value);
     }
 
@@ -116,7 +107,6 @@ public partial class MainModel
         _salesReasons = null;
         OnPropertyChanged(nameof(SalesReasons));
 
-        // Reset the load state flag
         IsSalesReasonsLoaded = false;
     }
 }

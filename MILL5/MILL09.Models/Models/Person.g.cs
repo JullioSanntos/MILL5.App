@@ -126,18 +126,9 @@ public partial class Person : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Person>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.Persons;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Person>)MainModel.Instance.Persons).ReplaceRange(fresh);
+
         MainModel.Instance.IsPersonsLoaded = true;
         OnRefreshed();
     }
@@ -180,10 +171,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Person>? _persons;
-    public ObservableCollection<Person> Persons
+    private ObservableRangeCollection<Person>? _persons;
+    public ObservableRangeCollection<Person> Persons
     {
-        get { if (_persons == null) Persons = new ObservableCollection<Person>(); return _persons!; }
+        get { if (_persons == null) Persons = new ObservableRangeCollection<Person>(); return _persons!; }
         private set => SetProperty(ref _persons, value);
     }
 
@@ -200,7 +191,6 @@ public partial class MainModel
         _persons = null;
         OnPropertyChanged(nameof(Persons));
 
-        // Reset the load state flag
         IsPersonsLoaded = false;
     }
 }

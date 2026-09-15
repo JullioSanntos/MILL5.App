@@ -47,18 +47,9 @@ public partial class PersonCreditCard : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<PersonCreditCard>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.PersonCreditCards;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<PersonCreditCard>)MainModel.Instance.PersonCreditCards).ReplaceRange(fresh);
+
         MainModel.Instance.IsPersonCreditCardsLoaded = true;
         OnRefreshed();
     }
@@ -91,10 +82,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<PersonCreditCard>? _personCreditCards;
-    public ObservableCollection<PersonCreditCard> PersonCreditCards
+    private ObservableRangeCollection<PersonCreditCard>? _personCreditCards;
+    public ObservableRangeCollection<PersonCreditCard> PersonCreditCards
     {
-        get { if (_personCreditCards == null) PersonCreditCards = new ObservableCollection<PersonCreditCard>(); return _personCreditCards!; }
+        get { if (_personCreditCards == null) PersonCreditCards = new ObservableRangeCollection<PersonCreditCard>(); return _personCreditCards!; }
         private set => SetProperty(ref _personCreditCards, value);
     }
 
@@ -111,7 +102,6 @@ public partial class MainModel
         _personCreditCards = null;
         OnPropertyChanged(nameof(PersonCreditCards));
 
-        // Reset the load state flag
         IsPersonCreditCardsLoaded = false;
     }
 }

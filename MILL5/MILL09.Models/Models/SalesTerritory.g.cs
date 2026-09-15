@@ -109,18 +109,9 @@ public partial class SalesTerritory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<SalesTerritory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.TerritoryId).ToHashSet();
-        var collection = MainModel.Instance.SalesTerritories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.TerritoryId, freshItem.TerritoryId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].TerritoryId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<SalesTerritory>)MainModel.Instance.SalesTerritories).ReplaceRange(fresh);
+
         MainModel.Instance.IsSalesTerritoriesLoaded = true;
         OnRefreshed();
     }
@@ -160,10 +151,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<SalesTerritory>? _salesTerritories;
-    public ObservableCollection<SalesTerritory> SalesTerritories
+    private ObservableRangeCollection<SalesTerritory>? _salesTerritories;
+    public ObservableRangeCollection<SalesTerritory> SalesTerritories
     {
-        get { if (_salesTerritories == null) SalesTerritories = new ObservableCollection<SalesTerritory>(); return _salesTerritories!; }
+        get { if (_salesTerritories == null) SalesTerritories = new ObservableRangeCollection<SalesTerritory>(); return _salesTerritories!; }
         private set => SetProperty(ref _salesTerritories, value);
     }
 
@@ -180,7 +171,6 @@ public partial class MainModel
         _salesTerritories = null;
         OnPropertyChanged(nameof(SalesTerritories));
 
-        // Reset the load state flag
         IsSalesTerritoriesLoaded = false;
     }
 }

@@ -48,18 +48,9 @@ public partial class JobCandidate : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<JobCandidate>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.JobCandidateId).ToHashSet();
-        var collection = MainModel.Instance.JobCandidates;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.JobCandidateId, freshItem.JobCandidateId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].JobCandidateId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<JobCandidate>)MainModel.Instance.JobCandidates).ReplaceRange(fresh);
+
         MainModel.Instance.IsJobCandidatesLoaded = true;
         OnRefreshed();
     }
@@ -93,10 +84,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<JobCandidate>? _jobCandidates;
-    public ObservableCollection<JobCandidate> JobCandidates
+    private ObservableRangeCollection<JobCandidate>? _jobCandidates;
+    public ObservableRangeCollection<JobCandidate> JobCandidates
     {
-        get { if (_jobCandidates == null) JobCandidates = new ObservableCollection<JobCandidate>(); return _jobCandidates!; }
+        get { if (_jobCandidates == null) JobCandidates = new ObservableRangeCollection<JobCandidate>(); return _jobCandidates!; }
         private set => SetProperty(ref _jobCandidates, value);
     }
 
@@ -113,7 +104,6 @@ public partial class MainModel
         _jobCandidates = null;
         OnPropertyChanged(nameof(JobCandidates));
 
-        // Reset the load state flag
         IsJobCandidatesLoaded = false;
     }
 }

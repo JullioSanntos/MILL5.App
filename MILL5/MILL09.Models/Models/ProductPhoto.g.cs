@@ -57,18 +57,9 @@ public partial class ProductPhoto : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductPhoto>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductPhotoId).ToHashSet();
-        var collection = MainModel.Instance.ProductPhotos;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductPhotoId, freshItem.ProductPhotoId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductPhotoId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductPhoto>)MainModel.Instance.ProductPhotos).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductPhotosLoaded = true;
         OnRefreshed();
     }
@@ -104,10 +95,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductPhoto>? _productPhotos;
-    public ObservableCollection<ProductPhoto> ProductPhotos
+    private ObservableRangeCollection<ProductPhoto>? _productPhotos;
+    public ObservableRangeCollection<ProductPhoto> ProductPhotos
     {
-        get { if (_productPhotos == null) ProductPhotos = new ObservableCollection<ProductPhoto>(); return _productPhotos!; }
+        get { if (_productPhotos == null) ProductPhotos = new ObservableRangeCollection<ProductPhoto>(); return _productPhotos!; }
         private set => SetProperty(ref _productPhotos, value);
     }
 
@@ -124,7 +115,6 @@ public partial class MainModel
         _productPhotos = null;
         OnPropertyChanged(nameof(ProductPhotos));
 
-        // Reset the load state flag
         IsProductPhotosLoaded = false;
     }
 }

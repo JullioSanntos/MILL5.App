@@ -9,18 +9,10 @@
 
 namespace MILL09.Models.Interfaces;
 
-/// <summary>
-/// Loads every row of one entity type. Implemented in whichever project owns data
-/// access; resolved by the generated RefreshAllAsync through the service locator.
-/// </summary>
 public interface IEntitySetLoader<T> {
     Task<IReadOnlyList<T>> LoadAllAsync(CancellationToken ct);
 }
 
-/// <summary>
-/// Persists one entity. Implemented in whichever project owns data access; resolved by
-/// the generated OnSaveAsync through the service locator.
-/// </summary>
 public interface IEntitySaver<T> {
     Task SaveAsync(T entity, CancellationToken ct);
 }

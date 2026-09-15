@@ -49,18 +49,9 @@ public partial class ProductListPriceHistory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductListPriceHistory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductId).ToHashSet();
-        var collection = MainModel.Instance.ProductListPriceHistories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductId, freshItem.ProductId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductListPriceHistory>)MainModel.Instance.ProductListPriceHistories).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductListPriceHistoriesLoaded = true;
         OnRefreshed();
     }
@@ -95,10 +86,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductListPriceHistory>? _productListPriceHistories;
-    public ObservableCollection<ProductListPriceHistory> ProductListPriceHistories
+    private ObservableRangeCollection<ProductListPriceHistory>? _productListPriceHistories;
+    public ObservableRangeCollection<ProductListPriceHistory> ProductListPriceHistories
     {
-        get { if (_productListPriceHistories == null) ProductListPriceHistories = new ObservableCollection<ProductListPriceHistory>(); return _productListPriceHistories!; }
+        get { if (_productListPriceHistories == null) ProductListPriceHistories = new ObservableRangeCollection<ProductListPriceHistory>(); return _productListPriceHistories!; }
         private set => SetProperty(ref _productListPriceHistories, value);
     }
 
@@ -115,7 +106,6 @@ public partial class MainModel
         _productListPriceHistories = null;
         OnPropertyChanged(nameof(ProductListPriceHistories));
 
-        // Reset the load state flag
         IsProductListPriceHistoriesLoaded = false;
     }
 }

@@ -52,18 +52,9 @@ public partial class ShoppingCartItem : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ShoppingCartItem>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ShoppingCartItemId).ToHashSet();
-        var collection = MainModel.Instance.ShoppingCartItems;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ShoppingCartItemId, freshItem.ShoppingCartItemId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ShoppingCartItemId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ShoppingCartItem>)MainModel.Instance.ShoppingCartItems).ReplaceRange(fresh);
+
         MainModel.Instance.IsShoppingCartItemsLoaded = true;
         OnRefreshed();
     }
@@ -99,10 +90,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ShoppingCartItem>? _shoppingCartItems;
-    public ObservableCollection<ShoppingCartItem> ShoppingCartItems
+    private ObservableRangeCollection<ShoppingCartItem>? _shoppingCartItems;
+    public ObservableRangeCollection<ShoppingCartItem> ShoppingCartItems
     {
-        get { if (_shoppingCartItems == null) ShoppingCartItems = new ObservableCollection<ShoppingCartItem>(); return _shoppingCartItems!; }
+        get { if (_shoppingCartItems == null) ShoppingCartItems = new ObservableRangeCollection<ShoppingCartItem>(); return _shoppingCartItems!; }
         private set => SetProperty(ref _shoppingCartItems, value);
     }
 
@@ -119,7 +110,6 @@ public partial class MainModel
         _shoppingCartItems = null;
         OnPropertyChanged(nameof(ShoppingCartItems));
 
-        // Reset the load state flag
         IsShoppingCartItemsLoaded = false;
     }
 }

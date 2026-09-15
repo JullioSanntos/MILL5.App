@@ -76,18 +76,9 @@ public partial class StateProvince : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<StateProvince>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.StateProvinceId).ToHashSet();
-        var collection = MainModel.Instance.StateProvinces;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.StateProvinceId, freshItem.StateProvinceId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].StateProvinceId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<StateProvince>)MainModel.Instance.StateProvinces).ReplaceRange(fresh);
+
         MainModel.Instance.IsStateProvincesLoaded = true;
         OnRefreshed();
     }
@@ -125,10 +116,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<StateProvince>? _stateProvinces;
-    public ObservableCollection<StateProvince> StateProvinces
+    private ObservableRangeCollection<StateProvince>? _stateProvinces;
+    public ObservableRangeCollection<StateProvince> StateProvinces
     {
-        get { if (_stateProvinces == null) StateProvinces = new ObservableCollection<StateProvince>(); return _stateProvinces!; }
+        get { if (_stateProvinces == null) StateProvinces = new ObservableRangeCollection<StateProvince>(); return _stateProvinces!; }
         private set => SetProperty(ref _stateProvinces, value);
     }
 
@@ -145,7 +136,6 @@ public partial class MainModel
         _stateProvinces = null;
         OnPropertyChanged(nameof(StateProvinces));
 
-        // Reset the load state flag
         IsStateProvincesLoaded = false;
     }
 }

@@ -51,18 +51,9 @@ public partial class ProductCategory : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductCategory>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductCategoryId).ToHashSet();
-        var collection = MainModel.Instance.ProductCategories;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductCategoryId, freshItem.ProductCategoryId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductCategoryId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductCategory>)MainModel.Instance.ProductCategories).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductCategoriesLoaded = true;
         OnRefreshed();
     }
@@ -96,10 +87,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductCategory>? _productCategories;
-    public ObservableCollection<ProductCategory> ProductCategories
+    private ObservableRangeCollection<ProductCategory>? _productCategories;
+    public ObservableRangeCollection<ProductCategory> ProductCategories
     {
-        get { if (_productCategories == null) ProductCategories = new ObservableCollection<ProductCategory>(); return _productCategories!; }
+        get { if (_productCategories == null) ProductCategories = new ObservableRangeCollection<ProductCategory>(); return _productCategories!; }
         private set => SetProperty(ref _productCategories, value);
     }
 
@@ -116,7 +107,6 @@ public partial class MainModel
         _productCategories = null;
         OnPropertyChanged(nameof(ProductCategories));
 
-        // Reset the load state flag
         IsProductCategoriesLoaded = false;
     }
 }

@@ -48,18 +48,9 @@ public partial class Illustration : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Illustration>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.IllustrationId).ToHashSet();
-        var collection = MainModel.Instance.Illustrations;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.IllustrationId, freshItem.IllustrationId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].IllustrationId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Illustration>)MainModel.Instance.Illustrations).ReplaceRange(fresh);
+
         MainModel.Instance.IsIllustrationsLoaded = true;
         OnRefreshed();
     }
@@ -92,10 +83,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Illustration>? _illustrations;
-    public ObservableCollection<Illustration> Illustrations
+    private ObservableRangeCollection<Illustration>? _illustrations;
+    public ObservableRangeCollection<Illustration> Illustrations
     {
-        get { if (_illustrations == null) Illustrations = new ObservableCollection<Illustration>(); return _illustrations!; }
+        get { if (_illustrations == null) Illustrations = new ObservableRangeCollection<Illustration>(); return _illustrations!; }
         private set => SetProperty(ref _illustrations, value);
     }
 
@@ -112,7 +103,6 @@ public partial class MainModel
         _illustrations = null;
         OnPropertyChanged(nameof(Illustrations));
 
-        // Reset the load state flag
         IsIllustrationsLoaded = false;
     }
 }

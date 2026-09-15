@@ -76,18 +76,9 @@ public partial class Vendor : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Vendor>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.Vendors;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Vendor>)MainModel.Instance.Vendors).ReplaceRange(fresh);
+
         MainModel.Instance.IsVendorsLoaded = true;
         OnRefreshed();
     }
@@ -125,10 +116,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Vendor>? _vendors;
-    public ObservableCollection<Vendor> Vendors
+    private ObservableRangeCollection<Vendor>? _vendors;
+    public ObservableRangeCollection<Vendor> Vendors
     {
-        get { if (_vendors == null) Vendors = new ObservableCollection<Vendor>(); return _vendors!; }
+        get { if (_vendors == null) Vendors = new ObservableRangeCollection<Vendor>(); return _vendors!; }
         private set => SetProperty(ref _vendors, value);
     }
 
@@ -145,7 +136,6 @@ public partial class MainModel
         _vendors = null;
         OnPropertyChanged(nameof(Vendors));
 
-        // Reset the load state flag
         IsVendorsLoaded = false;
     }
 }

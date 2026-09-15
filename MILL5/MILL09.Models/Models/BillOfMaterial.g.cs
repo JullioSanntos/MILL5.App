@@ -69,18 +69,9 @@ public partial class BillOfMaterial : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<BillOfMaterial>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BillOfMaterialsId).ToHashSet();
-        var collection = MainModel.Instance.BillOfMaterials;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BillOfMaterialsId, freshItem.BillOfMaterialsId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BillOfMaterialsId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<BillOfMaterial>)MainModel.Instance.BillOfMaterials).ReplaceRange(fresh);
+
         MainModel.Instance.IsBillOfMaterialsLoaded = true;
         OnRefreshed();
     }
@@ -119,10 +110,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<BillOfMaterial>? _billOfMaterials;
-    public ObservableCollection<BillOfMaterial> BillOfMaterials
+    private ObservableRangeCollection<BillOfMaterial>? _billOfMaterials;
+    public ObservableRangeCollection<BillOfMaterial> BillOfMaterials
     {
-        get { if (_billOfMaterials == null) BillOfMaterials = new ObservableCollection<BillOfMaterial>(); return _billOfMaterials!; }
+        get { if (_billOfMaterials == null) BillOfMaterials = new ObservableRangeCollection<BillOfMaterial>(); return _billOfMaterials!; }
         private set => SetProperty(ref _billOfMaterials, value);
     }
 
@@ -139,7 +130,6 @@ public partial class MainModel
         _billOfMaterials = null;
         OnPropertyChanged(nameof(BillOfMaterials));
 
-        // Reset the load state flag
         IsBillOfMaterialsLoaded = false;
     }
 }

@@ -214,18 +214,9 @@ public partial class Product : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Product>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductId).ToHashSet();
-        var collection = MainModel.Instance.Products;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductId, freshItem.ProductId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Product>)MainModel.Instance.Products).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductsLoaded = true;
         OnRefreshed();
     }
@@ -280,10 +271,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Product>? _products;
-    public ObservableCollection<Product> Products
+    private ObservableRangeCollection<Product>? _products;
+    public ObservableRangeCollection<Product> Products
     {
-        get { if (_products == null) Products = new ObservableCollection<Product>(); return _products!; }
+        get { if (_products == null) Products = new ObservableRangeCollection<Product>(); return _products!; }
         private set => SetProperty(ref _products, value);
     }
 
@@ -300,7 +291,6 @@ public partial class MainModel
         _products = null;
         OnPropertyChanged(nameof(Products));
 
-        // Reset the load state flag
         IsProductsLoaded = false;
     }
 }

@@ -62,18 +62,9 @@ public partial class CountryRegion : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<CountryRegion>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.CountryRegionCode).ToHashSet();
-        var collection = MainModel.Instance.CountryRegions;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.CountryRegionCode, freshItem.CountryRegionCode));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].CountryRegionCode)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<CountryRegion>)MainModel.Instance.CountryRegions).ReplaceRange(fresh);
+
         MainModel.Instance.IsCountryRegionsLoaded = true;
         OnRefreshed();
     }
@@ -106,10 +97,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<CountryRegion>? _countryRegions;
-    public ObservableCollection<CountryRegion> CountryRegions
+    private ObservableRangeCollection<CountryRegion>? _countryRegions;
+    public ObservableRangeCollection<CountryRegion> CountryRegions
     {
-        get { if (_countryRegions == null) CountryRegions = new ObservableCollection<CountryRegion>(); return _countryRegions!; }
+        get { if (_countryRegions == null) CountryRegions = new ObservableRangeCollection<CountryRegion>(); return _countryRegions!; }
         private set => SetProperty(ref _countryRegions, value);
     }
 
@@ -126,7 +117,6 @@ public partial class MainModel
         _countryRegions = null;
         OnPropertyChanged(nameof(CountryRegions));
 
-        // Reset the load state flag
         IsCountryRegionsLoaded = false;
     }
 }

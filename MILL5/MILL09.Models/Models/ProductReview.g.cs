@@ -58,18 +58,9 @@ public partial class ProductReview : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<ProductReview>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ProductReviewId).ToHashSet();
-        var collection = MainModel.Instance.ProductReviews;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ProductReviewId, freshItem.ProductReviewId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ProductReviewId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<ProductReview>)MainModel.Instance.ProductReviews).ReplaceRange(fresh);
+
         MainModel.Instance.IsProductReviewsLoaded = true;
         OnRefreshed();
     }
@@ -107,10 +98,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<ProductReview>? _productReviews;
-    public ObservableCollection<ProductReview> ProductReviews
+    private ObservableRangeCollection<ProductReview>? _productReviews;
+    public ObservableRangeCollection<ProductReview> ProductReviews
     {
-        get { if (_productReviews == null) ProductReviews = new ObservableCollection<ProductReview>(); return _productReviews!; }
+        get { if (_productReviews == null) ProductReviews = new ObservableRangeCollection<ProductReview>(); return _productReviews!; }
         private set => SetProperty(ref _productReviews, value);
     }
 
@@ -127,7 +118,6 @@ public partial class MainModel
         _productReviews = null;
         OnPropertyChanged(nameof(ProductReviews));
 
-        // Reset the load state flag
         IsProductReviewsLoaded = false;
     }
 }

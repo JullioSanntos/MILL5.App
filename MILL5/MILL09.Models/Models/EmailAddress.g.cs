@@ -51,18 +51,9 @@ public partial class EmailAddress : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<EmailAddress>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.EmailAddresses;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<EmailAddress>)MainModel.Instance.EmailAddresses).ReplaceRange(fresh);
+
         MainModel.Instance.IsEmailAddressesLoaded = true;
         OnRefreshed();
     }
@@ -97,10 +88,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<EmailAddress>? _emailAddresses;
-    public ObservableCollection<EmailAddress> EmailAddresses
+    private ObservableRangeCollection<EmailAddress>? _emailAddresses;
+    public ObservableRangeCollection<EmailAddress> EmailAddresses
     {
-        get { if (_emailAddresses == null) EmailAddresses = new ObservableCollection<EmailAddress>(); return _emailAddresses!; }
+        get { if (_emailAddresses == null) EmailAddresses = new ObservableRangeCollection<EmailAddress>(); return _emailAddresses!; }
         private set => SetProperty(ref _emailAddresses, value);
     }
 
@@ -117,7 +108,6 @@ public partial class MainModel
         _emailAddresses = null;
         OnPropertyChanged(nameof(EmailAddresses));
 
-        // Reset the load state flag
         IsEmailAddressesLoaded = false;
     }
 }

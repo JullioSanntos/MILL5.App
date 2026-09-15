@@ -51,18 +51,9 @@ public partial class Department : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Department>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.DepartmentId).ToHashSet();
-        var collection = MainModel.Instance.Departments;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.DepartmentId, freshItem.DepartmentId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].DepartmentId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Department>)MainModel.Instance.Departments).ReplaceRange(fresh);
+
         MainModel.Instance.IsDepartmentsLoaded = true;
         OnRefreshed();
     }
@@ -96,10 +87,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Department>? _departments;
-    public ObservableCollection<Department> Departments
+    private ObservableRangeCollection<Department>? _departments;
+    public ObservableRangeCollection<Department> Departments
     {
-        get { if (_departments == null) Departments = new ObservableCollection<Department>(); return _departments!; }
+        get { if (_departments == null) Departments = new ObservableRangeCollection<Department>(); return _departments!; }
         private set => SetProperty(ref _departments, value);
     }
 
@@ -116,7 +107,6 @@ public partial class MainModel
         _departments = null;
         OnPropertyChanged(nameof(Departments));
 
-        // Reset the load state flag
         IsDepartmentsLoaded = false;
     }
 }

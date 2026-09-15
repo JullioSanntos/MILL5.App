@@ -66,18 +66,9 @@ public partial class Currency : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Currency>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.CurrencyCode).ToHashSet();
-        var collection = MainModel.Instance.Currencies;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.CurrencyCode, freshItem.CurrencyCode));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].CurrencyCode)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Currency>)MainModel.Instance.Currencies).ReplaceRange(fresh);
+
         MainModel.Instance.IsCurrenciesLoaded = true;
         OnRefreshed();
     }
@@ -110,10 +101,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Currency>? _currencies;
-    public ObservableCollection<Currency> Currencies
+    private ObservableRangeCollection<Currency>? _currencies;
+    public ObservableRangeCollection<Currency> Currencies
     {
-        get { if (_currencies == null) Currencies = new ObservableCollection<Currency>(); return _currencies!; }
+        get { if (_currencies == null) Currencies = new ObservableRangeCollection<Currency>(); return _currencies!; }
         private set => SetProperty(ref _currencies, value);
     }
 
@@ -130,7 +121,6 @@ public partial class MainModel
         _currencies = null;
         OnPropertyChanged(nameof(Currencies));
 
-        // Reset the load state flag
         IsCurrenciesLoaded = false;
     }
 }

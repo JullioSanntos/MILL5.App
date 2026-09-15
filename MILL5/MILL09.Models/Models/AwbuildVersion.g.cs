@@ -44,18 +44,9 @@ public partial class AwbuildVersion : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<AwbuildVersion>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.SystemInformationId).ToHashSet();
-        var collection = MainModel.Instance.AwbuildVersions;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.SystemInformationId, freshItem.SystemInformationId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].SystemInformationId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<AwbuildVersion>)MainModel.Instance.AwbuildVersions).ReplaceRange(fresh);
+
         MainModel.Instance.IsAwbuildVersionsLoaded = true;
         OnRefreshed();
     }
@@ -89,10 +80,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<AwbuildVersion>? _awbuildVersions;
-    public ObservableCollection<AwbuildVersion> AwbuildVersions
+    private ObservableRangeCollection<AwbuildVersion>? _awbuildVersions;
+    public ObservableRangeCollection<AwbuildVersion> AwbuildVersions
     {
-        get { if (_awbuildVersions == null) AwbuildVersions = new ObservableCollection<AwbuildVersion>(); return _awbuildVersions!; }
+        get { if (_awbuildVersions == null) AwbuildVersions = new ObservableRangeCollection<AwbuildVersion>(); return _awbuildVersions!; }
         private set => SetProperty(ref _awbuildVersions, value);
     }
 
@@ -109,7 +100,6 @@ public partial class MainModel
         _awbuildVersions = null;
         OnPropertyChanged(nameof(AwbuildVersions));
 
-        // Reset the load state flag
         IsAwbuildVersionsLoaded = false;
     }
 }

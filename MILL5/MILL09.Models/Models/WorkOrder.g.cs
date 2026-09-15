@@ -73,18 +73,9 @@ public partial class WorkOrder : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<WorkOrder>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.WorkOrderId).ToHashSet();
-        var collection = MainModel.Instance.WorkOrders;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.WorkOrderId, freshItem.WorkOrderId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].WorkOrderId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<WorkOrder>)MainModel.Instance.WorkOrders).ReplaceRange(fresh);
+
         MainModel.Instance.IsWorkOrdersLoaded = true;
         OnRefreshed();
     }
@@ -124,10 +115,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<WorkOrder>? _workOrders;
-    public ObservableCollection<WorkOrder> WorkOrders
+    private ObservableRangeCollection<WorkOrder>? _workOrders;
+    public ObservableRangeCollection<WorkOrder> WorkOrders
     {
-        get { if (_workOrders == null) WorkOrders = new ObservableCollection<WorkOrder>(); return _workOrders!; }
+        get { if (_workOrders == null) WorkOrders = new ObservableRangeCollection<WorkOrder>(); return _workOrders!; }
         private set => SetProperty(ref _workOrders, value);
     }
 
@@ -144,7 +135,6 @@ public partial class MainModel
         _workOrders = null;
         OnPropertyChanged(nameof(WorkOrders));
 
-        // Reset the load state flag
         IsWorkOrdersLoaded = false;
     }
 }

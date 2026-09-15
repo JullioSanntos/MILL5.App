@@ -53,18 +53,9 @@ public partial class BusinessEntityAddress : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<BusinessEntityAddress>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.BusinessEntityId).ToHashSet();
-        var collection = MainModel.Instance.BusinessEntityAddresses;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.BusinessEntityId, freshItem.BusinessEntityId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].BusinessEntityId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<BusinessEntityAddress>)MainModel.Instance.BusinessEntityAddresses).ReplaceRange(fresh);
+
         MainModel.Instance.IsBusinessEntityAddressesLoaded = true;
         OnRefreshed();
     }
@@ -99,10 +90,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<BusinessEntityAddress>? _businessEntityAddresses;
-    public ObservableCollection<BusinessEntityAddress> BusinessEntityAddresses
+    private ObservableRangeCollection<BusinessEntityAddress>? _businessEntityAddresses;
+    public ObservableRangeCollection<BusinessEntityAddress> BusinessEntityAddresses
     {
-        get { if (_businessEntityAddresses == null) BusinessEntityAddresses = new ObservableCollection<BusinessEntityAddress>(); return _businessEntityAddresses!; }
+        get { if (_businessEntityAddresses == null) BusinessEntityAddresses = new ObservableRangeCollection<BusinessEntityAddress>(); return _businessEntityAddresses!; }
         private set => SetProperty(ref _businessEntityAddresses, value);
     }
 
@@ -119,7 +110,6 @@ public partial class MainModel
         _businessEntityAddresses = null;
         OnPropertyChanged(nameof(BusinessEntityAddresses));
 
-        // Reset the load state flag
         IsBusinessEntityAddressesLoaded = false;
     }
 }

@@ -54,18 +54,9 @@ public partial class Shift : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<Shift>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.ShiftId).ToHashSet();
-        var collection = MainModel.Instance.Shifts;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.ShiftId, freshItem.ShiftId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].ShiftId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<Shift>)MainModel.Instance.Shifts).ReplaceRange(fresh);
+
         MainModel.Instance.IsShiftsLoaded = true;
         OnRefreshed();
     }
@@ -100,10 +91,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<Shift>? _shifts;
-    public ObservableCollection<Shift> Shifts
+    private ObservableRangeCollection<Shift>? _shifts;
+    public ObservableRangeCollection<Shift> Shifts
     {
-        get { if (_shifts == null) Shifts = new ObservableCollection<Shift>(); return _shifts!; }
+        get { if (_shifts == null) Shifts = new ObservableRangeCollection<Shift>(); return _shifts!; }
         private set => SetProperty(ref _shifts, value);
     }
 
@@ -120,7 +111,6 @@ public partial class MainModel
         _shifts = null;
         OnPropertyChanged(nameof(Shifts));
 
-        // Reset the load state flag
         IsShiftsLoaded = false;
     }
 }

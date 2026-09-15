@@ -90,18 +90,9 @@ public partial class PurchaseOrderHeader : ModelEntityBase
         OnRefreshing();
         var loader = MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<IEntitySetLoader<PurchaseOrderHeader>>();
         var fresh = await loader.LoadAllAsync(ct);
-        var freshIds = fresh.Select(x => x.PurchaseOrderId).ToHashSet();
-        var collection = MainModel.Instance.PurchaseOrderHeaders;
-        foreach (var freshItem in fresh)
-        {
-            var existing = collection.FirstOrDefault(x => Equals(x.PurchaseOrderId, freshItem.PurchaseOrderId));
-            if (existing != null) existing.CopyScalarsFrom(freshItem);
-            else collection.Add(freshItem);
-        }
-        for (int i = collection.Count - 1; i >= 0; i--)
-            if (!freshIds.Contains(collection[i].PurchaseOrderId)) collection.RemoveAt(i);
 
-        // Explicitly flag the collection as loaded after a successful database query
+        ((ObservableRangeCollection<PurchaseOrderHeader>)MainModel.Instance.PurchaseOrderHeaders).ReplaceRange(fresh);
+
         MainModel.Instance.IsPurchaseOrderHeadersLoaded = true;
         OnRefreshed();
     }
@@ -144,10 +135,10 @@ namespace MILL09.Models
 {
 public partial class MainModel
 {
-    private ObservableCollection<PurchaseOrderHeader>? _purchaseOrderHeaders;
-    public ObservableCollection<PurchaseOrderHeader> PurchaseOrderHeaders
+    private ObservableRangeCollection<PurchaseOrderHeader>? _purchaseOrderHeaders;
+    public ObservableRangeCollection<PurchaseOrderHeader> PurchaseOrderHeaders
     {
-        get { if (_purchaseOrderHeaders == null) PurchaseOrderHeaders = new ObservableCollection<PurchaseOrderHeader>(); return _purchaseOrderHeaders!; }
+        get { if (_purchaseOrderHeaders == null) PurchaseOrderHeaders = new ObservableRangeCollection<PurchaseOrderHeader>(); return _purchaseOrderHeaders!; }
         private set => SetProperty(ref _purchaseOrderHeaders, value);
     }
 
@@ -164,7 +155,6 @@ public partial class MainModel
         _purchaseOrderHeaders = null;
         OnPropertyChanged(nameof(PurchaseOrderHeaders));
 
-        // Reset the load state flag
         IsPurchaseOrderHeadersLoaded = false;
     }
 }
