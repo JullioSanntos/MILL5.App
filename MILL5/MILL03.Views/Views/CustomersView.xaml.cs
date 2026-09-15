@@ -8,8 +8,4 @@ public partial class CustomersView : ContentView {
     public CustomersView() {
         InitializeComponent();
     }
-
-    private async void OnLoadCustomersClicked(object sender, EventArgs e) {
-        await Customer.LoadAllAsync();
-    }
 }

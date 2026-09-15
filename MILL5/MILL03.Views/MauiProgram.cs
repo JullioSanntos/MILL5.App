@@ -25,7 +25,9 @@ public static class MauiProgram {
         // 2. Pass the framework-built provider into your ServiceLocator
         global::MILL80.Infrastructure.ServiceLocator.Initialize(app.Services);
 
-
+        // Option A: Make it the DEFAULT View for this ViewModel
+        // (No string parameter provided)
+        MILL03.Views.UIInfrastructure.ViewLocator.Instance.Register<MILL06.ViewModels.CustomersViewModel, Views.CustomersSyncFusion>();
 
 
         return app;

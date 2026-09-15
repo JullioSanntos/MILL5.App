@@ -1,13 +1,19 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
-using MILL06.ViewModels;
 using MILL09.Models;
-using MILL80.Infrastructure;
-using System;
 
 namespace MILL06.ViewModels;
 
-public partial class MainViewModel : ObservableObject, IDisposable {
+public partial class MainViewModel : BaseViewModel, IDisposable {
+
+    // Inside MainViewModel.cs
+    private BaseViewModel? _testViewModel;
+    public BaseViewModel? TestViewModel {
+        get {
+            // If CustomersViewModel is registered in your DI container:
+            return _testViewModel ??= global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetService<CustomersViewModel>();
+        }
+    }
 
     #region MainViewModel's Instance Singleton
     // Resolves directly from your global container, allowing test initialization to swap the provider

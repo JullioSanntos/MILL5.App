@@ -4,6 +4,8 @@ using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MILL06.ViewModels {
-    public class ViewModelBase : ObservableObject {
+    public abstract partial class BaseViewModel : ObservableObject {
+        [ObservableProperty]
+        string? _viewType;
     }
 }

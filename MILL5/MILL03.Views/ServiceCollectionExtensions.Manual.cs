@@ -2,6 +2,7 @@
 // edit freely.
 
 using Microsoft.Extensions.DependencyInjection;
+using MILL03.Views.UIInfrastructure;
 using MILL80.Infrastructure;
 
 namespace MILL03.Views;
@@ -42,5 +43,6 @@ public static partial class ServiceCollectionExtensions {
 
         // Example — delete or replace:
         // services.AddSingleton<SomeType>(_ => new SomeType());
+        services.AddSingleton(_ => new ViewLocator());
     }
 }

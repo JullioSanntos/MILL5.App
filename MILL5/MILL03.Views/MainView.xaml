@@ -6,16 +6,20 @@
              x:Class="MILL03.Views.MainView"
              Title="Enterprise Dashboard">
 
-    <Grid x:Name="RootGrid" BackgroundColor="Transparent">
-
-        <!-- The foundational cell that initializes the recursive grid -->
-        <!--<controls:RegionCell />-->
+    <!--<Grid x:Name="RootGrid" BackgroundColor="Transparent">
+         --><!--The foundational cell that initializes the recursive grid--> 
+        <!--<controls:RegionCell />--><!--
         <controls:RegionCell>
             <controls:RegionCell.Payload>
-                <!--<views:CustomersView />-->
-                <views:CustomersSyncFusion />
+                <views:CustomersView />
+                --><!--<views:CustomersSyncFusion />--><!--
             </controls:RegionCell.Payload>
         </controls:RegionCell>
+    </Grid>-->
+
+    <Grid x:Name="RootGrid" BackgroundColor="Transparent">
+         <!--The Smoke Test wrapped safely in a Grid--> 
+        <controls:RegionCell PayloadViewModel="{Binding TestViewModel}" />
     </Grid>
 
 </ContentPage>

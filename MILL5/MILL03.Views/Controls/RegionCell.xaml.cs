@@ -1,4 +1,6 @@
 using Microsoft.Maui.Controls;
+using MILL03.Views.UIInfrastructure;
+using MILL06.ViewModels;
 
 namespace MILL03.Views.Controls;
 
@@ -7,6 +9,27 @@ public enum SplitDirection { Top, Bottom, Left, Right }
 // 1. Tell MAUI that anything nested in XAML belongs in the Payload property
 //[ContentProperty(nameof(Payload))]
 public partial class RegionCell : ContentView {
+
+    public static readonly BindableProperty PayloadViewModelProperty = BindableProperty.Create(
+        nameof(PayloadViewModel),
+        typeof(BaseViewModel),
+        typeof(RegionCell),
+        null,
+        propertyChanged: (bindable, oldValue, newValue) => {
+            if (bindable is RegionCell cell && newValue is BaseViewModel vm) {
+
+                // Route the ViewModel through your new locator
+                var resolvedView = ViewLocator.Instance.Resolve(vm);
+
+                // Pass it to your existing injection logic
+                cell.InjectPayload(resolvedView);
+            }
+        });
+
+    public BaseViewModel? PayloadViewModel {
+        get => (BaseViewModel?)GetValue(PayloadViewModelProperty);
+        set => SetValue(PayloadViewModelProperty, value);
+    }
 
     // 2. Catch the nested view and route it to our existing Inject method
     public static readonly BindableProperty PayloadProperty = BindableProperty.Create(
