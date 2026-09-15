@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class BillOfMaterial : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "BillOfMaterials";
     [ObservableProperty]
     private int _billOfMaterialsId;
 

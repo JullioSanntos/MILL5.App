@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class SalesOrderDetail : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesOrderDetail";
     [ObservableProperty]
     private int _salesOrderId;
 

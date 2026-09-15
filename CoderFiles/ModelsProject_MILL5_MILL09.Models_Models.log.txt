@@ -1,10 +1,10 @@
-# ModelsProject_MILL5_MILL09.Models_Models — run at 2026-09-15 13:38:58
+# ModelsProject_MILL5_MILL09.Models_Models — run at 2026-09-15 16:44:47
 
-[13:38:57] Solution        : C:\Users\julio\source\repos\JullioSanntos\POCs\MILL5.App\MILL5.App.slnx
-[13:38:57] TargetDirectory : C:\Users\julio\source\repos\JullioSanntos\POCs\MILL5.App\MILL5\MILL09.Models\Models
-[13:38:57] Infrastructure  : MILL80.Infrastructure (tier 5)
-[13:38:57] ServiceLocator  : MILL5\MILL80.Infrastructure\DI\ServiceLocator.g.cs
-[13:38:57] Wrote MILL5\MILL09.Models\Interfaces\IEntitySetLoader.g.cs  (namespace MILL09.Models.Interfaces)
-[13:38:57] Wrote MILL5\MILL80.Infrastructure\Services\LiveFilteredCollection.g.cs  (namespace MILL80.Infrastructure.Services)
-[13:38:58] 
-[13:38:58] Batch complete: 69 file(s) written, 0 deleted, 1 skipped by filter, 75 relationship(s) could not be auto-detected.
+[16:44:46] Solution        : C:\Users\julio\source\repos\JullioSanntos\POCs\MILL5.App\MILL5.App.slnx
+[16:44:46] TargetDirectory : C:\Users\julio\source\repos\JullioSanntos\POCs\MILL5.App\MILL5\MILL09.Models\Models
+[16:44:46] Infrastructure  : MILL80.Infrastructure (tier 5)
+[16:44:46] ServiceLocator  : MILL5\MILL80.Infrastructure\DI\ServiceLocator.g.cs
+[16:44:46] Wrote MILL5\MILL09.Models\Interfaces\IEntitySetLoader.g.cs  (namespace MILL09.Models.Interfaces)
+[16:44:46] Wrote MILL5\MILL80.Infrastructure\Services\LiveFilteredCollection.g.cs  (namespace MILL80.Infrastructure.Services)
+[16:44:47] 
+[16:44:47] Batch complete: 69 file(s) written, 0 deleted, 1 skipped by filter, 75 relationship(s) could not be auto-detected.

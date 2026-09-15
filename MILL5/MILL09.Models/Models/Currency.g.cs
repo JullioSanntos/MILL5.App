@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class Currency : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "Currency";
     [ObservableProperty]
     private string _currencyCode = null!;
 

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class AwbuildVersion : ModelEntityBase
 {
+    public static string SqlSchema => "dbo";
+    public static string SqlTableName => "AWBuildVersion";
     [ObservableProperty]
     private byte _systemInformationId;
 

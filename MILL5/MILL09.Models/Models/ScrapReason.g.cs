@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class ScrapReason : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "ScrapReason";
     [ObservableProperty]
     private short _scrapReasonId;
 

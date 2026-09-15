@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class Culture : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "Culture";
     [ObservableProperty]
     private string _cultureId = null!;
 

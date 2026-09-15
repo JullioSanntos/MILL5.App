@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class ProductCostHistory : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "ProductCostHistory";
     [ObservableProperty]
     private int _productId;
 

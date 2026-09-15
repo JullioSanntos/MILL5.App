@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class Department : ModelEntityBase
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "Department";
     [ObservableProperty]
     private short _departmentId;
 

@@ -19,7 +19,7 @@ namespace MILL90.Tests.MILL06.ViewModels.Tests {
             var registry = Provider.GetRequiredService<MenuRegistry>();
             var menuTree = registry.GetDefaultMenu();
 
-            Assert.IsNotNull(menuTree, "Menu tree should not be null.");
+            Assert.IsNotNull(menuTree, "MenuViewModel tree should not be null.");
             Assert.IsTrue(menuTree.Count > 0, "The generated menu should contain at least one schema group.");
 
             var dboGroup = menuTree.OfType<MenuGroupViewModel>().FirstOrDefault(g => g.Title == "dbo");

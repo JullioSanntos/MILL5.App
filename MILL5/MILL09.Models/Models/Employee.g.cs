@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class Employee : ModelEntityBase
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "Employee";
     [ObservableProperty]
     private int _businessEntityId;
 

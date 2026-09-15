@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class Password : ModelEntityBase
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "Password";
     [ObservableProperty]
     private int _businessEntityId;
 

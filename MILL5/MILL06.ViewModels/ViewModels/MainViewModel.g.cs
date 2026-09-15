@@ -12,7 +12,7 @@ namespace MILL06.ViewModels
     public partial class MainViewModel : IDisposable
     {
         private MenuViewModel? _menu;
-        public MenuViewModel Menu => _menu ??= new MenuViewModel();
+        public MenuViewModel MenuViewModel => _menu ??= new MenuViewModel();
 
         private AddressesViewModel? _addressesViewModel;
         public AddressesViewModel AddressesViewModel => _addressesViewModel ??= new AddressesViewModel();

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class ProductVendor : ModelEntityBase
 {
+    public static string SqlSchema => "Purchasing";
+    public static string SqlTableName => "ProductVendor";
     [ObservableProperty]
     private int _productId;
 

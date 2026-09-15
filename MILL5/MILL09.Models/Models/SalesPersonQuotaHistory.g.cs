@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class SalesPersonQuotaHistory : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesPersonQuotaHistory";
     [ObservableProperty]
     private int _businessEntityId;
 

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class Shift : ModelEntityBase
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "Shift";
     [ObservableProperty]
     private byte _shiftId;
 

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class TransactionHistoryArchive : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "TransactionHistoryArchive";
     [ObservableProperty]
     private int _transactionId;
 

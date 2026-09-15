@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class Location : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "Location";
     [ObservableProperty]
     private short _locationId;
 

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class PhoneNumberType : ModelEntityBase
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "PhoneNumberType";
     [ObservableProperty]
     private int _phoneNumberTypeId;
 

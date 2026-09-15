@@ -81,6 +81,7 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 		<PackageReference Include="Syncfusion.Maui.DataGrid" Version="34.2.7" />
+		<PackageReference Include="Syncfusion.Maui.TreeView" Version="34.2.8" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -89,6 +90,12 @@
 	  <ProjectReference Include="..\MILL09.Models\MILL09.Models.csproj" />
 	  <ProjectReference Include="..\MILL12.Services\MILL12.Services.csproj" />
 	  <ProjectReference Include="..\MILL80.Infrastructure\MILL80.Infrastructure.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Views\CustomersSyncFusionView.xaml.cs">
+	    <DependentUpon>CustomersSyncFusionView.xaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -101,10 +108,13 @@
 	  <MauiXaml Update="SplashView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\CustomersSyncFusion.xaml">
+	  <MauiXaml Update="Views\CustomersSyncFusionView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\CustomersView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\MenuView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>

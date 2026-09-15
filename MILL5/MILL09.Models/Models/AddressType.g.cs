@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class AddressType : ModelEntityBase
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "AddressType";
     [ObservableProperty]
     private int _addressTypeId;
 

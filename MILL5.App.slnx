@@ -6,6 +6,7 @@
     <File Path="CoderFiles/README-DependencyInjection.md" />
     <File Path="CoderFiles/ViewModelsProject_MILL5_MILL06.ViewModels.log.txt" />
     <File Path="CoderFiles/ViewModelsProject_MILL5_MILL06.ViewModels_ViewModels.log.txt" />
+    <File Path="CoderFiles/ViewsProject_MILL5_MILL03.Views_Views.log.txt" />
   </Folder>
   <Project Path="MILL5/MILL03.Views/MILL03.Views.csproj" Id="a4beb0ae-60ff-4b7d-a3ea-4278cdd04516">
     <Deploy Solution="Debug|*" />

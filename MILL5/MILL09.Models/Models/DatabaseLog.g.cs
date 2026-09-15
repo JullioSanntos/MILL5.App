@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class DatabaseLog : ModelEntityBase
 {
+    public static string SqlSchema => "dbo";
+    public static string SqlTableName => "DatabaseLog";
     [ObservableProperty]
     private int _databaseLogId;
 

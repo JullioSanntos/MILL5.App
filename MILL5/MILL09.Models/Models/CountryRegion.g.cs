@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class CountryRegion : ModelEntityBase
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "CountryRegion";
     [ObservableProperty]
     private string _countryRegionCode = null!;
 

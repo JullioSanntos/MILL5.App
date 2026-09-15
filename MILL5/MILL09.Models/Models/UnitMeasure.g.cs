@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class UnitMeasure : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "UnitMeasure";
     [ObservableProperty]
     private string _unitMeasureCode = null!;
 

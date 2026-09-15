@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class StateProvince : ModelEntityBase
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "StateProvince";
     [ObservableProperty]
     private int _stateProvinceId;
 

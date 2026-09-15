@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class CountryRegionCurrency : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "CountryRegionCurrency";
     [ObservableProperty]
     private string _countryRegionCode = null!;
 

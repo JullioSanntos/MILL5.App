@@ -3,16 +3,12 @@ using Syncfusion.Maui.DataGrid;
 
 namespace MILL03.Views.Views;
 
-public partial class CustomersSyncFusion : ContentView
+public partial class CustomersSyncFusionView : ContentView
 {
-	public CustomersSyncFusion()
+	public CustomersSyncFusionView()
 	{
 		InitializeComponent();
 	}
-
-    private async void OnLoadCustomersClicked(object sender, EventArgs e) {
-        await Customer.LoadAllAsync();
-    }
 
     private void SfDataGrid_OnAutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e) {
         if (e.Column.MappingName == nameof(Customer.Rowguid)) {

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class SpecialOffer : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SpecialOffer";
     [ObservableProperty]
     private int _specialOfferId;
 

@@ -11,7 +11,10 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
     public BaseViewModel? TestViewModel {
         get {
             // If CustomersViewModel is registered in your DI container:
-            return _testViewModel ??= global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetService<CustomersViewModel>();
+            //return _testViewModel ??= global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetService<CustomersSyncFusionViewModel>();
+            //return _testViewModel ??= global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetService<AddressesViewModel>();
+            //return _testViewModel ??= MainViewModel.Instance.PersonsViewModel;
+            return _testViewModel ??= MainViewModel.Instance.MenuViewModel;
         }
     }
 

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class WorkOrderRouting : ModelEntityBase
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "WorkOrderRouting";
     [ObservableProperty]
     private int _workOrderId;
 

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class ShoppingCartItem : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "ShoppingCartItem";
     [ObservableProperty]
     private int _shoppingCartItemId;
 

@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class SalesTaxRate : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesTaxRate";
     [ObservableProperty]
     private int _salesTaxRateId;
 

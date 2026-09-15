@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class JobCandidate : ModelEntityBase
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "JobCandidate";
     [ObservableProperty]
     private int _jobCandidateId;
 

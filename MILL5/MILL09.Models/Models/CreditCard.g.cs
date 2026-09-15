@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class CreditCard : ModelEntityBase
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "CreditCard";
     [ObservableProperty]
     private int _creditCardId;
 

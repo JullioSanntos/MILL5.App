@@ -1,0 +1,35 @@
+﻿using CommunityToolkit.Mvvm.Input;
+using MILL09.Models;
+using System.Collections.ObjectModel;
+using MILL80.Infrastructure;
+
+namespace MILL06.ViewModels {
+    [Register]
+    public partial class CustomersSyncFusionViewModel : BaseViewModel {
+        // 1. Bridge the View to the MainModel's collection
+        public ObservableCollection<Customer> Customers => MainViewModel.Instance.MainModel.Customers;
+
+        #region Commands
+        // 2. The toolkit automatically generates an ICommand named 'LoadCustomersCommand'
+        [RelayCommand]
+        private async Task LoadCustomersAsync() {
+            await Customer.LoadAllAsync();
+            OnPropertyChanged(nameof(Customers));
+        }
+        #endregion Commands
+
+        #region IDisposing
+        // 3. IDisposable implementation (Inherited from BaseViewModel)
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
+                // Fire the partial method hook for manual cleanup
+                OnDisposing();
+            }
+            base.Dispose(disposing);
+        }
+
+        // Hook definition: Erased by the compiler if not implemented in the .Manual.cs file
+        partial void OnDisposing();
+        #endregion IDisposing
+    }
+}

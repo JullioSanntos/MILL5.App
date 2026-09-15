@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class ShipMethod : ModelEntityBase
 {
+    public static string SqlSchema => "Purchasing";
+    public static string SqlTableName => "ShipMethod";
     [ObservableProperty]
     private int _shipMethodId;
 

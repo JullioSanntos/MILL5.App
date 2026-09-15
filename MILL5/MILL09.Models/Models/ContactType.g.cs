@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class ContactType : ModelEntityBase
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "ContactType";
     [ObservableProperty]
     private int _contactTypeId;
 

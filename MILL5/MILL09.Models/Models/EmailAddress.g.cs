@@ -22,6 +22,8 @@ namespace MILL09.Models
 {
 public partial class EmailAddress : ModelEntityBase
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "EmailAddress";
     [ObservableProperty]
     private int _businessEntityId;
 
