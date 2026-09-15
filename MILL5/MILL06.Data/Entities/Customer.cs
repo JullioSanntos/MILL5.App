@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Customer
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "Customer";
+
     /// <summary>
     /// Primary key.
     /// </summary>
@@ -77,7 +80,6 @@ public class CustomerRepository : IEntitySetLoader<MILL09.Models.Customer>, IEnt
     {
         var dbEntities = await _dbContext.Set<Customer>()
             .AsNoTracking()
-            .Take(100) // <-- Add this line back to speed up UI testing
             .ToListAsync(ct);
 
         var uiEntities = dbEntities.Select(db => new MILL09.Models.Customer

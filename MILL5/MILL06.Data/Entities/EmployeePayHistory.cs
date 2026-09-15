@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class EmployeePayHistory
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "EmployeePayHistory";
+
     /// <summary>
     /// Employee identification number. Foreign key to Employee.BusinessEntityID.
     /// </summary>

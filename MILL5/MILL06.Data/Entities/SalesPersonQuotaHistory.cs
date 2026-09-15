@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class SalesPersonQuotaHistory
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesPersonQuotaHistory";
+
     /// <summary>
     /// Sales person identification number. Foreign key to SalesPerson.BusinessEntityID.
     /// </summary>

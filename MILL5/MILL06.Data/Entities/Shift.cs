@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Shift
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "Shift";
+
     /// <summary>
     /// Primary key for Shift records.
     /// </summary>

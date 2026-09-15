@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class DatabaseLog
 {
+    public static string SqlSchema => "dbo";
+    public static string SqlTableName => "DatabaseLog";
+
     /// <summary>
     /// Primary key for DatabaseLog records.
     /// </summary>

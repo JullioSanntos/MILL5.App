@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class EmailAddress
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "EmailAddress";
+
     /// <summary>
     /// Primary key. Person associated with this email address.  Foreign key to Person.BusinessEntityID
     /// </summary>

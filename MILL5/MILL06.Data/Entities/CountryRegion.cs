@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class CountryRegion
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "CountryRegion";
+
     /// <summary>
     /// ISO standard code for countries and regions.
     /// </summary>

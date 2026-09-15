@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class SalesOrderDetail
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesOrderDetail";
+
     /// <summary>
     /// Primary key. Foreign key to SalesOrderHeader.SalesOrderID.
     /// </summary>

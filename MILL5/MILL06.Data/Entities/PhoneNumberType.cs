@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class PhoneNumberType
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "PhoneNumberType";
+
     /// <summary>
     /// Primary key for telephone number type records.
     /// </summary>

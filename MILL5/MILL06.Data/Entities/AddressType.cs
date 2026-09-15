@@ -17,6 +17,10 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class AddressType
 {
+
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "AddressType";
+
     /// <summary>
     /// Primary key for AddressType records.
     /// </summary>

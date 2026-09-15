@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class TransactionHistory
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "TransactionHistory";
+
     /// <summary>
     /// Primary key for TransactionHistory records.
     /// </summary>

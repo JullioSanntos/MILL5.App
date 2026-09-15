@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class PurchaseOrderHeader
 {
+    public static string SqlSchema => "Purchasing";
+    public static string SqlTableName => "PurchaseOrderHeader";
+
     /// <summary>
     /// Primary key.
     /// </summary>

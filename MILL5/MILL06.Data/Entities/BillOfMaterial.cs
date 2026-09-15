@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class BillOfMaterial
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "BillOfMaterials";
+
     /// <summary>
     /// Primary key for BillOfMaterials records.
     /// </summary>

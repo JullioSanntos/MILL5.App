@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Department
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "Department";
+
     /// <summary>
     /// Primary key for Department records.
     /// </summary>

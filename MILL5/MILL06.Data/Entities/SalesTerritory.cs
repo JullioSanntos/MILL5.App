@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class SalesTerritory
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesTerritory";
+
     /// <summary>
     /// Primary key for SalesTerritory records.
     /// </summary>

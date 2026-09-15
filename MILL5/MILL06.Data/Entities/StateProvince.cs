@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class StateProvince
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "StateProvince";
+
     /// <summary>
     /// Primary key for StateProvince records.
     /// </summary>

@@ -36,12 +36,20 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
         _dashboardViewModel ??= global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<DashboardViewModel>();
     #endregion DashboardViewModel
 
-    #region IDisposable
-    public void Dispose() {
-        // MainModel is deliberately absent as it is owned by the container, not this class.
-        _dashboardViewModel?.Dispose();
-        GC.SuppressFinalize(this);
-    }
-    #endregion IDisposable
+    //#region IDisposable
+    //public void Dispose() {
+    //    // MainModel is deliberately absent as it is owned by the container, not this class.
+    //    _dashboardViewModel?.Dispose();
+    //    GC.SuppressFinalize(this);
+    //}
+    //#endregion IDisposable
+
+    //// The engineer just types this to add their manual cleanup!
+    //partial void OnDisposing() {
+    //    // Unsubscribe from events, clear custom messengers, etc.
+    //    // e.g., WeakReferenceMessenger.Default.UnregisterAll(this);
+    //    _dashboardViewModel?.Dispose();
+    //    GC.SuppressFinalize(this);
+    //}
 
 }

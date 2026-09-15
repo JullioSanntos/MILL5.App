@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Illustration
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "Illustration";
+
     /// <summary>
     /// Primary key for Illustration records.
     /// </summary>

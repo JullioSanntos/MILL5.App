@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class PersonPhone
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "PersonPhone";
+
     /// <summary>
     /// Business entity identification number. Foreign key to Person.BusinessEntityID.
     /// </summary>

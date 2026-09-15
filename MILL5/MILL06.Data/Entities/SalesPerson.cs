@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class SalesPerson
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesPerson";
+
     /// <summary>
     /// Primary key for SalesPerson records. Foreign key to Employee.BusinessEntityID
     /// </summary>

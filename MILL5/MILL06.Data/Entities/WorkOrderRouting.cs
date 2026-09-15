@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class WorkOrderRouting
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "WorkOrderRouting";
+
     /// <summary>
     /// Primary key. Foreign key to WorkOrder.WorkOrderID.
     /// </summary>

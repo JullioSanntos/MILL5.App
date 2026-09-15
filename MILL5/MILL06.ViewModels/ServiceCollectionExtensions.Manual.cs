@@ -43,5 +43,6 @@ public static partial class ServiceCollectionExtensions {
         // Example — delete or replace:
         // services.AddSingleton<SomeType>(_ => new SomeType());
         services.AddSingleton(_ => new MainViewModel());
+        services.AddSingleton(_ => new MenuRegistry());
     }
 }

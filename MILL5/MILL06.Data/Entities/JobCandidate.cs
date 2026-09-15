@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class JobCandidate
 {
+    public static string SqlSchema => "HumanResources";
+    public static string SqlTableName => "JobCandidate";
+
     /// <summary>
     /// Primary key for JobCandidate records.
     /// </summary>

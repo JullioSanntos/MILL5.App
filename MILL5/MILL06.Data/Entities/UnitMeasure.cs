@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class UnitMeasure
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "UnitMeasure";
+
     /// <summary>
     /// Primary key.
     /// </summary>

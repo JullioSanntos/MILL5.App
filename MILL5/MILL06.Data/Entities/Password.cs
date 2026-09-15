@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Password
 {
+    public static string SqlSchema => "Person";
+    public static string SqlTableName => "Password";
+
     public int BusinessEntityId { get; set; }
 
     /// <summary>

@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Culture
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "Culture";
+
     /// <summary>
     /// Primary key for Culture records.
     /// </summary>

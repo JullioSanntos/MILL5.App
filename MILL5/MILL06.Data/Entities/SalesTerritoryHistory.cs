@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class SalesTerritoryHistory
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesTerritoryHistory";
+
     /// <summary>
     /// Primary key. The sales rep.  Foreign key to SalesPerson.BusinessEntityID.
     /// </summary>

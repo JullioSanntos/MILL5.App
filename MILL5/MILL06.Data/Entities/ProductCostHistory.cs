@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ProductCostHistory
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "ProductCostHistory";
+
     /// <summary>
     /// Product identification number. Foreign key to Product.ProductID
     /// </summary>

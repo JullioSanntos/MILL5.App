@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class CountryRegionCurrency
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "CountryRegionCurrency";
+
     /// <summary>
     /// ISO code for countries and regions. Foreign key to CountryRegion.CountryRegionCode.
     /// </summary>

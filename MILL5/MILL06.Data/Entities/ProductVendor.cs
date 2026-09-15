@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ProductVendor
 {
+    public static string SqlSchema => "Purchasing";
+    public static string SqlTableName => "ProductVendor";
+
     /// <summary>
     /// Primary key. Foreign key to Product.ProductID.
     /// </summary>

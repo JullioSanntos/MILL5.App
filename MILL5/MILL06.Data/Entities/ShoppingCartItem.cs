@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ShoppingCartItem
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "ShoppingCartItem";
+
     /// <summary>
     /// Primary key for ShoppingCartItem records.
     /// </summary>

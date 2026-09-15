@@ -18,10 +18,9 @@ using MILL09.Models.Interfaces;
 using MILL80.Infrastructure.Services;
 using MILL80.Infrastructure;
 
-namespace MILL09.Models
-{
-public partial class Address : ModelEntityBase
-{
+
+namespace MILL09.Models {
+public partial class Address : ModelEntityBase {
     [ObservableProperty]
     private int _addressId;
 
@@ -128,10 +127,8 @@ public partial class Address : ModelEntityBase
 }
 }
 
-namespace MILL09.Models
-{
-public partial class MainModel
-{
+namespace MILL09.Models {
+public partial class MainModel {
     private ObservableCollection<Address>? _addresses;
     public ObservableCollection<Address> Addresses
     {

@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Location
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "Location";
+
     /// <summary>
     /// Primary key for Location records.
     /// </summary>

@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class CurrencyRate
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "CurrencyRate";
+
     /// <summary>
     /// Primary key for CurrencyRate records.
     /// </summary>

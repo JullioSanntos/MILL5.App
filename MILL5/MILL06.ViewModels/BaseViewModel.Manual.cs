@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MILL06.ViewModels {
     public abstract partial class BaseViewModel : ObservableObject {
-        [ObservableProperty]
-        string? _viewType;
+
     }
 }

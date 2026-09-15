@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ShipMethod
 {
+    public static string SqlSchema => "Purchasing";
+    public static string SqlTableName => "ShipMethod";
+
     /// <summary>
     /// Primary key for ShipMethod records.
     /// </summary>

@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ErrorLog
 {
+    public static string SqlSchema => "dbo";
+    public static string SqlTableName => "ErrorLog";
+
     /// <summary>
     /// Primary key for ErrorLog records.
     /// </summary>

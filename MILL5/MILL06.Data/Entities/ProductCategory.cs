@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ProductCategory
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "ProductCategory";
+
     /// <summary>
     /// Primary key for ProductCategory records.
     /// </summary>

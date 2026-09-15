@@ -18,8 +18,7 @@ using MILL09.Models.Interfaces;
 using MILL80.Infrastructure.Services;
 using MILL80.Infrastructure;
 
-namespace MILL09.Models
-{
+namespace MILL09.Models {
 public partial class AddressType : ModelEntityBase
 {
     [ObservableProperty]

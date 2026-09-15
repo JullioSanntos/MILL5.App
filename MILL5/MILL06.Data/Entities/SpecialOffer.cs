@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class SpecialOffer
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SpecialOffer";
+
     /// <summary>
     /// Primary key for SpecialOffer records.
     /// </summary>

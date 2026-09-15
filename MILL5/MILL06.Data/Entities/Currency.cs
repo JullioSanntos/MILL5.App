@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class Currency
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "Currency";
+
     /// <summary>
     /// The ISO code for the Currency.
     /// </summary>

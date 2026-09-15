@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ProductReview
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "ProductReview";
+
     /// <summary>
     /// Primary key for ProductReview records.
     /// </summary>

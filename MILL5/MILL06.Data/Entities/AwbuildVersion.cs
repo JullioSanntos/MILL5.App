@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class AwbuildVersion
 {
+    public static string SqlSchema => "dbo";
+    public static string SqlTableName => "AWBuildVersion";
+
     /// <summary>
     /// Primary key for AWBuildVersion records.
     /// </summary>

@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class SalesReason
 {
+    public static string SqlSchema => "Sales";
+    public static string SqlTableName => "SalesReason";
+
     /// <summary>
     /// Primary key for SalesReason records.
     /// </summary>

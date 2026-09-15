@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class ScrapReason
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "ScrapReason";
+
     /// <summary>
     /// Primary key for ScrapReason records.
     /// </summary>

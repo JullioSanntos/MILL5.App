@@ -17,6 +17,9 @@ namespace MILL06.Data.Entities.Entities;
 /// </summary>
 public partial class WorkOrder
 {
+    public static string SqlSchema => "Production";
+    public static string SqlTableName => "WorkOrder";
+
     /// <summary>
     /// Primary key for WorkOrder records.
     /// </summary>
