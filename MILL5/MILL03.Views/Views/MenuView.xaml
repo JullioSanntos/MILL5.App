@@ -4,8 +4,22 @@
              xmlns:syncfusion="clr-namespace:Syncfusion.Maui.TreeView;assembly=Syncfusion.Maui.TreeView"
              xmlns:vm="using:MILL06.ViewModels"
              x:Class="MILL03.Views.Views.MenuView">
-    <Grid RowDefinitions="*" VerticalOptions="Fill" HorizontalOptions="Fill">
+    <Grid RowDefinitions="Auto, *" VerticalOptions="Fill" HorizontalOptions="Fill">
 
+
+        <Border Grid.Row="0" BackgroundColor="#2B579A" 
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 8"
+                Margin="5,5,5,15">
+
+            <Label Text="Adventure Works"
+                   TextColor="White"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Padding="10" />
+        </Border>
 
         <syncfusion:SfTreeView Grid.Row="1" 
                                ItemDoubleTapped="MenuTreeView_ItemDoubleTapped"
@@ -30,24 +44,6 @@
         </syncfusion:SfTreeView>
 
 
-        <!--<syncfusion:SfTreeView Grid.Row="1" 
-                               ItemsSource="{Binding MenuItems}" 
-                               ChildPropertyName="Children">
-
-            <syncfusion:SfTreeView.ItemTemplate>
-                --><!-- Fixes the (???) on Title --><!--
-                <DataTemplate x:DataType="vm:MenuNodeViewModel">
-                    <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
-
-                        --><!-- Force TextColor to Black to override Dark Mode defaults --><!--
-                        <Label Text="{Binding Title}" 
-                               TextColor="Black" 
-                               VerticalOptions="Center" />
-
-                    </HorizontalStackLayout>
-                </DataTemplate>
-            </syncfusion:SfTreeView.ItemTemplate>
-        </syncfusion:SfTreeView>-->
 
  </Grid>
 </ContentView>
