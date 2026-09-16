@@ -8,12 +8,12 @@
 
 
         <syncfusion:SfTreeView Grid.Row="1" 
+                               ItemDoubleTapped="MenuTreeView_ItemDoubleTapped"
                                ItemsSource="{Binding MenuItems}" 
                                ChildPropertyName="Children"
-                               ItemHeight="32"            
-                               ExpanderWidth="32"
-                              
-                               Indentation="16">
+                               ItemHeight="32"             
+                               ExpanderWidth="32"          
+                               Indentation="16">    
 
             <syncfusion:SfTreeView.ItemTemplate>
                 <DataTemplate x:DataType="vm:MenuNodeViewModel">

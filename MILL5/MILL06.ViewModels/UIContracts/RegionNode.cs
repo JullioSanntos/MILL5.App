@@ -1,5 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using MILL06.ViewModels.UIContracts;
+﻿using System;
+using CommunityToolkit.Mvvm.ComponentModel;
+using MILL06.ViewModels; // Added for BaseViewModel
 
 namespace MILL06.ViewModels.UIContracts;
 
@@ -48,13 +49,16 @@ public partial class RegionNode : ObservableObject {
     [ObservableProperty]
     private RegionNode? _parent;
 
+    // --- THE PIVOT: ViewModel instead of string key ---
     [ObservableProperty]
-    private string? _payloadKey;
-    partial void OnPayloadKeyChanged(string? value) {
+    private BaseViewModel? _payloadViewModel;
+
+    partial void OnPayloadViewModelChanged(BaseViewModel? value) {
         OnPropertyChanged(nameof(IsOccupied));
     }
 
-    public bool IsOccupied => !string.IsNullOrEmpty(PayloadKey) || IsSplit;
+    // --- UPDATED: Now checks the object instead of the string ---
+    public bool IsOccupied => PayloadViewModel != null || IsSplit;
 
     public event EventHandler<RegionNodeChangingEventArgs>? NodeChanging;
 

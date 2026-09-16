@@ -18,8 +18,9 @@
     </Grid>-->
 
     <Grid x:Name="RootGrid" BackgroundColor="Transparent">
-         <!--The Smoke Test wrapped safely in a Grid--> 
-        <controls:RegionCell PayloadViewModel="{Binding TestViewModel}" />
+        <!--<controls:RegionCell PayloadViewModel="{Binding StartupViewModel}"  />-->
+        <controls:RegionCell RegionNode="{Binding RootRegionNode}"  />
+
     </Grid>
 
 </ContentPage>

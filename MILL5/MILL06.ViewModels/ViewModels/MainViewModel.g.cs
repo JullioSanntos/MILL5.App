@@ -246,10 +246,13 @@ namespace MILL06.ViewModels
                             disposable.Dispose();
                         }
                     }
+                    OnDisposing();
                 }
                 _disposed = true;
             }
         }
         #endregion IDisposing
+
+        partial void OnDisposing();
     }
 }

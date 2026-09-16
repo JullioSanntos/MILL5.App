@@ -1,15 +1,57 @@
 using Microsoft.Maui.Controls;
 using MILL03.Views.UIInfrastructure;
 using MILL06.ViewModels;
+using MILL06.ViewModels.UIContracts;
 
 namespace MILL03.Views.Controls;
 
 public enum SplitDirection { Top, Bottom, Left, Right }
 
-// 1. Tell MAUI that anything nested in XAML belongs in the Payload property
-//[ContentProperty(nameof(Payload))]
 public partial class RegionCell : ContentView {
+    // --- STATE-DRIVEN TREE BINDING ---
+    public static readonly BindableProperty RegionNodeProperty = BindableProperty.Create(
+        nameof(RegionNode),
+        typeof(RegionNode),
+        typeof(RegionCell),
+        null,
+        propertyChanged: (bindable, oldValue, newValue) => {
+            if (bindable is RegionCell cell) {
+                if (oldValue is RegionNode oldNode) {
+                    oldNode.PropertyChanged -= cell.OnNodePropertyChanged;
+                }
+                if (newValue is RegionNode newNode) {
+                    newNode.PropertyChanged += cell.OnNodePropertyChanged;
+                    // Force an initial sync when the node is first attached
+                    cell.SyncWithNode(newNode);
+                }
+            }
+        });
 
+    public RegionNode? RegionNode {
+        get => (RegionNode?)GetValue(RegionNodeProperty);
+        set => SetValue(RegionNodeProperty, value);
+    }
+
+    private void OnNodePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
+        if (sender is RegionNode node && e.PropertyName == nameof(RegionNode.PayloadViewModel)) {
+            MainThread.BeginInvokeOnMainThread(() => SyncWithNode(node));
+        }
+    }
+
+    private void SyncWithNode(RegionNode node) {
+        if (PayloadContainer == null) return;
+
+        if (node.PayloadViewModel == null) {
+            PayloadContainer.Content = null;
+            return;
+        }
+
+        // Direct ViewModel-to-View resolution. No reflection needed.
+        var resolvedView = ViewLocator.Instance.Resolve(node.PayloadViewModel);
+        InjectPayload(resolvedView);
+    }
+
+    // --- EXISTING DIRECT BINDINGS (Kept for backward compatibility/flexibility) ---
     public static readonly BindableProperty PayloadViewModelProperty = BindableProperty.Create(
         nameof(PayloadViewModel),
         typeof(BaseViewModel),
@@ -17,11 +59,7 @@ public partial class RegionCell : ContentView {
         null,
         propertyChanged: (bindable, oldValue, newValue) => {
             if (bindable is RegionCell cell && newValue is BaseViewModel vm) {
-
-                // Route the ViewModel through your new locator
                 var resolvedView = ViewLocator.Instance.Resolve(vm);
-
-                // Pass it to your existing injection logic
                 cell.InjectPayload(resolvedView);
             }
         });
@@ -31,7 +69,6 @@ public partial class RegionCell : ContentView {
         set => SetValue(PayloadViewModelProperty, value);
     }
 
-    // 2. Catch the nested view and route it to our existing Inject method
     public static readonly BindableProperty PayloadProperty = BindableProperty.Create(
         nameof(Payload),
         typeof(View),
@@ -48,10 +85,11 @@ public partial class RegionCell : ContentView {
         set => SetValue(PayloadProperty, value);
     }
 
-    private static readonly Color[] RegionColors = { Colors.White,
-        Colors.LightBlue, Colors.LightCoral, Colors.LightGreen, Colors.LightGoldenrodYellow,
-        Colors.LightPink, Colors.MediumPurple, Colors.LightSeaGreen, Colors.Orange,
-        Colors.LightSkyBlue, Colors.Plum
+    // --- UI INFRASTRUCTURE & ADORNERS ---
+    private static readonly Color[] RegionColors = {
+        Colors.White, Colors.LightBlue, Colors.LightCoral, Colors.LightGreen,
+        Colors.LightGoldenrodYellow, Colors.LightPink, Colors.MediumPurple,
+        Colors.LightSeaGreen, Colors.Orange, Colors.LightSkyBlue, Colors.Plum
     };
     private static readonly Random _random = new Random();
     private static int _lastColorIndex = -1;
@@ -64,7 +102,6 @@ public partial class RegionCell : ContentView {
                 nextIndex = _random.Next(RegionColors.Length);
             } while (nextIndex == _lastColorIndex);
         }
-
         _lastColorIndex = nextIndex;
         return RegionColors[nextIndex];
     }
@@ -87,7 +124,6 @@ public partial class RegionCell : ContentView {
     public RegionCell() {
         InitializeComponent();
 
-        // Map directly to XAML elements — no more guessing spans or UI-tree hunting
         _adorners = new Lazy<Dictionary<SplitDirection, BoxView>>(() => new Dictionary<SplitDirection, BoxView> {
             { SplitDirection.Top, TopAdorner },
             { SplitDirection.Bottom, BottomAdorner },
@@ -96,6 +132,14 @@ public partial class RegionCell : ContentView {
         });
 
         WireUpAutonomousLogic();
+    }
+
+    protected override void OnHandlerChanged() {
+        base.OnHandlerChanged();
+        // Failsafe: Ensure content paints if the binding fired before InitializeComponent finished
+        if (Handler != null && RegionNode != null) {
+            SyncWithNode(RegionNode);
+        }
     }
 
     private static void OnIsSplittingStateChanged(BindableObject bindable, object oldValue, object newValue) {
@@ -139,7 +183,6 @@ public partial class RegionCell : ContentView {
         if (!position.HasValue) return;
 
         if (IndicatorLabel.IsVisible) {
-            // Reverted to your exact custom offset
             IndicatorLabel.TranslationX = position.Value.X + 8;
             IndicatorLabel.TranslationY = position.Value.Y - 9;
         }
@@ -172,6 +215,7 @@ public partial class RegionCell : ContentView {
     }
 
     private void PerformSplit(bool isTopBottomClick, double clickX, double clickY) {
+        // --- YOUR EXACT UI EXTRACTION ---
         var extractedPayload = PayloadContainer.Content ?? new ContentView { BackgroundColor = GetNextColor() };
         PayloadContainer.Content = null;
 
@@ -180,12 +224,39 @@ public partial class RegionCell : ContentView {
         RootGrid.ColumnDefinitions.Clear();
 
         var splitGrid = new Grid();
+
+        // --- STATE TREE MUTATION (INJECTED) ---
+        RegionNode? child1Node = null;
+        RegionNode? child2Node = null;
+
+        if (this.RegionNode != null) {
+            double stateStar1 = isTopBottomClick ? (clickX / RootGrid.Width) : (clickY / RootGrid.Height);
+            double stateStar2 = 1.0 - stateStar1;
+
+            // Child 1 inherits the current payload. Child 2 is empty.
+            child1Node = new RegionNode { PayloadViewModel = this.RegionNode.PayloadViewModel };
+            child2Node = new RegionNode { PayloadViewModel = null };
+
+            // Update the current node to become a split parent
+            this.RegionNode.PayloadViewModel = null;
+            this.RegionNode.FirstChildWeight = stateStar1;
+            this.RegionNode.SecondChildWeight = stateStar2;
+            this.RegionNode.FirstChild = child1Node;
+            this.RegionNode.SecondChild = child2Node;
+            this.RegionNode.Orientation = isTopBottomClick ? SplitOrientation.Vertical : SplitOrientation.Horizontal;
+        }
+        // --------------------------------------
+
+        // --- YOUR EXACT CELL CREATION ---
         var cell1 = new RegionCell();
-        cell1.InjectPayload(extractedPayload);
+        if (child1Node != null) cell1.RegionNode = child1Node; // Wire to state
+        cell1.InjectPayload(extractedPayload); // Keeps your view intact
 
         var cell2 = new RegionCell();
+        if (child2Node != null) cell2.RegionNode = child2Node; // Wire to state
         cell2.InjectPayload(new ContentView { BackgroundColor = GetNextColor() });
 
+        // --- YOUR EXACT GRID SPLITTER & MATH ---
         var splitter = new GridSplitter {
             Orientation = isTopBottomClick ? GridSplitter.SplitOrientation.Vertical : GridSplitter.SplitOrientation.Horizontal,
             WidthRequest = isTopBottomClick ? 5 : -1,
@@ -224,7 +295,68 @@ public partial class RegionCell : ContentView {
         splitGrid.Children.Add(cell2);
 
         RootGrid.Children.Add(splitGrid);
+
+        // --- TARGETING UPDATE (INJECTED) ---
+        if (child2Node != null) {
+            // Tell the ViewModel that the new empty cell is the active target!
+            MainViewModel.Instance.ActiveRegionNode = child2Node;
+        }
     }
+
+    //private void PerformSplit(bool isTopBottomClick, double clickX, double clickY) {
+    //    var extractedPayload = PayloadContainer.Content ?? new ContentView { BackgroundColor = GetNextColor() };
+    //    PayloadContainer.Content = null;
+
+    //    RootGrid.Children.Clear();
+    //    RootGrid.RowDefinitions.Clear();
+    //    RootGrid.ColumnDefinitions.Clear();
+
+    //    var splitGrid = new Grid();
+    //    var cell1 = new RegionCell();
+    //    cell1.InjectPayload(extractedPayload);
+
+    //    var cell2 = new RegionCell();
+    //    cell2.InjectPayload(new ContentView { BackgroundColor = GetNextColor() });
+
+    //    var splitter = new GridSplitter {
+    //        Orientation = isTopBottomClick ? GridSplitter.SplitOrientation.Vertical : GridSplitter.SplitOrientation.Horizontal,
+    //        WidthRequest = isTopBottomClick ? 5 : -1,
+    //        HeightRequest = isTopBottomClick ? -1 : 5,
+    //        HorizontalOptions = isTopBottomClick ? LayoutOptions.Center : LayoutOptions.Fill,
+    //        VerticalOptions = isTopBottomClick ? LayoutOptions.Fill : LayoutOptions.Center
+    //    };
+
+    //    if (isTopBottomClick) {
+    //        double star1 = clickX / RootGrid.Width;
+    //        double star2 = 1.0 - star1;
+
+    //        splitGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(star1, GridUnitType.Star)));
+    //        splitGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+    //        splitGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(star2, GridUnitType.Star)));
+
+    //        Grid.SetColumn(cell1, 0);
+    //        Grid.SetColumn(splitter, 1);
+    //        Grid.SetColumn(cell2, 2);
+    //    }
+    //    else {
+    //        double star1 = clickY / RootGrid.Height;
+    //        double star2 = 1.0 - star1;
+
+    //        splitGrid.RowDefinitions.Add(new RowDefinition(new GridLength(star1, GridUnitType.Star)));
+    //        splitGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+    //        splitGrid.RowDefinitions.Add(new RowDefinition(new GridLength(star2, GridUnitType.Star)));
+
+    //        Grid.SetRow(cell1, 0);
+    //        Grid.SetRow(splitter, 1);
+    //        Grid.SetRow(cell2, 2);
+    //    }
+
+    //    splitGrid.Children.Add(cell1);
+    //    splitGrid.Children.Add(splitter);
+    //    splitGrid.Children.Add(cell2);
+
+    //    RootGrid.Children.Add(splitGrid);
+    //}
 
     private void OnCloseButtonTapped(object sender, TappedEventArgs e) {
         if (this.Parent is Grid parentGrid) {
