@@ -41,13 +41,20 @@ public partial class RegionCell : ContentView {
     private void SyncWithNode(RegionNode node) {
         if (PayloadContainer == null) return;
 
+        // If the node has no payload, it's an empty placeholder. Give it a dummy color.
         if (node.PayloadViewModel == null) {
-            PayloadContainer.Content = null;
+            PayloadContainer.Content = new ContentView { BackgroundColor = GetNextColor() };
             return;
         }
 
-        // Direct ViewModel-to-View resolution. No reflection needed.
+        // Direct ViewModel-to-View resolution.
         var resolvedView = ViewLocator.Instance.Resolve(node.PayloadViewModel);
+
+        // 1. It's a REAL view! Force background to White if it doesn't already have one set in XAML
+        if (resolvedView != null && resolvedView.BackgroundColor == null) {
+            resolvedView.BackgroundColor = Colors.White;
+        }
+
         InjectPayload(resolvedView);
     }
 
@@ -207,11 +214,16 @@ public partial class RegionCell : ContentView {
         }
     }
 
+    //public void InjectPayload(View payload) {
+    //    PayloadContainer.Content = payload;
+    //    if (payload != null && payload.BackgroundColor == null) {
+    //        payload.BackgroundColor = GetNextColor();
+    //    }
+    //}
+
     public void InjectPayload(View payload) {
         PayloadContainer.Content = payload;
-        if (payload != null && payload.BackgroundColor == null) {
-            payload.BackgroundColor = GetNextColor();
-        }
+        // Removed the blanket GetNextColor() logic from here!
     }
 
     private void PerformSplit(bool isTopBottomClick, double clickX, double clickY) {
