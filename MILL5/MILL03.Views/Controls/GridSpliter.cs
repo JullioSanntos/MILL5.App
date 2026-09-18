@@ -3,35 +3,54 @@ using System;
 
 namespace MILL03.Views.Controls;
 
-public class GridSplitter : BoxView {
+public class GridSplitter : Grid {
     public enum SplitOrientation { Vertical, Horizontal }
 
     public static readonly BindableProperty OrientationProperty = BindableProperty.Create(
         nameof(Orientation),
         typeof(SplitOrientation),
         typeof(GridSplitter),
-        SplitOrientation.Vertical);
+        SplitOrientation.Vertical,
+        propertyChanged: OnOrientationChanged);
 
     public SplitOrientation Orientation {
         get => (SplitOrientation)GetValue(OrientationProperty);
         set => SetValue(OrientationProperty, value);
     }
 
+    private readonly SplitDividerVisual _dividerVisual;
     private double _initialStar1;
     private double _initialStar2;
     private bool _isDragging;
 
     public GridSplitter() {
-        // Apply styling directly to the BoxView to guarantee hit-testing
-        //BackgroundColor = Color.FromArgb("#80808080");
-        BackgroundColor = Colors.Orange;
         ZIndex = 100;
+
+        _dividerVisual = new SplitDividerVisual {
+            Opacity = 1.0,
+            InputTransparent = true,
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Fill
+        };
+
+        Children.Add(_dividerVisual);
+        UpdateAppearance();
 
         var panGesture = new PanGestureRecognizer();
         panGesture.PanUpdated += OnPanUpdated;
         GestureRecognizers.Add(panGesture);
 
-        this.HandlerChanged += OnHandlerChanged;
+        HandlerChanged += OnHandlerChanged;
+    }
+
+    private static void OnOrientationChanged(BindableObject bindable, object oldValue, object newValue) {
+        ((GridSplitter)bindable).UpdateAppearance();
+    }
+
+    private void UpdateAppearance() {
+        _dividerVisual.Orientation = Orientation == SplitOrientation.Vertical
+            ? SplitDividerVisual.DividerOrientation.Vertical
+            : SplitDividerVisual.DividerOrientation.Horizontal;
     }
 
     private void OnPanUpdated(object? sender, PanUpdatedEventArgs e) {
@@ -91,9 +110,9 @@ public class GridSplitter : BoxView {
 
     private void OnHandlerChanged(object? sender, EventArgs e) {
 #if WINDOWS
-        if (this.Handler?.PlatformView is Microsoft.UI.Xaml.UIElement platformView) {
+        if (Handler?.PlatformView is Microsoft.UI.Xaml.UIElement platformView) {
             platformView.PointerEntered += (s, args) => {
-                var shape = this.Orientation == SplitOrientation.Vertical
+                var shape = Orientation == SplitOrientation.Vertical
                     ? Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast
                     : Microsoft.UI.Input.InputSystemCursorShape.SizeNorthSouth;
 
@@ -109,7 +128,7 @@ public class GridSplitter : BoxView {
 
     private void ResetCursor() {
 #if WINDOWS
-        if (this.Handler?.PlatformView is Microsoft.UI.Xaml.UIElement platformView) {
+        if (Handler?.PlatformView is Microsoft.UI.Xaml.UIElement platformView) {
             platformView.ForceSetCursor(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
         }
 #endif
