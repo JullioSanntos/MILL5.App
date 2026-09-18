@@ -1,8 +1,9 @@
-﻿using System.Reflection;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using MILL06.ViewModels.UIContracts;
 using MILL09.Models;
+using System.Reflection;
+using System.Xml.Linq;
 
 namespace MILL06.ViewModels;
 
@@ -17,15 +18,54 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
         _mainModel ??= global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<MainModel>();
     #endregion MainModel
 
-    // 1. The root node of your entire layout tree. 
+    #region RootRegionNode
+    //The root node of your entire layout tree.
     private RegionNode? _rootRegionNode;
-    public RegionNode RootRegionNode => _rootRegionNode ??= new RegionNode {
-        PayloadViewModel = StartupViewModel
-    };
+    public RegionNode RootRegionNode {
+        get {
+            if (_rootRegionNode != null) { return _rootRegionNode; }
+
+            RootRegionNode = new RegionNode {
+                PayloadViewModel = StartupViewModel
+            };
+
+            return _rootRegionNode!;
+        }
+        set {
+            if (_rootRegionNode != null) { _rootRegionNode.NodeChanging -= RootRegionNode_NodeChanging; }
+            _rootRegionNode = value;
+            if (_rootRegionNode != null) { _rootRegionNode.NodeChanging += RootRegionNode_NodeChanging; }
+        }
+    }
+    private void RootRegionNode_NodeChanging(object? sender, RegionNodeChangingEventArgs e) 
+    {
+        // Temporary testing:
+        System.Diagnostics.Debug.WriteLine($"RegionNode {e.NodeId}: {e.Action}");
+    }
+    #endregion RootRegionNode
+
 
     // Active node tracking for your target rules (Active preferred, otherwise First Empty)
-    [ObservableProperty]
+    #region ActiveRegionNode
+
     private RegionNode? _activeRegionNode;
+    public RegionNode ActiveRegionNode {
+        get {
+            if (_activeRegionNode != null) return _activeRegionNode;
+
+            ActiveRegionNode = RootRegionNode;
+
+            return _activeRegionNode!;
+        }
+        set {
+            if (ReferenceEquals(_activeRegionNode, value)) return;
+
+            _activeRegionNode = value;
+            OnPropertyChanged();
+        }
+    }
+
+    #endregion ActiveRegionNode
 
     private BaseViewModel? _startupViewModel;
     public BaseViewModel? StartupViewModel {
@@ -44,7 +84,7 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
     protected internal MainViewModel() {
         // 2. Initialize the tree with a default single root leaf node so the app launches cleanly
         // (Moved the instantiation to the property getter to avoid double-instantiation)
-        _activeRegionNode = RootRegionNode; // Default focus to the root
+        //_activeRegionNode = RootRegionNode; // Default focus to the root
 
         this.MenuViewModel.PropertyChanged += MenuViewModel_PropertyChanged;
     }
@@ -108,7 +148,7 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
 
     #endregion MainViewModel's Instance Singleton
 
-    #region Properties
+    #region Methods
 
     private RegionNode? FindTargetNode(RegionNode currentNode, RegionNode? preferredNode) {
         // UPDATED: Check for PayloadViewModel == null instead of empty string
@@ -136,13 +176,17 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
 
         return null;
     }
-    #endregion Properties
+    #endregion Methods
 
-    // The engineer just types this to add their manual cleanup!
+    #region OnDisposing
     partial void OnDisposing() {
-        this.MenuViewModel.PropertyChanged -= MenuViewModel_PropertyChanged;
-        // Unsubscribe from events, clear custom messengers, etc.
-        // e.g., WeakReferenceMessenger.Default.UnregisterAll(this);
+        if (_rootRegionNode != null) {
+            _rootRegionNode.NodeChanging -= RootRegionNode_NodeChanging;
+        }
+        MenuViewModel.PropertyChanged -= MenuViewModel_PropertyChanged;
+
         GC.SuppressFinalize(this);
     }
+    #endregion OnDisposing
+
 }

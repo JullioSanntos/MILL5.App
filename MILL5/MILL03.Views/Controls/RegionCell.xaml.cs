@@ -238,6 +238,11 @@ public partial class RegionCell : ContentView {
     }
 
     private void PerformSplit(bool isTopBottomClick, double clickX, double clickY) {
+
+        if (RegionNode != null && !RegionNode.RaiseNodeChanging(RegionNode.Id, NodeAction.Splitting)) {
+            return;
+        }
+
         var extractedPayload = PayloadContainer.Content ?? new ContentView { BackgroundColor = GetNextColor() };
         PayloadContainer.Content = null;
 
@@ -334,13 +339,17 @@ public partial class RegionCell : ContentView {
         var ownerCell = FindOwningRegionCell(splitGrid);
         if (ownerCell?.RegionNode == null) return;
 
+        // Give the ViewModel/tree an opportunity to observe or cancel the close.
+        if (!RegionNode.RaiseNodeChanging(RegionNode.Id, NodeAction.Closing)) return;
+
         var closedNode = RegionNode;
         var survivingNode = sibling.RegionNode;
         var parentNode = ownerCell.RegionNode;
 
-        // The parent node survives. Promote the sibling's state into it.
+        // Collapse the state tree first.
         PromoteNode(survivingNode, parentNode);
 
+        // Collapse the visual tree.
         var splitter = splitGrid.Children.OfType<GridSplitter>().FirstOrDefault();
         if (splitter != null) splitGrid.Children.Remove(splitter);
 
@@ -354,9 +363,10 @@ public partial class RegionCell : ContentView {
         Grid.SetColumnSpan(sibling, 1);
         Grid.SetRowSpan(sibling, 1);
 
-        // The surviving visual cell must now observe the promoted parent node.
+        // The surviving RegionCell now represents the promoted parent node.
         sibling.RegionNode = parentNode;
 
+        // Repair the active target if it referenced either removed logical node.
         var activeNode = MainViewModel.Instance.ActiveRegionNode;
 
         if (ReferenceEquals(activeNode, closedNode) ||
@@ -364,7 +374,6 @@ public partial class RegionCell : ContentView {
             MainViewModel.Instance.ActiveRegionNode = FindFirstLeaf(parentNode);
         }
     }
-
     private static void PromoteNode(RegionNode source, RegionNode target) {
         target.PayloadViewModel = source.PayloadViewModel;
         target.FirstChildWeight = source.FirstChildWeight;

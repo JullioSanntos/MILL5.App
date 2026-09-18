@@ -72,4 +72,30 @@ public partial class RegionNode : ObservableObject {
         NodeChanging?.Invoke(this, e);
         Parent?.OnNodeChanging(e);
     }
+
+    partial void OnFirstChildChanged(RegionNode? oldValue, RegionNode? newValue) {
+        if (oldValue != null && ReferenceEquals(oldValue.Parent, this)) {
+            oldValue.Parent = null;
+        }
+
+        if (newValue != null) {
+            newValue.Parent = this;
+        }
+
+        OnPropertyChanged(nameof(IsSplit));
+        OnPropertyChanged(nameof(IsOccupied));
+    }
+
+    partial void OnSecondChildChanged(RegionNode? oldValue, RegionNode? newValue) {
+        if (oldValue != null && ReferenceEquals(oldValue.Parent, this)) {
+            oldValue.Parent = null;
+        }
+
+        if (newValue != null) {
+            newValue.Parent = this;
+        }
+
+        OnPropertyChanged(nameof(IsSplit));
+        OnPropertyChanged(nameof(IsOccupied));
+    }
 }
