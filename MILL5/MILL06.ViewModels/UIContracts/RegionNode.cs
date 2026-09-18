@@ -53,6 +53,9 @@ public partial class RegionNode : ObservableObject {
     [ObservableProperty]
     private BaseViewModel? _payloadViewModel;
 
+    private static long _nextCreationOrder;
+    public long CreationOrder { get; } = Interlocked.Increment(ref _nextCreationOrder);
+
     partial void OnPayloadViewModelChanged(BaseViewModel? value) {
         OnPropertyChanged(nameof(IsOccupied));
     }

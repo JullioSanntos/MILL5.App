@@ -95,7 +95,7 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
             if (selectedNode == null || RootRegionNode == null || string.IsNullOrEmpty(selectedNode.TargetViewModelName)) return;
 
             // 1. Try to find an empty node first (Existing logic)
-            var targetNode = FindTargetNode(RootRegionNode, ActiveRegionNode);
+            var targetNode = FindTargetNode(RootRegionNode);
 
             // 2. NEW REQUIREMENT: If no empty cells, fallback to the last populated cell
             if (targetNode == null) {
@@ -150,31 +150,34 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
 
     #region Methods
 
-    private RegionNode? FindTargetNode(RegionNode currentNode, RegionNode? preferredNode) {
-        // UPDATED: Check for PayloadViewModel == null instead of empty string
 
-        // If preferred node is a valid empty leaf, use it
-        if (preferredNode != null && !preferredNode.IsSplit && preferredNode.PayloadViewModel == null) {
-            return preferredNode;
+    private static long _nextCreationOrder;
+    public long CreationOrder { get; } = Interlocked.Increment(ref _nextCreationOrder);
+    private RegionNode? FindTargetNode(RegionNode rootNode) {
+        RegionNode? oldestEmptyNode = null;
+
+        FindOldestEmptyNode(rootNode, ref oldestEmptyNode);
+
+        return oldestEmptyNode;
+    }
+
+    private void FindOldestEmptyNode(RegionNode currentNode, ref RegionNode? oldestEmptyNode) {
+        if (!currentNode.IsSplit) {
+            if (currentNode.PayloadViewModel == null &&
+                (oldestEmptyNode == null || currentNode.CreationOrder < oldestEmptyNode.CreationOrder)) {
+                oldestEmptyNode = currentNode;
+            }
+
+            return;
         }
 
-        // If current node is an empty leaf, use it
-        if (!currentNode.IsSplit && currentNode.PayloadViewModel == null) {
-            return currentNode;
-        }
-
-        // Recurse down children branches
         if (currentNode.FirstChild != null) {
-            var found = FindTargetNode(currentNode.FirstChild, preferredNode);
-            if (found != null) return found;
+            FindOldestEmptyNode(currentNode.FirstChild, ref oldestEmptyNode);
         }
 
         if (currentNode.SecondChild != null) {
-            var found = FindTargetNode(currentNode.SecondChild, preferredNode);
-            if (found != null) return found;
+            FindOldestEmptyNode(currentNode.SecondChild, ref oldestEmptyNode);
         }
-
-        return null;
     }
     #endregion Methods
 
