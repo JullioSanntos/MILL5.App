@@ -214,13 +214,6 @@ public partial class RegionCell : ContentView {
         }
     }
 
-    //public void InjectPayload(View payload) {
-    //    PayloadContainer.Content = payload;
-    //    if (payload != null && payload.BackgroundColor == null) {
-    //        payload.BackgroundColor = GetNextColor();
-    //    }
-    //}
-
     public void InjectPayload(View payload) {
         PayloadContainer.Content = payload;
         // Removed the blanket GetNextColor() logic from here!
@@ -314,61 +307,6 @@ public partial class RegionCell : ContentView {
             MainViewModel.Instance.ActiveRegionNode = child2Node;
         }
     }
-
-    //private void PerformSplit(bool isTopBottomClick, double clickX, double clickY) {
-    //    var extractedPayload = PayloadContainer.Content ?? new ContentView { BackgroundColor = GetNextColor() };
-    //    PayloadContainer.Content = null;
-
-    //    RootGrid.Children.Clear();
-    //    RootGrid.RowDefinitions.Clear();
-    //    RootGrid.ColumnDefinitions.Clear();
-
-    //    var splitGrid = new Grid();
-    //    var cell1 = new RegionCell();
-    //    cell1.InjectPayload(extractedPayload);
-
-    //    var cell2 = new RegionCell();
-    //    cell2.InjectPayload(new ContentView { BackgroundColor = GetNextColor() });
-
-    //    var splitter = new GridSplitter {
-    //        Orientation = isTopBottomClick ? GridSplitter.SplitOrientation.Vertical : GridSplitter.SplitOrientation.Horizontal,
-    //        WidthRequest = isTopBottomClick ? 5 : -1,
-    //        HeightRequest = isTopBottomClick ? -1 : 5,
-    //        HorizontalOptions = isTopBottomClick ? LayoutOptions.Center : LayoutOptions.Fill,
-    //        VerticalOptions = isTopBottomClick ? LayoutOptions.Fill : LayoutOptions.Center
-    //    };
-
-    //    if (isTopBottomClick) {
-    //        double star1 = clickX / RootGrid.Width;
-    //        double star2 = 1.0 - star1;
-
-    //        splitGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(star1, GridUnitType.Star)));
-    //        splitGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-    //        splitGrid.ColumnDefinitions.Add(new ColumnDefinition(new GridLength(star2, GridUnitType.Star)));
-
-    //        Grid.SetColumn(cell1, 0);
-    //        Grid.SetColumn(splitter, 1);
-    //        Grid.SetColumn(cell2, 2);
-    //    }
-    //    else {
-    //        double star1 = clickY / RootGrid.Height;
-    //        double star2 = 1.0 - star1;
-
-    //        splitGrid.RowDefinitions.Add(new RowDefinition(new GridLength(star1, GridUnitType.Star)));
-    //        splitGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-    //        splitGrid.RowDefinitions.Add(new RowDefinition(new GridLength(star2, GridUnitType.Star)));
-
-    //        Grid.SetRow(cell1, 0);
-    //        Grid.SetRow(splitter, 1);
-    //        Grid.SetRow(cell2, 2);
-    //    }
-
-    //    splitGrid.Children.Add(cell1);
-    //    splitGrid.Children.Add(splitter);
-    //    splitGrid.Children.Add(cell2);
-
-    //    RootGrid.Children.Add(splitGrid);
-    //}
 
     private void OnCloseButtonTapped(object sender, TappedEventArgs e) {
         if (this.Parent is Grid parentGrid) {

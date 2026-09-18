@@ -23,7 +23,8 @@ public class GridSplitter : BoxView {
 
     public GridSplitter() {
         // Apply styling directly to the BoxView to guarantee hit-testing
-        BackgroundColor = Color.FromArgb("#80808080");
+        //BackgroundColor = Color.FromArgb("#80808080");
+        BackgroundColor = Colors.Orange;
         ZIndex = 100;
 
         var panGesture = new PanGestureRecognizer();
