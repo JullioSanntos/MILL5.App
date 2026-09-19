@@ -6,71 +6,29 @@
              VerticalOptions="Fill"
              HorizontalOptions="Fill">
 
-    <Grid x:Name="RootGrid" VerticalOptions="Fill" HorizontalOptions="Fill">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="5" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="5" />
-        </Grid.RowDefinitions>
+    <Grid x:Name="RootGrid"
+          VerticalOptions="Fill"
+          HorizontalOptions="Fill">
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="5" />
-        </Grid.ColumnDefinitions>
+        <controls:Perimeter x:Name="SplitPerimeter">
+            <controls:Perimeter.InnerContent>
 
-        <!-- Payload fills the complete region. -->
-        <ContentView x:Name="PayloadContainer"
-                     Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
-                     VerticalOptions="Fill" HorizontalOptions="Fill" />
+                <Grid>
+                    <ContentView x:Name="PayloadContainer"
+                                 VerticalOptions="Fill"
+                                 HorizontalOptions="Fill" />
 
-        <!-- 5px perimeter hit areas used to initiate a split. -->
-        <BoxView x:Name="TopAdorner"
-                 Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
-                 BackgroundColor="Transparent" ZIndex="110" />
+                    <Label x:Name="CloseBtnLabel"
+                           Style="{StaticResource RegionCloseButtonStyle}"
+                           ZIndex="100">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCloseButtonTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Grid>
 
-        <BoxView x:Name="BottomAdorner"
-                 Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
-                 BackgroundColor="Transparent" ZIndex="110" />
+            </controls:Perimeter.InnerContent>
+        </controls:Perimeter>
 
-        <BoxView x:Name="LeftAdorner"
-                 Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
-                 BackgroundColor="Transparent" ZIndex="110" />
-
-        <BoxView x:Name="RightAdorner"
-                 Grid.Row="0" Grid.Column="2" Grid.RowSpan="3"
-                 BackgroundColor="Transparent" ZIndex="110" />
-
-        <!-- Same visual language as the committed GridSplitter, but translucent. -->
-        <controls:SplitDividerVisual x:Name="SplitPreview"
-                                     Grid.Row="0" Grid.RowSpan="3"
-                                     Grid.Column="0" Grid.ColumnSpan="3"
-                                     Opacity="0.60"
-                                     InputTransparent="True"
-                                     IsVisible="False"
-                                     ZIndex="98" />
-
-        <Label x:Name="IndicatorLabel"
-               Text="+"
-               FontSize="Medium"
-               TextColor="Red"
-               FontAttributes="Bold"
-               HorizontalOptions="Start"
-               VerticalOptions="Start"
-               Grid.Row="0" Grid.RowSpan="3"
-               Grid.Column="0" Grid.ColumnSpan="3"
-               IsVisible="False"
-               InputTransparent="True"
-               ZIndex="99" />
-
-        <Label x:Name="CloseBtnLabel"
-               Grid.Row="0" Grid.RowSpan="3"
-               Grid.Column="0" Grid.ColumnSpan="3"
-               Style="{StaticResource RegionCloseButtonStyle}"
-               ZIndex="100">
-            <Label.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnCloseButtonTapped" />
-            </Label.GestureRecognizers>
-        </Label>
     </Grid>
 </ContentView>
