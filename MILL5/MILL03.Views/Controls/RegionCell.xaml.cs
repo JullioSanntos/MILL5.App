@@ -246,6 +246,7 @@ public partial class RegionCell : ContentView {
 
     private readonly record struct CloseContext(
         Grid SplitGrid,
+        RegionCell OwnerCell,
         RegionCell Sibling,
         RegionNode ClosedNode,
         RegionNode SurvivingNode,
@@ -265,14 +266,22 @@ public partial class RegionCell : ContentView {
 
         if (Parent is not Grid splitGrid || RegionNode == null) return false;
 
-        var sibling = splitGrid.Children.OfType<RegionCell>().FirstOrDefault(cell => cell != this);
+        var sibling = splitGrid.Children
+            .OfType<RegionCell>()
+            .FirstOrDefault(cell => cell != this);
+
         if (sibling?.RegionNode == null) return false;
 
         var ownerCell = FindOwningRegionCell(splitGrid);
         if (ownerCell?.RegionNode == null) return false;
 
         context = new CloseContext(
-            splitGrid, sibling, RegionNode, sibling.RegionNode, ownerCell.RegionNode);
+            splitGrid,
+            ownerCell,
+            sibling,
+            RegionNode,
+            sibling.RegionNode,
+            ownerCell.RegionNode);
 
         return true;
     }
@@ -287,22 +296,53 @@ public partial class RegionCell : ContentView {
     }
 
     private void CollapseVisualTree(CloseContext context) {
-        var splitter = context.SplitGrid.Children.OfType<GridSplitter>().FirstOrDefault();
-        if (splitter != null) context.SplitGrid.Children.Remove(splitter);
+        if (context.SurvivingNode.IsSplit) {
+            PromoteSplitVisual(context);
+        }
+        else {
+            PromoteLeafVisual(context);
+        }
 
-        context.SplitGrid.Children.Remove(this);
-        context.SplitGrid.ColumnDefinitions.Clear();
-        context.SplitGrid.RowDefinitions.Clear();
-
-        ResetGridPosition(context.Sibling);
-        context.Sibling.RegionNode = context.ParentNode;
+        // These RegionCells are no longer part of the visual/logical tree.
+        // Detach their RegionNode subscriptions as well.
+        context.Sibling.RegionNode = null;
+        RegionNode = null;
     }
 
-    private static void ResetGridPosition(RegionCell cell) {
-        Grid.SetColumn(cell, 0);
-        Grid.SetRow(cell, 0);
-        Grid.SetColumnSpan(cell, 1);
-        Grid.SetRowSpan(cell, 1);
+    private static void PromoteLeafVisual(CloseContext context) {
+        var payload = context.Sibling.ExtractPayload();
+
+        ClearRootGrid(context.OwnerCell);
+
+        context.OwnerCell.RootGrid.Children.Add(
+            context.OwnerCell.SplitPerimeter);
+
+        context.OwnerCell.InjectPayload(payload);
+    }
+
+    private static void PromoteSplitVisual(CloseContext context) {
+        var survivingSplitGrid = context.Sibling.RootGrid.Children
+            .OfType<Grid>()
+            .FirstOrDefault();
+
+        if (survivingSplitGrid == null) {
+            throw new InvalidOperationException(
+                "A split RegionNode must be represented by a split Grid.");
+        }
+
+        // Detach it from the surviving child before removing the old
+        // outer split hierarchy.
+        context.Sibling.RootGrid.Children.Remove(survivingSplitGrid);
+
+        ClearRootGrid(context.OwnerCell);
+
+        context.OwnerCell.RootGrid.Children.Add(survivingSplitGrid);
+    }
+
+    private static void ClearRootGrid(RegionCell cell) {
+        cell.RootGrid.Children.Clear();
+        cell.RootGrid.ColumnDefinitions.Clear();
+        cell.RootGrid.RowDefinitions.Clear();
     }
 
     private static void RepairActiveRegion(CloseContext context) {

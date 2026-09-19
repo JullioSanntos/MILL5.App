@@ -48,7 +48,7 @@ public partial class Perimeter : ContentView {
             SetPreviewOrientation(direction);
         };
 
-        pointerGesture.PointerExited += (s, e) => SetHoverState(false);
+        pointerGesture.PointerExited += (s, e) => ResetInteractionState();
         pointerGesture.PointerMoved += (s, e) => TrackPreview(e, direction);
 
         area.GestureRecognizers.Add(pointerGesture);
@@ -57,18 +57,27 @@ public partial class Perimeter : ContentView {
 
         tapGesture.Tapped += (s, e) => {
             var position = e.GetPosition(RootGrid);
-            if (position.HasValue) {
-                SplitRequested?.Invoke(this, new SplitRequestedEventArgs(direction, position.Value));
-            }
+            if (!position.HasValue) return;
+
+            ResetInteractionState();
+
+            SplitRequested?.Invoke(
+                this,
+                new SplitRequestedEventArgs(direction, position.Value));
         };
 
         area.GestureRecognizers.Add(tapGesture);
     }
 
     private void SetHoverState(bool isHovering) {
-        SetPerimeterColor(isHovering ? HoverColor : Colors.Transparent);
-        SplitPreview.IsVisible = isHovering;
-        IndicatorLabel.IsVisible = isHovering;
+        if (!isHovering) {
+            ResetInteractionState();
+            return;
+        }
+
+        SetPerimeterColor(HoverColor);
+        SplitPreview.IsVisible = true;
+        IndicatorLabel.IsVisible = true;
     }
 
 
@@ -116,6 +125,18 @@ public partial class Perimeter : ContentView {
         BottomArea.BackgroundColor = color;
         LeftArea.BackgroundColor = color;
         RightArea.BackgroundColor = color;
+    }
+
+    public void ResetInteractionState() {
+        SetPerimeterColor(Colors.Transparent);
+
+        SplitPreview.IsVisible = false;
+        SplitPreview.TranslationX = 0;
+        SplitPreview.TranslationY = 0;
+
+        IndicatorLabel.IsVisible = false;
+        IndicatorLabel.TranslationX = 0;
+        IndicatorLabel.TranslationY = 0;
     }
 
 }
