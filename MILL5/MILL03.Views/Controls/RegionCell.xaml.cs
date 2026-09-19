@@ -196,8 +196,6 @@ public partial class RegionCell : ContentView {
                 ? GridSplitter.SplitOrientation.Vertical
                 : GridSplitter.SplitOrientation.Horizontal,
 
-            WidthRequest = isVertical ? 5 : -1,
-            HeightRequest = isVertical ? -1 : 5,
             HorizontalOptions = isVertical ? LayoutOptions.Center : LayoutOptions.Fill,
             VerticalOptions = isVertical ? LayoutOptions.Fill : LayoutOptions.Center
         };
