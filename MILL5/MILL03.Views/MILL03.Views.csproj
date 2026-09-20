@@ -100,6 +100,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Update="Controls\Draggable.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Controls\Perimeter.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

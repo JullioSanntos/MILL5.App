@@ -19,8 +19,4 @@
     <ProjectReference Include="..\MILL80.Infrastructure\MILL80.Infrastructure.csproj" />
   </ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="ViewModels\" />
-	</ItemGroup>
-
 </Project>

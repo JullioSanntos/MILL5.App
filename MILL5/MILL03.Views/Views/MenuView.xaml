@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:syncfusion="clr-namespace:Syncfusion.Maui.TreeView;assembly=Syncfusion.Maui.TreeView"
-             xmlns:vm="using:MILL06.ViewModels"
-             x:Class="MILL03.Views.Views.MenuView">
-    <Grid RowDefinitions="Auto, *" VerticalOptions="Fill" HorizontalOptions="Fill">
 
+<ContentView
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:syncfusion="clr-namespace:Syncfusion.Maui.TreeView;assembly=Syncfusion.Maui.TreeView"
+    xmlns:vm="clr-namespace:MILL06.ViewModels;assembly=MILL06.ViewModels"
+    xmlns:controls="clr-namespace:MILL03.Views.Controls"
+    x:Class="MILL03.Views.Views.MenuView">
 
-        <Border Grid.Row="0" BackgroundColor="#2B579A" 
+    <Grid RowDefinitions="Auto,*"
+          VerticalOptions="Fill"
+          HorizontalOptions="Fill">
+
+        <Border Grid.Row="0"
+                BackgroundColor="#2B579A"
                 StrokeThickness="0"
                 StrokeShape="RoundRectangle 8"
                 Margin="5,5,5,15">
@@ -19,31 +25,46 @@
                    HorizontalOptions="Center"
                    VerticalOptions="Center"
                    Padding="10" />
+
         </Border>
 
-        <syncfusion:SfTreeView Grid.Row="1" 
-                               ItemDoubleTapped="MenuTreeView_ItemDoubleTapped"
-                               ItemsSource="{Binding MenuItems}" 
-                               ChildPropertyName="Children"
-                               ItemHeight="32"             
-                               ExpanderWidth="32"          
-                               Indentation="16">    
+        <syncfusion:SfTreeView
+            Grid.Row="1"
+            ItemDoubleTapped="MenuTreeView_ItemDoubleTapped"
+            ItemsSource="{Binding MenuItems}"
+            ChildPropertyName="Children"
+            ItemHeight="32"
+            ExpanderWidth="32"
+            Indentation="16">
 
             <syncfusion:SfTreeView.ItemTemplate>
                 <DataTemplate x:DataType="vm:MenuNodeViewModel">
-                    <Grid Padding="0,0,0,0" Margin="0,0,0,0">
-                        <Label Text="{Binding Title}" 
-                               TextColor="Black" 
-                               VerticalOptions="Center" 
-                               VerticalTextAlignment="Center"
-                               FontSize="14" />
 
-                    </Grid>
+                    <controls:Draggable
+                        DragData="{Binding .}"
+                        IsDraggable="{Binding IsLeaf}">
+
+                        <controls:Draggable.InnerContent>
+
+                            <Grid Padding="0"
+                                  Margin="0">
+
+                                <Label Text="{Binding Title}"
+                                       TextColor="Black"
+                                       VerticalOptions="Center"
+                                       VerticalTextAlignment="Center"
+                                       FontSize="14" />
+
+                            </Grid>
+
+                        </controls:Draggable.InnerContent>
+
+                    </controls:Draggable>
+
                 </DataTemplate>
             </syncfusion:SfTreeView.ItemTemplate>
+
         </syncfusion:SfTreeView>
 
-
-
- </Grid>
+    </Grid>
 </ContentView>

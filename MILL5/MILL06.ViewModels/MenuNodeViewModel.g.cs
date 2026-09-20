@@ -19,6 +19,8 @@ namespace MILL06.ViewModels
         [ObservableProperty]
         private bool _isSelected;
 
+        public bool IsLeaf => Children.Count == 0;
+
         public ObservableCollection<MenuNodeViewModel> Children { get; } = new();
     }
 }
