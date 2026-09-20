@@ -19,7 +19,23 @@
 
     <Grid x:Name="RootGrid" BackgroundColor="Transparent">
         <!--<controls:RegionCell PayloadViewModel="{Binding StartupViewModel}"  />-->
-        <controls:RegionCell RegionNode="{Binding RootRegionNode}"  />
+        <controls:RegionCell Grid.Column="0" RegionNode="{Binding RootRegionNode}" 
+                AllowsMove="False" AllowsDrop="False" />
+
+        <!--<controls:DropTarget Grid.Column="1" Dropped="DropTarget_Dropped">
+
+            <controls:DropTarget.InnerContent>
+                <Border BackgroundColor="White"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Fill">
+                    <Label Text="Test Drop Target"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Border>
+            </controls:DropTarget.InnerContent>
+
+        </controls:DropTarget>-->
+
 
     </Grid>
 

@@ -103,6 +103,9 @@
 	  <MauiXaml Update="Controls\Draggable.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Controls\DropTarget.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Controls\Perimeter.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

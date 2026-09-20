@@ -66,14 +66,19 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
     }
 
     #endregion ActiveRegionNode
+    #region StartupViewModel
+    /// <summary>
+    /// Region content initially assigned to the root Region.
+    ///
+    /// The startup ViewModel participates in the Region lifecycle even though
+    /// its initial layout position may normally prevent it from being replaced
+    /// or moved.
+    /// </summary>
+    private RegionBaseViewModel? _startupViewModel;
+    public RegionBaseViewModel StartupViewModel =>
+        _startupViewModel ??= MenuViewModel;
 
-    private BaseViewModel? _startupViewModel;
-    public BaseViewModel? StartupViewModel {
-        get {
-            // Assuming MenuViewModel is defined elsewhere in your partial class
-            return _startupViewModel ??= this.MenuViewModel;
-        }
-    }
+    #endregion StartupViewModel
     #endregion RegionManager properties
 
     #region MainViewModel's Instance Singleton

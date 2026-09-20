@@ -510,4 +510,62 @@
                 Value="0,0,6,0" />
     </Style>
 
+    <!-- DropTarget -->
+
+    <Style x:Key="DropTargetSurfaceStyle"
+           TargetType="Border">
+        <Setter Property="Stroke"
+                Value="Transparent" />
+        <Setter Property="StrokeThickness"
+                Value="0" />
+        <Setter Property="BackgroundColor"
+                Value="Transparent" />
+        <Setter Property="Padding"
+                Value="0" />
+    </Style>
+
+    <Style x:Key="DropTargetAvailableStyle"
+           TargetType="Border">
+        <Setter Property="Margin"
+                Value="6" />
+        <Setter Property="Stroke"
+                Value="#700078D4" />
+        <Setter Property="StrokeThickness"
+                Value="2" />
+        <Setter Property="StrokeDashArray"
+                Value="3,3" />
+        <Setter Property="StrokeShape"
+                Value="RoundRectangle 6" />
+        <Setter Property="BackgroundColor"
+                Value="#080078D4" />
+    </Style>
+
+    <Style x:Key="DropTargetDragOverStyle"
+           TargetType="Border">
+        <Setter Property="Margin"
+                Value="6" />
+        <Setter Property="Stroke"
+                Value="#0078D4" />
+        <Setter Property="StrokeThickness"
+                Value="2" />
+        <Setter Property="StrokeShape"
+                Value="RoundRectangle 6" />
+        <Setter Property="BackgroundColor"
+                Value="#180078D4" />
+    </Style>
+
+    <Style x:Key="DropTargetLabelStyle"
+           TargetType="Label">
+        <Setter Property="TextColor"
+                Value="#0078D4" />
+        <Setter Property="FontAttributes"
+                Value="Bold" />
+        <Setter Property="FontSize"
+                Value="14" />
+        <Setter Property="HorizontalOptions"
+                Value="Center" />
+        <Setter Property="VerticalOptions"
+                Value="Center" />
+    </Style>
+
 </ResourceDictionary>

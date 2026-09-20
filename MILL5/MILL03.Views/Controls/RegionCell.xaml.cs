@@ -89,6 +89,57 @@ public partial class RegionCell : ContentView {
 
     #endregion Direct Payload Bindings
 
+    #region Region Interaction Policy
+    #region AllowsMoveProperty
+    /// <summary>
+    /// Indicates whether content occupying this layout position may normally
+    /// be moved to another Region.
+    ///
+    /// This is layout policy, not drag-gesture behavior. A MenuNodeViewModel,
+    /// for example, may be draggable even though it is not movable Region
+    /// content.
+    ///
+    /// RegionBaseViewModel.IsMovable supplies the content-level policy, while
+    /// CanRemoveFromRegion provides contextual exceptions.
+    /// </summary>
+    public static readonly BindableProperty AllowsMoveProperty =
+        BindableProperty.Create(
+            nameof(AllowsMove),
+            typeof(bool),
+            typeof(RegionCell),
+            true);
+
+    public bool AllowsMove {
+        get => (bool)GetValue(AllowsMoveProperty);
+        set => SetValue(AllowsMoveProperty, value);
+    }
+    #endregion AllowsMoveProperty
+
+    #region AllowsDropProperty
+    /// <summary>
+    /// Indicates whether this layout position normally permits its current
+    /// content to be replaced.
+    ///
+    /// This is the persistent layout default. It is not changed temporarily
+    /// during drag-over. Candidate-specific exceptions are evaluated through
+    /// RegionBaseViewModel.CanBeReplacedBy.
+    /// </summary>
+    public static readonly BindableProperty AllowsDropProperty =
+        BindableProperty.Create(
+            nameof(AllowsDrop),
+            typeof(bool),
+            typeof(RegionCell),
+            true);
+
+    public bool AllowsDrop {
+        get => (bool)GetValue(AllowsDropProperty);
+        set => SetValue(AllowsDropProperty, value);
+    }
+    #endregion AllowsDropProperty
+
+
+    #endregion Region Interaction Policy
+
     #region Constructors
 
     public RegionCell() {
@@ -106,6 +157,9 @@ public partial class RegionCell : ContentView {
 
     protected override void OnHandlerChanged() {
         base.OnHandlerChanged();
+
+        System.Diagnostics.Debug.WriteLine(
+            $"RegionCell attached: Move={AllowsMove}, Drop={AllowsDrop}");
 
         // A binding may have assigned RegionNode before InitializeComponent completed.
         if (Handler != null && RegionNode != null) SyncWithNode(RegionNode);
@@ -162,15 +216,33 @@ public partial class RegionCell : ContentView {
     }
 
     private Grid CreateSplitGrid(
-        SplitDirection direction, double firstWeight,
-        SplitNodes nodes, View payload) {
+        SplitDirection direction,
+        double firstWeight,
+        SplitNodes nodes,
+        View payload) {
 
-        var firstCell = CreateCell(nodes.First, payload);
-        var secondCell = CreateCell(nodes.Second, CreateEmptyPayload());
+        // The first child continues the existing Region's layout role.
+        var firstCell = CreateCell(
+            nodes.First,
+            payload,
+            AllowsMove,
+            AllowsDrop);
+
+        // A newly created empty Region begins as an ordinary destination.
+        var secondCell = CreateCell(
+            nodes.Second,
+            CreateEmptyPayload());
+
         var splitter = CreateSplitter(direction);
         var grid = new Grid();
 
-        ConfigureSplitGrid(grid, direction, firstWeight, firstCell, splitter, secondCell);
+        ConfigureSplitGrid(
+            grid,
+            direction,
+            firstWeight,
+            firstCell,
+            splitter,
+            secondCell);
 
         grid.Children.Add(firstCell);
         grid.Children.Add(splitter);
@@ -179,12 +251,25 @@ public partial class RegionCell : ContentView {
         return grid;
     }
 
-    private static RegionCell CreateCell(RegionNode? node, View payload) {
-        var cell = new RegionCell();
+    private static RegionCell CreateCell(
+        RegionNode? node,
+        View payload,
+        bool allowsMove = true,
+        bool allowsDrop = true) {
 
-        if (node != null) cell.RegionNode = node;
+        var cell = new RegionCell {
+            AllowsMove = allowsMove,
+            AllowsDrop = allowsDrop
+        };
+
+        System.Diagnostics.Debug.WriteLine(
+            $"RegionCell created: Move={cell.AllowsMove}, Drop={cell.AllowsDrop}");
+
+        if (node != null)
+            cell.RegionNode = node;
 
         cell.InjectPayload(payload);
+
         return cell;
     }
 
@@ -258,6 +343,10 @@ public partial class RegionCell : ContentView {
 
         PromoteNode(context.SurvivingNode, context.ParentNode);
         CollapseVisualTree(context);
+        System.Diagnostics.Debug.WriteLine(
+            $"After collapse: Move={context.OwnerCell.AllowsMove}, " +
+            $"Drop={context.OwnerCell.AllowsDrop}");
+
         RepairActiveRegion(context);
     }
 

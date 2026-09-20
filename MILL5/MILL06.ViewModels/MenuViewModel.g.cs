@@ -8,8 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MILL06.ViewModels
 {
-    public partial class MenuViewModel : BaseViewModel
-    {
+    public partial class MenuViewModel : RegionBaseViewModel {
         private ObservableCollection<MenuNodeViewModel>? _menuItems;
         
         public ObservableCollection<MenuNodeViewModel> MenuItems => 
