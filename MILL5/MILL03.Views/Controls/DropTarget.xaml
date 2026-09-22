@@ -7,12 +7,11 @@
 
     <Grid>
 
-        <Border x:Name="Surface"
-                Style="{DynamicResource DropTargetSurfaceStyle}">
+        <Border x:Name="Surface" Style="{DynamicResource DropTargetSurfaceStyle}"
+                Stroke="Transparent" StrokeThickness="0">
 
             <ContentView x:Name="InnerContentHost"
-                         VerticalOptions="Fill"
-                         HorizontalOptions="Fill" />
+                         VerticalOptions="Fill" HorizontalOptions="Fill" />
 
         </Border>
 

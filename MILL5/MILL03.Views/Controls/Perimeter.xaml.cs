@@ -7,17 +7,12 @@ public partial class Perimeter : ContentView {
     private const double IndicatorOffsetY = -9;
     private const double PreviewHalfThickness = 2.5;
 
-    private static readonly Color HoverColor = Color.FromArgb("#80808080");
-
     public event EventHandler<SplitRequestedEventArgs>? SplitRequested;
 
     #region InnerContent
 
     public static readonly BindableProperty InnerContentProperty = BindableProperty.Create(
-        nameof(InnerContent),
-        typeof(View),
-        typeof(Perimeter),
-        null,
+        nameof(InnerContent), typeof(View), typeof(Perimeter), null,
         propertyChanged: OnInnerContentChanged);
 
     public View? InnerContent {
@@ -25,11 +20,27 @@ public partial class Perimeter : ContentView {
         set => SetValue(InnerContentProperty, value);
     }
 
-    private static void OnInnerContentChanged(BindableObject bindable, object oldValue, object newValue) {
+    private static void OnInnerContentChanged(
+        BindableObject bindable, object oldValue, object newValue) {
+
         ((Perimeter)bindable).InnerContentHost.Content = newValue as View;
     }
 
     #endregion InnerContent
+
+    #region HitThickness
+
+    public static readonly BindableProperty HitThicknessProperty = BindableProperty.Create(
+        nameof(HitThickness), typeof(GridLength), typeof(Perimeter), new GridLength(5));
+
+    public GridLength HitThickness {
+        get => (GridLength)GetValue(HitThicknessProperty);
+        set => SetValue(HitThicknessProperty, value);
+    }
+
+    #endregion HitThickness
+
+    #region Constructors
 
     public Perimeter() {
         InitializeComponent();
@@ -38,16 +49,18 @@ public partial class Perimeter : ContentView {
         WireArea(BottomArea, SplitDirection.Bottom);
         WireArea(LeftArea, SplitDirection.Left);
         WireArea(RightArea, SplitDirection.Right);
+
+        ResetInteractionState();
     }
+
+    #endregion Constructors
+
+    #region Interaction
 
     private void WireArea(BoxView area, SplitDirection direction) {
         var pointerGesture = new PointerGestureRecognizer();
 
-        pointerGesture.PointerEntered += (s, e) => {
-            SetHoverState(true);
-            SetPreviewOrientation(direction);
-        };
-
+        pointerGesture.PointerEntered += (s, e) => SetHoverState(direction);
         pointerGesture.PointerExited += (s, e) => ResetInteractionState();
         pointerGesture.PointerMoved += (s, e) => TrackPreview(e, direction);
 
@@ -69,17 +82,30 @@ public partial class Perimeter : ContentView {
         area.GestureRecognizers.Add(tapGesture);
     }
 
-    private void SetHoverState(bool isHovering) {
-        if (!isHovering) {
-            ResetInteractionState();
-            return;
-        }
+    private void SetHoverState(SplitDirection direction) {
+        HoverBorder.IsVisible = true;
 
-        SetPerimeterColor(HoverColor);
+        SetPreviewOrientation(direction);
+
         SplitPreview.IsVisible = true;
         IndicatorLabel.IsVisible = true;
     }
 
+    public void ResetInteractionState() {
+        HoverBorder.IsVisible = false;
+
+        SplitPreview.IsVisible = false;
+        SplitPreview.TranslationX = 0;
+        SplitPreview.TranslationY = 0;
+
+        IndicatorLabel.IsVisible = false;
+        IndicatorLabel.TranslationX = 0;
+        IndicatorLabel.TranslationY = 0;
+    }
+
+    #endregion Interaction
+
+    #region Preview
 
     private void TrackPreview(PointerEventArgs e, SplitDirection direction) {
         var position = e.GetPosition(RootGrid);
@@ -120,23 +146,5 @@ public partial class Perimeter : ContentView {
         SplitPreview.VerticalOptions = LayoutOptions.Start;
     }
 
-    private void SetPerimeterColor(Color color) {
-        TopArea.BackgroundColor = color;
-        BottomArea.BackgroundColor = color;
-        LeftArea.BackgroundColor = color;
-        RightArea.BackgroundColor = color;
-    }
-
-    public void ResetInteractionState() {
-        SetPerimeterColor(Colors.Transparent);
-
-        SplitPreview.IsVisible = false;
-        SplitPreview.TranslationX = 0;
-        SplitPreview.TranslationY = 0;
-
-        IndicatorLabel.IsVisible = false;
-        IndicatorLabel.TranslationX = 0;
-        IndicatorLabel.TranslationY = 0;
-    }
-
+    #endregion Preview
 }

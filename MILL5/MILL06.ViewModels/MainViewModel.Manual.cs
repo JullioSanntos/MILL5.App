@@ -12,18 +12,21 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
     #region RegionManager properties
 
     #region MainModel
-    // Child properties pull from the locator instead of using 'new()', preserving full substitution
+
+    // Child properties pull from the locator instead of using 'new()', preserving full substitution.
     private MainModel? _mainModel;
     public MainModel MainModel =>
         _mainModel ??= global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<MainModel>();
+
     #endregion MainModel
 
     #region RootRegionNode
-    //The root node of your entire layout tree.
+
+    // The root node of the entire layout tree.
     private RegionNode? _rootRegionNode;
     public RegionNode RootRegionNode {
         get {
-            if (_rootRegionNode != null) { return _rootRegionNode; }
+            if (_rootRegionNode != null) return _rootRegionNode;
 
             RootRegionNode = new RegionNode {
                 PayloadViewModel = StartupViewModel
@@ -32,22 +35,36 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
             return _rootRegionNode!;
         }
         set {
-            if (_rootRegionNode != null) { _rootRegionNode.NodeChanging -= RootRegionNode_NodeChanging; }
+            if (_rootRegionNode != null) {
+                _rootRegionNode.NodeChanging -= RootRegionNode_NodeChanging;
+                _rootRegionNode.RegionAssigning -= RootRegionNode_RegionAssigning;
+            }
+
             _rootRegionNode = value;
-            if (_rootRegionNode != null) { _rootRegionNode.NodeChanging += RootRegionNode_NodeChanging; }
+
+            if (_rootRegionNode != null) {
+                _rootRegionNode.NodeChanging += RootRegionNode_NodeChanging;
+                _rootRegionNode.RegionAssigning += RootRegionNode_RegionAssigning;
+            }
         }
     }
-    private void RootRegionNode_NodeChanging(object? sender, RegionNodeChangingEventArgs e) 
-    {
+
+    private void RootRegionNode_NodeChanging(object? sender, RegionNodeChangingEventArgs e) {
         // Temporary testing:
         System.Diagnostics.Debug.WriteLine($"RegionNode {e.NodeId}: {e.Action}");
     }
+
+    private void RootRegionNode_RegionAssigning(object? sender, RegionAssigningEventArgs e) {
+        // Candidate-specific assignment policy belongs here or in handlers subscribed here.
+        //
+        // e.Cancel = true;
+    }
+
     #endregion RootRegionNode
 
-
-    // Active node tracking for your target rules (Active preferred, otherwise First Empty)
     #region ActiveRegionNode
 
+    // Active node tracking for target rules (Active preferred, otherwise First Empty).
     private RegionNode? _activeRegionNode;
     public RegionNode ActiveRegionNode {
         get {
@@ -66,7 +83,9 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
     }
 
     #endregion ActiveRegionNode
+
     #region StartupViewModel
+
     /// <summary>
     /// Region content initially assigned to the root Region.
     ///
@@ -79,122 +98,246 @@ public partial class MainViewModel : BaseViewModel, IDisposable {
         _startupViewModel ??= MenuViewModel;
 
     #endregion StartupViewModel
+
     #endregion RegionManager properties
 
     #region MainViewModel's Instance Singleton
-    // Resolves directly from your global container, allowing test initialization to swap the provider
+
+    // Resolves directly from the global container, allowing test initialization to swap the provider.
     public static MainViewModel Instance =>
         global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<MainViewModel>();
 
     protected internal MainViewModel() {
-        // 2. Initialize the tree with a default single root leaf node so the app launches cleanly
-        // (Moved the instantiation to the property getter to avoid double-instantiation)
-        //_activeRegionNode = RootRegionNode; // Default focus to the root
-
-        this.MenuViewModel.PropertyChanged += MenuViewModel_PropertyChanged;
+        MenuViewModel.PropertyChanged += MenuViewModel_PropertyChanged;
     }
 
-    private void MenuViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
-        if (e.PropertyName == nameof(MenuViewModel.SelectedMenuNode)) {
-            var selectedNode = ((MenuViewModel)sender!).SelectedMenuNode;
-            if (selectedNode == null || RootRegionNode == null || string.IsNullOrEmpty(selectedNode.TargetViewModelName)) return;
+    private void MenuViewModel_PropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e) {
 
-            // 1. Try to find an empty node first (Existing logic)
-            var targetNode = FindTargetNode(RootRegionNode);
+        if (e.PropertyName != nameof(MenuViewModel.SelectedMenuNode)) return;
 
-            // 2. NEW REQUIREMENT: If no empty cells, fallback to the last populated cell
-            if (targetNode == null) {
-                targetNode = GetReplaceableNode(ActiveRegionNode, RootRegionNode);
-            }
+        var selectedNode = ((MenuViewModel)sender!).SelectedMenuNode;
 
-            if (targetNode != null) {
-                // 3. Resolve and Inject
-                var vmProperty = this.GetType().GetProperty(selectedNode.TargetViewModelName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        if (selectedNode == null ||
+            string.IsNullOrEmpty(selectedNode.TargetViewModelName)) {
 
-                if (vmProperty?.GetValue(this) is BaseViewModel vmInstance) {
-                    targetNode.PayloadViewModel = vmInstance;
-                    ActiveRegionNode = targetNode; // This updates the "last populated" tracker!
-                }
-            }
+            return;
         }
+
+        // Prefer the oldest empty Region.
+        var targetNode = FindTargetNode(RootRegionNode);
+
+        // Existing fallback behavior when there are no empty Regions.
+        targetNode ??= GetReplaceableNode(ActiveRegionNode, RootRegionNode);
+
+        if (targetNode == null) return;
+
+        TryAssignMenuItemToRegion(selectedNode, targetNode);
     }
 
-    private RegionNode? GetReplaceableNode(RegionNode? activeNode, RegionNode rootNode) {
-        // 1. If the Active Node is a leaf and is NOT holding the StartupViewModel, 
-        // then it is our last populated cell. We replace its view!
-        if (activeNode != null && !activeNode.IsSplit && activeNode.PayloadViewModel != this.StartupViewModel) {
+    #endregion MainViewModel's Instance Singleton
+
+    #region Region Assignment
+
+    /// <summary>
+    /// Entry point used by the View tier after a physical drop occurs.
+    ///
+    /// DragData remains generic in the Views project. Interpretation of that
+    /// data and assignment policy remain in the ViewModel tier.
+    /// </summary>
+    public bool TryAssignDrop(object dragData, RegionNode targetRegionNode) {
+
+        if (dragData is MenuItemViewModel menuItem) {
+            return TryAssignMenuItemToRegion(
+                menuItem,
+                targetRegionNode);
+        }
+
+        // RegionNode-to-RegionNode movement will be added separately.
+        return false;
+    }
+
+    private bool TryAssignMenuItemToRegion(MenuItemViewModel menuItem, RegionNode targetRegionNode) {
+
+        var incomingViewModel =
+            ResolveTargetViewModel(menuItem);
+
+        if (incomingViewModel == null)
+            return false;
+
+        // A Menu item is a descriptor, not Region content.
+        // Therefore this assignment has no source RegionNode.
+        return TryAssignViewModelToRegion(
+            null,
+            targetRegionNode,
+            incomingViewModel);
+    }
+
+    private BaseViewModel? ResolveTargetViewModel(
+        MenuItemViewModel menuItem) {
+
+        if (string.IsNullOrEmpty(menuItem.TargetViewModelName))
+            return null;
+
+        var property = GetType().GetProperty(
+            menuItem.TargetViewModelName,
+            BindingFlags.Public | BindingFlags.Instance);
+
+        return property?.GetValue(this) as BaseViewModel;
+    }
+
+    private bool TryAssignViewModelToRegion(
+        RegionNode? sourceRegionNode,
+        RegionNode targetRegionNode,
+        BaseViewModel incomingViewModel) {
+
+        // Target-only capability.
+        if (!targetRegionNode.CanBeReplaced)
+            return false;
+
+        // Final source + target compatibility gate.
+        if (!RootRegionNode.RaiseRegionAssigning(
+                sourceRegionNode,
+                targetRegionNode,
+                incomingViewModel)) {
+
+            return false;
+        }
+
+        targetRegionNode.PayloadViewModel =
+            incomingViewModel;
+
+        ActiveRegionNode =
+            targetRegionNode;
+
+        RootRegionNode.RaiseRegionAssigned(
+            sourceRegionNode,
+            targetRegionNode,
+            incomingViewModel);
+
+        return true;
+    }
+
+    #endregion Region Assignment
+
+    #region Target Selection
+
+    private RegionNode? GetReplaceableNode(
+        RegionNode? activeNode,
+        RegionNode rootNode) {
+
+        // If Active Node is a leaf and is not holding StartupViewModel,
+        // it is the preferred existing destination.
+        if (activeNode != null &&
+            !activeNode.IsSplit &&
+            activeNode.PayloadViewModel != StartupViewModel) {
+
             return activeNode;
         }
 
-        // 2. If the Active Node IS the protected StartupView (or is a split parent), 
-        // we must not overwrite it. Instead, find ANY unprotected leaf in the tree.
+        // Otherwise find an unprotected leaf.
         return FindFirstUnprotectedLeaf(rootNode);
     }
 
-    private RegionNode? FindFirstUnprotectedLeaf(RegionNode currentNode) {
-        // If it's a leaf, check if it's protected by the StartupViewModel
+    private RegionNode? FindFirstUnprotectedLeaf(
+        RegionNode currentNode) {
+
         if (!currentNode.IsSplit) {
-            return (currentNode.PayloadViewModel == this.StartupViewModel) ? null : currentNode;
+            return currentNode.PayloadViewModel == StartupViewModel
+                ? null
+                : currentNode;
         }
 
-        // Recurse down children branches
         if (currentNode.FirstChild != null) {
-            var found = FindFirstUnprotectedLeaf(currentNode.FirstChild);
-            if (found != null) return found;
+            var found =
+                FindFirstUnprotectedLeaf(
+                    currentNode.FirstChild);
+
+            if (found != null)
+                return found;
         }
 
         if (currentNode.SecondChild != null) {
-            var found = FindFirstUnprotectedLeaf(currentNode.SecondChild);
-            if (found != null) return found;
+            var found =
+                FindFirstUnprotectedLeaf(
+                    currentNode.SecondChild);
+
+            if (found != null)
+                return found;
         }
 
         return null;
     }
 
-    #endregion MainViewModel's Instance Singleton
+    private RegionNode? FindTargetNode(
+        RegionNode rootNode) {
 
-    #region Methods
-
-
-    private static long _nextCreationOrder;
-    public long CreationOrder { get; } = Interlocked.Increment(ref _nextCreationOrder);
-    private RegionNode? FindTargetNode(RegionNode rootNode) {
         RegionNode? oldestEmptyNode = null;
 
-        FindOldestEmptyNode(rootNode, ref oldestEmptyNode);
+        FindOldestEmptyNode(
+            rootNode,
+            ref oldestEmptyNode);
 
         return oldestEmptyNode;
     }
 
-    private void FindOldestEmptyNode(RegionNode currentNode, ref RegionNode? oldestEmptyNode) {
+    private void FindOldestEmptyNode(
+        RegionNode currentNode,
+        ref RegionNode? oldestEmptyNode) {
+
         if (!currentNode.IsSplit) {
             if (currentNode.PayloadViewModel == null &&
-                (oldestEmptyNode == null || currentNode.CreationOrder < oldestEmptyNode.CreationOrder)) {
-                oldestEmptyNode = currentNode;
+                (oldestEmptyNode == null ||
+                 currentNode.CreationOrder <
+                 oldestEmptyNode.CreationOrder)) {
+
+                oldestEmptyNode =
+                    currentNode;
             }
 
             return;
         }
 
         if (currentNode.FirstChild != null) {
-            FindOldestEmptyNode(currentNode.FirstChild, ref oldestEmptyNode);
+            FindOldestEmptyNode(
+                currentNode.FirstChild,
+                ref oldestEmptyNode);
         }
 
         if (currentNode.SecondChild != null) {
-            FindOldestEmptyNode(currentNode.SecondChild, ref oldestEmptyNode);
+            FindOldestEmptyNode(
+                currentNode.SecondChild,
+                ref oldestEmptyNode);
         }
     }
-    #endregion Methods
+
+    #endregion Target Selection
+
+    #region CreationOrder
+
+    private static long _nextCreationOrder;
+    public long CreationOrder { get; } =
+        Interlocked.Increment(ref _nextCreationOrder);
+
+    #endregion CreationOrder
 
     #region OnDisposing
+
     partial void OnDisposing() {
         if (_rootRegionNode != null) {
-            _rootRegionNode.NodeChanging -= RootRegionNode_NodeChanging;
+            _rootRegionNode.NodeChanging -=
+                RootRegionNode_NodeChanging;
+
+            _rootRegionNode.RegionAssigning -=
+                RootRegionNode_RegionAssigning;
         }
-        MenuViewModel.PropertyChanged -= MenuViewModel_PropertyChanged;
+
+        MenuViewModel.PropertyChanged -=
+            MenuViewModel_PropertyChanged;
 
         GC.SuppressFinalize(this);
     }
-    #endregion OnDisposing
 
+    #endregion OnDisposing
 }

@@ -91,6 +91,7 @@ public partial class RegionCell : ContentView {
 
     #region Region Interaction Policy
     #region AllowsMoveProperty
+
     /// <summary>
     /// Indicates whether content occupying this layout position may normally
     /// be moved to another Region.
@@ -102,20 +103,18 @@ public partial class RegionCell : ContentView {
     /// RegionBaseViewModel.IsMovable supplies the content-level policy, while
     /// CanRemoveFromRegion provides contextual exceptions.
     /// </summary>
-    public static readonly BindableProperty AllowsMoveProperty =
-        BindableProperty.Create(
-            nameof(AllowsMove),
-            typeof(bool),
-            typeof(RegionCell),
-            true);
+    public static readonly BindableProperty AllowsMoveProperty = BindableProperty.Create(
+        nameof(AllowsMove), typeof(bool), typeof(RegionCell), true);
 
     public bool AllowsMove {
         get => (bool)GetValue(AllowsMoveProperty);
         set => SetValue(AllowsMoveProperty, value);
     }
+
     #endregion AllowsMoveProperty
 
     #region AllowsDropProperty
+
     /// <summary>
     /// Indicates whether this layout position normally permits its current
     /// content to be replaced.
@@ -124,20 +123,15 @@ public partial class RegionCell : ContentView {
     /// during drag-over. Candidate-specific exceptions are evaluated through
     /// RegionBaseViewModel.CanBeReplacedBy.
     /// </summary>
-    public static readonly BindableProperty AllowsDropProperty =
-        BindableProperty.Create(
-            nameof(AllowsDrop),
-            typeof(bool),
-            typeof(RegionCell),
-            true);
+    public static readonly BindableProperty AllowsDropProperty = BindableProperty.Create(
+        nameof(AllowsDrop), typeof(bool), typeof(RegionCell), true);
 
     public bool AllowsDrop {
         get => (bool)GetValue(AllowsDropProperty);
         set => SetValue(AllowsDropProperty, value);
     }
+
     #endregion AllowsDropProperty
-
-
     #endregion Region Interaction Policy
 
     #region Constructors
@@ -158,9 +152,6 @@ public partial class RegionCell : ContentView {
     protected override void OnHandlerChanged() {
         base.OnHandlerChanged();
 
-        System.Diagnostics.Debug.WriteLine(
-            $"RegionCell attached: Move={AllowsMove}, Drop={AllowsDrop}");
-
         // A binding may have assigned RegionNode before InitializeComponent completed.
         if (Handler != null && RegionNode != null) SyncWithNode(RegionNode);
     }
@@ -172,7 +163,11 @@ public partial class RegionCell : ContentView {
     private readonly record struct SplitNodes(RegionNode? First, RegionNode? Second);
 
     private void PerformSplit(SplitDirection direction, Point position) {
-        if (RegionNode != null && !RegionNode.RaiseNodeChanging(RegionNode.Id, NodeAction.Splitting)) return;
+        if (RegionNode != null &&
+            !RegionNode.RaiseNodeChanging(RegionNode.Id, NodeAction.Splitting)) {
+
+            return;
+        }
 
         var firstWeight = GetSplitWeight(direction, position);
         var payload = ExtractPayload();
@@ -181,7 +176,8 @@ public partial class RegionCell : ContentView {
 
         ReplaceWithSplitGrid(splitGrid);
 
-        if (nodes.Second != null) MainViewModel.Instance.ActiveRegionNode = nodes.Second;
+        if (nodes.Second != null)
+            MainViewModel.Instance.ActiveRegionNode = nodes.Second;
     }
 
     private double GetSplitWeight(SplitDirection direction, Point position) {
@@ -262,9 +258,6 @@ public partial class RegionCell : ContentView {
             AllowsDrop = allowsDrop
         };
 
-        System.Diagnostics.Debug.WriteLine(
-            $"RegionCell created: Move={cell.AllowsMove}, Drop={cell.AllowsDrop}");
-
         if (node != null)
             cell.RegionNode = node;
 
@@ -343,10 +336,6 @@ public partial class RegionCell : ContentView {
 
         PromoteNode(context.SurvivingNode, context.ParentNode);
         CollapseVisualTree(context);
-        System.Diagnostics.Debug.WriteLine(
-            $"After collapse: Move={context.OwnerCell.AllowsMove}, " +
-            $"Drop={context.OwnerCell.AllowsDrop}");
-
         RepairActiveRegion(context);
     }
 
@@ -440,6 +429,7 @@ public partial class RegionCell : ContentView {
 
         if (ReferenceEquals(activeNode, context.ClosedNode) ||
             ReferenceEquals(activeNode, context.SurvivingNode)) {
+
             mainViewModel.ActiveRegionNode = FindFirstLeaf(context.ParentNode);
         }
     }
@@ -501,4 +491,20 @@ public partial class RegionCell : ContentView {
     }
 
     #endregion Colors
+
+    #region Drop
+
+    private void RegionDropTarget_Dropped(
+        object? sender,
+        DropTargetDroppedEventArgs e) {
+
+        if (RegionNode == null)
+            return;
+
+        MainViewModel.Instance.TryAssignDrop(
+            e.DragData,
+            RegionNode);
+    }
+
+    #endregion Drop
 }

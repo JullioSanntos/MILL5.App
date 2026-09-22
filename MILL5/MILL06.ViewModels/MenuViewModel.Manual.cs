@@ -21,19 +21,7 @@ public partial class MenuViewModel {
     }
     #endregion Commands
 
-    protected override bool OnCanBeReplacedBy(
-        RegionAssignmentContext context,
-        bool currentDecision) {
 
-        // Preserve the normal decision unless another Menu is incoming.
-        //
-        // This allows a Menu occupying a protected layout position to reject
-        // ordinary content while still permitting another Menu to replace it.
-        if (context.IncomingViewModel is MenuViewModel)
-            return true;
-
-        return currentDecision;
-    }
 }
 
 

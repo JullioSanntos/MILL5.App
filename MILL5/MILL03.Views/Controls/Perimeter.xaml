@@ -2,71 +2,49 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:MILL03.Views.Controls"
-             x:Class="MILL03.Views.Controls.Perimeter">
+             x:Class="MILL03.Views.Controls.Perimeter"
+             x:Name="PerimeterRoot">
 
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="5" />
+            <RowDefinition Height="{Binding HitThickness, Source={x:Reference PerimeterRoot}}" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="5" />
+            <RowDefinition Height="{Binding HitThickness, Source={x:Reference PerimeterRoot}}" />
         </Grid.RowDefinitions>
-
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="{Binding HitThickness, Source={x:Reference PerimeterRoot}}" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="{Binding HitThickness, Source={x:Reference PerimeterRoot}}" />
         </Grid.ColumnDefinitions>
 
-        <!--
-            The consumer's content occupies the complete area.
-            Perimeter hit areas are drawn over it.
-        -->
-        <ContentView x:Name="InnerContentHost"
-                     Grid.Row="0" Grid.RowSpan="3"
-                     Grid.Column="0" Grid.ColumnSpan="3"
-                     VerticalOptions="Fill"
-                     HorizontalOptions="Fill" />
+        <!-- Consumer content occupies the complete area.
+             Perimeter hit areas overlay it and consume no content space. -->
+        <ContentView x:Name="InnerContentHost" Grid.Row="0" Grid.RowSpan="3" Grid.Column="0"
+                     Grid.ColumnSpan="3" VerticalOptions="Fill" HorizontalOptions="Fill" />
 
-        <!-- Only these four strips intercept pointer input. -->
-        <BoxView x:Name="TopArea"
-                 Grid.Row="0" Grid.Column="1"
-                 BackgroundColor="Transparent"
-                 ZIndex="20" />
+        <!-- Visible perimeter cue is independent from the larger transparent hit areas. -->
+        <Border x:Name="HoverBorder" Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
+                Stroke="#80808080" StrokeThickness="3" BackgroundColor="Transparent"
+                IsVisible="False" InputTransparent="True" ZIndex="9" />
 
-        <BoxView x:Name="BottomArea"
-                 Grid.Row="2" Grid.Column="1"
-                 BackgroundColor="Transparent"
-                 ZIndex="20" />
+        <!-- Interaction-only hit areas. These always remain visually transparent. -->
+        <BoxView x:Name="TopArea" Grid.Row="0" Grid.Column="1"
+                 BackgroundColor="Transparent" ZIndex="20" />
+        <BoxView x:Name="BottomArea" Grid.Row="2" Grid.Column="1"
+                 BackgroundColor="Transparent" ZIndex="20" />
+        <BoxView x:Name="LeftArea" Grid.Row="1" Grid.Column="0"
+                 BackgroundColor="Transparent" ZIndex="20" />
+        <BoxView x:Name="RightArea" Grid.Row="1" Grid.Column="2"
+                 BackgroundColor="Transparent" ZIndex="20" />
 
-        <BoxView x:Name="LeftArea"
-                 Grid.Row="1" Grid.Column="0"
-                 BackgroundColor="Transparent"
-                 ZIndex="20" />
+        <controls:SplitDividerVisual x:Name="SplitPreview" Grid.Row="0" Grid.RowSpan="3"
+                                     Grid.Column="0" Grid.ColumnSpan="3" Opacity="0.60"
+                                     InputTransparent="True" IsVisible="False" ZIndex="10" />
 
-        <BoxView x:Name="RightArea"
-                 Grid.Row="1" Grid.Column="2"
-                 BackgroundColor="Transparent"
-                 ZIndex="20" />
-
-        <controls:SplitDividerVisual x:Name="SplitPreview"
-                                     Grid.Row="0" Grid.RowSpan="3"
-                                     Grid.Column="0" Grid.ColumnSpan="3"
-                                     Opacity="0.60"
-                                     InputTransparent="True"
-                                     IsVisible="False"
-                                     ZIndex="10" />
-
-        <Label x:Name="IndicatorLabel"
-               Text="+"
-               FontSize="Medium"
-               TextColor="Red"
-               FontAttributes="Bold"
-               HorizontalOptions="Start"
-               VerticalOptions="Start"
-               Grid.Row="0" Grid.RowSpan="3"
-               Grid.Column="0" Grid.ColumnSpan="3"
-               IsVisible="False"
-               InputTransparent="True"
-               ZIndex="11" />
+        <Label x:Name="IndicatorLabel" Text="+" FontSize="Medium" TextColor="Red"
+               FontAttributes="Bold" HorizontalOptions="Start" VerticalOptions="Start"
+               Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3"
+               IsVisible="False" InputTransparent="True" ZIndex="11" />
     </Grid>
+
 </ContentView>

@@ -3,28 +3,42 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:MILL03.Views.Controls"
              x:Class="MILL03.Views.Controls.RegionCell"
-             VerticalOptions="Fill"
-             HorizontalOptions="Fill">
+             x:Name="RegionCellRoot"
+             VerticalOptions="Fill" HorizontalOptions="Fill">
 
-    <Grid x:Name="RootGrid"
-          VerticalOptions="Fill"
-          HorizontalOptions="Fill">
+    <Grid x:Name="RootGrid" VerticalOptions="Fill" HorizontalOptions="Fill">
 
         <controls:Perimeter x:Name="SplitPerimeter">
             <controls:Perimeter.InnerContent>
 
                 <Grid>
-                    <ContentView x:Name="PayloadContainer"
-                                 VerticalOptions="Fill"
-                                 HorizontalOptions="Fill" />
 
-                    <Label x:Name="CloseBtnLabel"
-                           Style="{StaticResource RegionCloseButtonStyle}"
-                           ZIndex="100">
+                    <controls:DropTarget IsDroppable="{Binding RegionNode.CanBeReplaced,
+                                                              Source={x:Reference RegionCellRoot}}"
+                                         Dropped="RegionDropTarget_Dropped">
+                        <controls:DropTarget.InnerContent>
+
+                            <controls:Draggable DragData="{Binding RegionNode,
+                                                                 Source={x:Reference RegionCellRoot}}"
+                                                IsDraggable="{Binding RegionNode.CanBeDragged,
+                                                                     Source={x:Reference RegionCellRoot}}">
+                                <controls:Draggable.InnerContent>
+
+                                    <ContentView x:Name="PayloadContainer"
+                                                 VerticalOptions="Fill" HorizontalOptions="Fill" />
+
+                                </controls:Draggable.InnerContent>
+                            </controls:Draggable>
+
+                        </controls:DropTarget.InnerContent>
+                    </controls:DropTarget>
+
+                    <Label x:Name="CloseBtnLabel" Style="{StaticResource RegionCloseButtonStyle}" ZIndex="100">
                         <Label.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnCloseButtonTapped" />
                         </Label.GestureRecognizers>
                     </Label>
+
                 </Grid>
 
             </controls:Perimeter.InnerContent>
