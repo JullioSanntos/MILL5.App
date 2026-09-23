@@ -2,6 +2,7 @@
 // edit freely.
 
 using Microsoft.Extensions.DependencyInjection;
+using MILL06.ViewModels.UIContracts;
 using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels;
@@ -44,5 +45,6 @@ public static partial class ServiceCollectionExtensions {
         // services.AddSingleton<SomeType>(_ => new SomeType());
         services.AddSingleton(_ => new MainViewModel());
         services.AddSingleton(_ => new MenuRegistry());
+        services.AddSingleton(_ => new RegionNodesTree());
     }
 }

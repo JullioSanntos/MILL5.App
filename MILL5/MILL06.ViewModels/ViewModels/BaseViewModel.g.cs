@@ -6,34 +6,40 @@
 
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MILL06.ViewModels.UIContracts;
 
-namespace MILL06.ViewModels
-{
-    public abstract partial class BaseViewModel : ObservableObject, IDisposable
-    {
+namespace MILL06.ViewModels {
+    public abstract partial class BaseViewModel : ObservableObject, IDisposable {
         [ObservableProperty]
         private string? _viewType;
 
+        #region Regions
+
+        private RegionNodesTree? _regions;
+        public RegionNodesTree Regions =>
+            _regions ??= RegionNodesTree.Instance;
+
+        #endregion Regions
+
         #region IDisposing
+
         private bool _disposed;
 
-        public void Dispose()
-        {
+        public void Dispose() {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
+        protected virtual void Dispose(bool disposing) {
+            if (!_disposed) {
+                if (disposing) {
                     // Clean up managed resources (e.g., event subscriptions)
                 }
+
                 _disposed = true;
             }
         }
+
         #endregion IDisposing
     }
 }

@@ -10,6 +10,35 @@ namespace MILL06.ViewModels;
 /// dependency on RegionCell, Draggable, DropTarget, or other View controls.
 /// </summary>
 public abstract partial class RegionBaseViewModel : BaseViewModel {
+
+    #region Drag Drop Responsibility Reference
+    /*
+    RegionBaseViewModel — content-owned extensibility
+        GetCanBeDragged(RegionNode)          Per-presentation source capability; the same ViewModel may be shown in multiple Regions.
+        GetCanBeReplaced(RegionNode)         Per-presentation target capability; does not decide compatibility with a specific incoming ViewModel.
+        DragDropCapabilitiesChanged          Invalidates calculated RegionNode capabilities when business state changes.
+        RaiseDragDropCapabilitiesChanged()   Protected trigger used by derived ViewModels when capability answers may have changed.
+
+    RegionNode — Region state + calculated capabilities
+        CanBeDragged                         Calculated from the payload ViewModel for this specific Region presentation.
+        CanBeReplaced                        Calculated from the payload ViewModel; empty Regions are replaceable by default.
+        RegionAssigning                      Cancellable final gate with source, target, and incoming ViewModel all available.
+        RegionAssigned                       Completion notification raised only after a successful assignment.
+
+    MainViewModel — transaction/orchestration
+        Interpret DragData                   Converts generic drag data into the semantic source being assigned or moved.
+        Resolve incoming ViewModel           Converts descriptors such as MenuItemViewModel into actual Region content.
+        Validate source/target               Enforces capabilities and raises RegionAssigning before mutating Region state.
+        Perform assignment/move              Mutates RegionNode state, updates ActiveRegionNode, then raises RegionAssigned.
+
+    Draggable / DropTarget — physical View behavior
+        Pointer / gesture / cursor           Own platform interaction only; no Region or business semantics.
+        DragData                             Carries the source descriptor unchanged to the drop destination.
+        Visual cues                          Own hover, dragging, available-target, drag-over, and dropped appearance.
+    */
+
+    #endregion Drag Drop Responsibility Reference
+
     #region Active Region
 
     /// <summary>
