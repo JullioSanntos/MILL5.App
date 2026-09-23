@@ -153,22 +153,6 @@ public partial class RegionNode : ObservableObject {
     #region Region Assignment
 
     /// <summary>
-    /// Invokes the cancellable Region assignment lifecycle on this Region's
-    /// participating payload ViewModel.
-    ///
-    /// Returns false when the participant cancels the pending operation.
-    /// Regions whose payload does not participate in Region drag/drop do not
-    /// interfere with the operation.
-    /// </summary>
-    internal bool InvokeRegionAssigning(RegionAssigningContext e) {
-        if (PayloadViewModel is not RegionBaseViewModel viewModel)
-            return true;
-
-        viewModel.OnRegionAssigning(e);
-        return !e.Cancel;
-    }
-
-    /// <summary>
     /// Broadcast after a Region drag/drop assignment has successfully completed.
     /// This event is normally raised from the RootRegionNode.
     /// </summary>

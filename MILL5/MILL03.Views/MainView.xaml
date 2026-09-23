@@ -6,37 +6,8 @@
              x:Class="MILL03.Views.MainView"
              Title="Enterprise Dashboard">
 
-    <!--<Grid x:Name="RootGrid" BackgroundColor="Transparent">
-         --><!--The foundational cell that initializes the recursive grid--> 
-        <!--<controls:RegionCell />--><!--
-        <controls:RegionCell>
-            <controls:RegionCell.Payload>
-                <views:CustomersView />
-                --><!--<views:CustomersSyncFusion />--><!--
-            </controls:RegionCell.Payload>
-        </controls:RegionCell>
-    </Grid>-->
-
     <Grid x:Name="RootGrid" BackgroundColor="Transparent">
-        <!--<controls:RegionCell PayloadViewModel="{Binding StartupViewModel}"  />-->
-        <controls:RegionCell Grid.Column="0" RegionNode="{Binding RootRegionNode}" 
-                AllowsMove="False" AllowsDrop="False" />
-
-        <!--<controls:DropTarget Grid.Column="1" Dropped="DropTarget_Dropped">
-
-            <controls:DropTarget.InnerContent>
-                <Border BackgroundColor="White"
-                        HorizontalOptions="Fill"
-                        VerticalOptions="Fill">
-                    <Label Text="Test Drop Target"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center" />
-                </Border>
-            </controls:DropTarget.InnerContent>
-
-        </controls:DropTarget>-->
-
-
+        <controls:RegionCell Grid.Column="0" RegionNode="{Binding Regions.RootRegionNode}" />
     </Grid>
 
 </ContentPage>

@@ -177,7 +177,7 @@ public partial class RegionCell : ContentView {
         ReplaceWithSplitGrid(splitGrid);
 
         if (nodes.Second != null)
-            MainViewModel.Instance.ActiveRegionNode = nodes.Second;
+            RegionNodesTree.Instance.ActiveRegionNode = nodes.Second;
     }
 
     private double GetSplitWeight(SplitDirection direction, Point position) {
@@ -424,13 +424,13 @@ public partial class RegionCell : ContentView {
     }
 
     private static void RepairActiveRegion(CloseContext context) {
-        var mainViewModel = MainViewModel.Instance;
-        var activeNode = mainViewModel.ActiveRegionNode;
+        var regions = RegionNodesTree.Instance;
+        var activeNode = regions.ActiveRegionNode;
 
         if (ReferenceEquals(activeNode, context.ClosedNode) ||
             ReferenceEquals(activeNode, context.SurvivingNode)) {
 
-            mainViewModel.ActiveRegionNode = FindFirstLeaf(context.ParentNode);
+            regions.ActiveRegionNode = FindFirstLeaf(context.ParentNode);
         }
     }
 
@@ -494,16 +494,10 @@ public partial class RegionCell : ContentView {
 
     #region Drop
 
-    private void RegionDropTarget_Dropped(
-        object? sender,
-        DropTargetDroppedEventArgs e) {
+    private void RegionDropTarget_Dropped(object? sender, DropTargetDroppedEventArgs e) {
+        if (RegionNode == null) return;
 
-        if (RegionNode == null)
-            return;
-
-        MainViewModel.Instance.TryAssignDrop(
-            e.DragData,
-            RegionNode);
+        MainViewModel.Instance.TryAssignDrop(e.DragData, RegionNode);
     }
 
     #endregion Drop

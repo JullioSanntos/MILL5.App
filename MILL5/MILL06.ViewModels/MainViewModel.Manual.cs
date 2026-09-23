@@ -16,22 +16,6 @@ public partial class MainViewModel : BaseViewModel {
 
     #endregion MainModel
 
-    #region Regions
-
-    // Temporary forwarding properties preserve existing MainViewModel bindings/callers
-    // while RegionNodesTree owns the authoritative Region state.
-    public RegionNode RootRegionNode => Regions.RootRegionNode;
-
-    public RegionNode ActiveRegionNode {
-        get => Regions.ActiveRegionNode ?? Regions.RootRegionNode;
-        set {
-            if (ReferenceEquals(Regions.ActiveRegionNode, value)) return;
-
-            Regions.ActiveRegionNode = value;
-            OnPropertyChanged();
-        }
-    }
-
     #region StartupViewModel
 
     /// <summary>
@@ -43,8 +27,6 @@ public partial class MainViewModel : BaseViewModel {
 
     #endregion StartupViewModel
 
-    #endregion Regions
-
     #region MainViewModel's Instance Singleton
 
     // Resolves directly from the global container, allowing test initialization to swap the provider.
@@ -52,8 +34,8 @@ public partial class MainViewModel : BaseViewModel {
         global::MILL80.Infrastructure.ServiceLocator.CurrentProvider.GetRequiredService<MainViewModel>();
 
     protected internal MainViewModel() {
-        if (RootRegionNode.PayloadViewModel == null)
-            RootRegionNode.PayloadViewModel = StartupViewModel;
+        if (Regions.RootRegionNode.PayloadViewModel == null)
+            Regions.RootRegionNode.PayloadViewModel = StartupViewModel;
 
         MenuViewModel.PropertyChanged += MenuViewModel_PropertyChanged;
     }
@@ -71,10 +53,12 @@ public partial class MainViewModel : BaseViewModel {
         if (selectedNode == null || string.IsNullOrEmpty(selectedNode.TargetViewModelName)) return;
 
         // Prefer the oldest empty Region.
-        var targetNode = FindTargetNode(RootRegionNode);
+        var targetNode = FindTargetNode(Regions.RootRegionNode);
 
         // Existing fallback behavior when there are no empty Regions.
-        targetNode ??= GetReplaceableNode(ActiveRegionNode, RootRegionNode);
+        targetNode ??= GetReplaceableNode(
+            Regions.ActiveRegionNode,
+            Regions.RootRegionNode);
 
         if (targetNode == null) return;
 
@@ -89,7 +73,7 @@ public partial class MainViewModel : BaseViewModel {
         if (!targetNode.CanBeReplaced) return false;
 
         targetNode.PayloadViewModel = viewModel;
-        ActiveRegionNode = targetNode;
+        Regions.ActiveRegionNode = targetNode;
 
         return true;
     }
