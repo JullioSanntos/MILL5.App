@@ -78,37 +78,44 @@ public partial class MainViewModel : BaseViewModel {
 
         if (targetNode == null) return;
 
-        TryAssignMenuItemToRegion(selectedNode, targetNode);
+        AssignMenuItemToNode(selectedNode, targetNode);
+    }
+
+    private bool AssignMenuItemToNode(MenuItemViewModel menuItem, RegionNode targetNode) {
+        var viewModel = ResolveTargetViewModel(menuItem);
+        if (viewModel == null) return false;
+
+        // Temporary until NodeAssigning / NodeAssigned are implemented.
+        if (!targetNode.CanBeReplaced) return false;
+
+        targetNode.PayloadViewModel = viewModel;
+        ActiveRegionNode = targetNode;
+
+        return true;
     }
 
     #endregion Menu Selection
 
-    #region Region Assignment - Temporary Bridge
+    #region Menu Drag Adapter
 
     /// <summary>
-    /// Entry point used by the View tier after a physical drop occurs.
+    /// Temporary adapter for the current Menu drag payload.
     ///
-    /// DragData remains generic in the Views project. Interpretation of that
-    /// data remains in the ViewModel tier.
-    ///
-    /// This transaction code is temporary until RegionAssigning and
-    /// NodeAssigning are migrated to the agreed lifecycle architecture.
+    /// MainViewModel participates only because it has application-global
+    /// knowledge required to resolve TargetViewModelName. Region assignment
+    /// policy and lifecycle orchestration belong to RegionNodesTree.
     /// </summary>
-    public bool TryAssignDrop(object dragData, RegionNode targetRegionNode) {
-        if (dragData is MenuItemViewModel menuItem)
-            return TryAssignMenuItemToRegion(menuItem, targetRegionNode);
+    public bool TryAssignDrop(object dragData, RegionNode targetNode) {
+        if (dragData is not MenuItemViewModel menuItem)
+            return false;
 
-        // RegionNode-to-RegionNode movement will be added separately.
-        return false;
-    }
+        var draggedViewModel = ResolveTargetViewModel(menuItem);
+        if (draggedViewModel == null) return false;
 
-    private bool TryAssignMenuItemToRegion(MenuItemViewModel menuItem, RegionNode targetRegionNode) {
-        var incomingViewModel = ResolveTargetViewModel(menuItem);
-        if (incomingViewModel == null) return false;
+        var sourceNode = Regions.GetRegionNode(MenuViewModel);
+        if (sourceNode == null) return false;
 
-        // A Menu item is a descriptor, not Region content.
-        // Therefore this assignment has no source RegionNode.
-        return TryAssignViewModelToRegion(null, targetRegionNode, incomingViewModel);
+        return Regions.AssignRegion(sourceNode, draggedViewModel, targetNode);
     }
 
     private BaseViewModel? ResolveTargetViewModel(MenuItemViewModel menuItem) {
@@ -121,27 +128,7 @@ public partial class MainViewModel : BaseViewModel {
         return property?.GetValue(this) as BaseViewModel;
     }
 
-    private bool TryAssignViewModelToRegion(RegionNode? sourceRegionNode,
-        RegionNode targetRegionNode, BaseViewModel incomingViewModel) {
-
-        if (!targetRegionNode.CanBeReplaced) return false;
-
-        // TODO: Replace with the agreed lifecycle architecture:
-        //   NodeAssigning     - ordinary Region assignment, target participant only.
-        //   RegionAssigning   - drag/drop, source and target participants.
-        //
-        // Retained temporarily so the currently working assignment path is not broken.
-        if (!RootRegionNode.RaiseRegionAssigning(sourceRegionNode, targetRegionNode, incomingViewModel))
-            return false;
-
-        targetRegionNode.PayloadViewModel = incomingViewModel;
-        ActiveRegionNode = targetRegionNode;
-
-        RootRegionNode.RaiseRegionAssigned(sourceRegionNode, targetRegionNode, incomingViewModel);
-        return true;
-    }
-
-    #endregion Region Assignment - Temporary Bridge
+    #endregion Menu Drag Adapter
 
     #region Target Selection
 

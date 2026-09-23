@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using MILL06.ViewModels.UIContracts;
+﻿using MILL06.ViewModels.UIContracts;
 
 namespace MILL06.ViewModels;
 
@@ -11,91 +10,94 @@ namespace MILL06.ViewModels;
 /// </summary>
 public abstract partial class RegionBaseViewModel : BaseViewModel {
 
-    #region Drag Drop Responsibility Reference
-    /*
-    RegionBaseViewModel — content-owned extensibility
-        GetCanBeDragged(RegionNode)          Per-presentation source capability; the same ViewModel may be shown in multiple Regions.
-        GetCanBeReplaced(RegionNode)         Per-presentation target capability; does not decide compatibility with a specific incoming ViewModel.
-        DragDropCapabilitiesChanged          Invalidates calculated RegionNode capabilities when business state changes.
-        RaiseDragDropCapabilitiesChanged()   Protected trigger used by derived ViewModels when capability answers may have changed.
-
-    RegionNode — Region state + calculated capabilities
-        CanBeDragged                         Calculated from the payload ViewModel for this specific Region presentation.
-        CanBeReplaced                        Calculated from the payload ViewModel; empty Regions are replaceable by default.
-        RegionAssigning                      Cancellable final gate with source, target, and incoming ViewModel all available.
-        RegionAssigned                       Completion notification raised only after a successful assignment.
-
-    MainViewModel — transaction/orchestration
-        Interpret DragData                   Converts generic drag data into the semantic source being assigned or moved.
-        Resolve incoming ViewModel           Converts descriptors such as MenuItemViewModel into actual Region content.
-        Validate source/target               Enforces capabilities and raises RegionAssigning before mutating Region state.
-        Perform assignment/move              Mutates RegionNode state, updates ActiveRegionNode, then raises RegionAssigned.
-
-    Draggable / DropTarget — physical View behavior
-        Pointer / gesture / cursor           Own platform interaction only; no Region or business semantics.
-        DragData                             Carries the source descriptor unchanged to the drop destination.
-        Visual cues                          Own hover, dragging, available-target, drag-over, and dropped appearance.
-    */
-
-    #endregion Drag Drop Responsibility Reference
-
-    #region Active Region
-
-    /// <summary>
-    /// Gets or sets the Region presentation of this ViewModel that is
-    /// currently being operated on.
-    ///
-    /// A ViewModel may be presented by more than one RegionNode.
-    /// ActiveRegionNode identifies the currently active presentation.
-    ///
-    /// This is application state and is not required to identify the
-    /// source of a drag operation; a Region drag carries its RegionNode.
-    /// </summary>
-    [ObservableProperty]
-    private RegionNode? _activeRegionNode;
-
-    #endregion Active Region
-
     #region Drag Drop Capabilities
 
     /// <summary>
-    /// Determines whether this ViewModel may be dragged from the specified
-    /// Region.
-    ///
-    /// Derived ViewModels may consider business state, Region location,
-    /// Region-tree state, or other semantic conditions.
+    /// Determines whether this ViewModel may currently participate as
+    /// the ViewModel being dragged from its Region.
     /// </summary>
-    public virtual bool GetCanBeDragged(RegionNode regionNode) {
-        return true;
-    }
+    public virtual bool CanBeDragged => true;
 
     /// <summary>
-    /// Determines whether this ViewModel may be replaced in the specified
-    /// Region.
+    /// Determines whether the Region presenting this ViewModel may
+    /// generally be replaced by another ViewModel.
     ///
-    /// Derived ViewModels may consider business state, Region location,
-    /// Region-tree state, or other semantic conditions.
+    /// More specific assignment policy belongs in OnRegionAssigning.
     /// </summary>
-    public virtual bool GetCanBeReplaced(RegionNode regionNode) {
-        return true;
-    }
+    public virtual bool CanBeReplaced => true;
 
     /// <summary>
-    /// Raised when business state changes in a way that may change the
-    /// answers returned by GetCanBeDragged or GetCanBeReplaced.
-    ///
-    /// RegionNodes presenting this ViewModel use this notification to
-    /// reevaluate their calculated drag/drop capabilities.
+    /// Raised when business state changes in a way that may change
+    /// CanBeDragged or CanBeReplaced.
     /// </summary>
     public event EventHandler? DragDropCapabilitiesChanged;
 
     /// <summary>
-    /// Notifies RegionNodes presenting this ViewModel that their drag/drop
-    /// capabilities should be reevaluated.
+    /// Notifies RegionNodes presenting this ViewModel that their
+    /// drag/drop capabilities should be reevaluated.
     /// </summary>
     protected void RaiseDragDropCapabilitiesChanged() {
         DragDropCapabilitiesChanged?.Invoke(this, EventArgs.Empty);
     }
 
     #endregion Drag Drop Capabilities
+
+    #region Region Assignment Lifecycle
+
+    /// <summary>
+    /// Optional externally supplied assignment policy.
+    ///
+    /// null  = no opinion; use this ViewModel's normal lifecycle policy.
+    /// true  = explicitly allow this participant's involvement.
+    /// false = cancel the assignment.
+    /// </summary>
+    public Func<RegionAssigningContext, bool?>? RegionAssigningCallback { get; set; }
+
+    /// <summary>
+    /// Called before a Region drag/drop assignment is committed.
+    ///
+    /// Infrastructure calls each distinct participating ViewModel once,
+    /// in this order: target, source when different from the dragged
+    /// ViewModel, and dragged ViewModel last.
+    ///
+    /// Derived ViewModels may call base to retain the default policy or
+    /// omit the base call to replace that policy completely.
+    /// </summary>
+    protected internal virtual void OnRegionAssigning(RegionAssigningContext context) {
+        var callbackResult = RegionAssigningCallback?.Invoke(context);
+
+        if (callbackResult.HasValue) {
+            context.Cancel = !callbackResult.Value;
+            return;
+        }
+
+        var isTarget =
+            ReferenceEquals(context.TargetNode.PayloadViewModel, this);
+
+        var isSource =
+            ReferenceEquals(context.SourceNode.PayloadViewModel, this);
+
+        var isDragged =
+            ReferenceEquals(context.DraggedViewModel, this);
+
+        // A target normally obeys its general replaceability rule.
+        if (isTarget && !CanBeReplaced) {
+            context.Cancel = true;
+            return;
+        }
+
+        if (!isSource) return;
+
+        // Normal case: the Region is transporting its own payload.
+        if (isDragged) {
+            context.Cancel = !CanBeDragged;
+            return;
+        }
+
+        // Exceptional case: this Region is transporting another ViewModel.
+        // Derived ViewModels must explicitly authorize that behavior.
+        context.Cancel = true;
+    }
+
+    #endregion Region Assignment Lifecycle
 }

@@ -53,15 +53,9 @@ public partial class RegionNode : ObservableObject {
     [ObservableProperty]
     private RegionNode? _parent;
 
-    partial void OnFirstChildChanged(
-        RegionNode? oldValue,
-        RegionNode? newValue) {
-
-        if (oldValue != null &&
-            ReferenceEquals(oldValue.Parent, this)) {
-
+    partial void OnFirstChildChanged(RegionNode? oldValue, RegionNode? newValue) {
+        if (oldValue != null && ReferenceEquals(oldValue.Parent, this))
             oldValue.Parent = null;
-        }
 
         if (newValue != null)
             newValue.Parent = this;
@@ -70,15 +64,9 @@ public partial class RegionNode : ObservableObject {
         OnPropertyChanged(nameof(IsOccupied));
     }
 
-    partial void OnSecondChildChanged(
-        RegionNode? oldValue,
-        RegionNode? newValue) {
-
-        if (oldValue != null &&
-            ReferenceEquals(oldValue.Parent, this)) {
-
+    partial void OnSecondChildChanged(RegionNode? oldValue, RegionNode? newValue) {
+        if (oldValue != null && ReferenceEquals(oldValue.Parent, this))
             oldValue.Parent = null;
-        }
 
         if (newValue != null)
             newValue.Parent = this;
@@ -99,22 +87,14 @@ public partial class RegionNode : ObservableObject {
     [ObservableProperty]
     private BaseViewModel? _payloadViewModel;
 
-    partial void OnPayloadViewModelChanged(
-        BaseViewModel? oldValue,
-        BaseViewModel? newValue) {
+    partial void OnPayloadViewModelChanged(BaseViewModel? oldValue, BaseViewModel? newValue) {
+        if (oldValue is RegionBaseViewModel oldRegionViewModel)
+            oldRegionViewModel.DragDropCapabilitiesChanged -= PayloadViewModel_DragDropCapabilitiesChanged;
 
-        if (oldValue is RegionBaseViewModel oldRegionViewModel) {
-            oldRegionViewModel.DragDropCapabilitiesChanged -=
-                PayloadViewModel_DragDropCapabilitiesChanged;
-        }
-
-        if (newValue is RegionBaseViewModel newRegionViewModel) {
-            newRegionViewModel.DragDropCapabilitiesChanged +=
-                PayloadViewModel_DragDropCapabilitiesChanged;
-        }
+        if (newValue is RegionBaseViewModel newRegionViewModel)
+            newRegionViewModel.DragDropCapabilitiesChanged += PayloadViewModel_DragDropCapabilitiesChanged;
 
         OnPropertyChanged(nameof(IsOccupied));
-
         ReevaluateOwnDragDropCapabilities();
     }
 
@@ -127,11 +107,11 @@ public partial class RegionNode : ObservableObject {
 
     /// <summary>
     /// Determines whether the payload presented by this Region may
-    /// currently be dragged from this Region.
+    /// currently participate as the source of a drag operation.
     /// </summary>
     public bool CanBeDragged =>
         PayloadViewModel is RegionBaseViewModel viewModel &&
-        viewModel.GetCanBeDragged(this);
+        viewModel.CanBeDragged;
 
     /// <summary>
     /// Determines whether the payload presented by this Region may
@@ -142,7 +122,7 @@ public partial class RegionNode : ObservableObject {
     /// </summary>
     public bool CanBeReplaced =>
         PayloadViewModel is not RegionBaseViewModel viewModel ||
-        viewModel.GetCanBeReplaced(this);
+        viewModel.CanBeReplaced;
 
     /// <summary>
     /// Causes bindings to reevaluate the drag/drop capabilities of this
@@ -164,10 +144,7 @@ public partial class RegionNode : ObservableObject {
         SecondChild?.ReevaluateDragDropCapabilities();
     }
 
-    private void PayloadViewModel_DragDropCapabilitiesChanged(
-        object? sender,
-        EventArgs e) {
-
+    private void PayloadViewModel_DragDropCapabilitiesChanged(object? sender, EventArgs e) {
         ReevaluateOwnDragDropCapabilities();
     }
 
@@ -176,41 +153,29 @@ public partial class RegionNode : ObservableObject {
     #region Region Assignment
 
     /// <summary>
-    /// Raised immediately before a ViewModel is assigned to a Region.
+    /// Invokes the cancellable Region assignment lifecycle on this Region's
+    /// participating payload ViewModel.
     ///
-    /// This is a tree-level cancellable event and should normally be raised
-    /// from the RootRegionNode.
+    /// Returns false when the participant cancels the pending operation.
+    /// Regions whose payload does not participate in Region drag/drop do not
+    /// interfere with the operation.
     /// </summary>
-    public event EventHandler<RegionAssigningEventArgs>? RegionAssigning;
+    internal bool InvokeRegionAssigning(RegionAssigningContext e) {
+        if (PayloadViewModel is not RegionBaseViewModel viewModel)
+            return true;
 
-    /// <summary>
-    /// Raises the cancellable RegionAssigning event.
-    ///
-    /// Returns false when any subscriber cancels the assignment.
-    /// </summary>
-    public bool RaiseRegionAssigning(
-        RegionNode? sourceRegionNode,
-        RegionNode targetRegionNode,
-        BaseViewModel incomingViewModel) {
-
-        var e = new RegionAssigningEventArgs(
-            sourceRegionNode,
-            targetRegionNode,
-            incomingViewModel);
-
-        RegionAssigning?.Invoke(this, e);
-
+        viewModel.OnRegionAssigning(e);
         return !e.Cancel;
     }
 
-    #endregion Region Assignment
-
+    /// <summary>
+    /// Broadcast after a Region drag/drop assignment has successfully completed.
+    /// This event is normally raised from the RootRegionNode.
+    /// </summary>
     public event EventHandler<RegionAssignedEventArgs>? RegionAssigned;
 
-    public void RaiseRegionAssigned(
-        RegionNode? sourceRegionNode,
-        RegionNode targetRegionNode,
-        BaseViewModel assignedViewModel) {
+    public void RaiseRegionAssigned(RegionNode? sourceRegionNode,
+        RegionNode targetRegionNode, BaseViewModel assignedViewModel) {
 
         var e = new RegionAssignedEventArgs(
             sourceRegionNode,
@@ -220,23 +185,20 @@ public partial class RegionNode : ObservableObject {
         RegionAssigned?.Invoke(this, e);
     }
 
+    #endregion Region Assignment
+
     #region Node Changing
 
     public event EventHandler<RegionNodeChangingEventArgs>? NodeChanging;
 
-    public bool RaiseNodeChanging(
-        string nodeId,
-        NodeAction action) {
-
+    public bool RaiseNodeChanging(string nodeId, NodeAction action) {
         var args = new RegionNodeChangingEventArgs(nodeId, action);
         OnNodeChanging(args);
 
         return !args.Cancel;
     }
 
-    protected virtual void OnNodeChanging(
-        RegionNodeChangingEventArgs e) {
-
+    protected virtual void OnNodeChanging(RegionNodeChangingEventArgs e) {
         NodeChanging?.Invoke(this, e);
         Parent?.OnNodeChanging(e);
     }
