@@ -78,7 +78,7 @@ public abstract partial class RegionBaseViewModel : BaseViewModel {
             ReferenceEquals(context.SourceNode.PayloadViewModel, this);
 
         var isDragged =
-            ReferenceEquals(context.DraggedViewModel, this);
+            ReferenceEquals(context.IncomingViewModel, this);
 
         // A target normally obeys its general replaceability rule.
         if (isTarget && !CanBeReplaced) {

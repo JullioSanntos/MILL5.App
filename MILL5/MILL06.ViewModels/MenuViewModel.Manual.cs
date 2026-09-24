@@ -13,13 +13,23 @@ public partial class MenuViewModel {
     [ObservableProperty]
     private MenuItemViewModel? _selectedMenuNode;
 
+    partial void OnSelectedMenuNodeChanged(MenuItemViewModel? value) {
+        var targetViewModel = value?.TargetViewModel;
+        if (targetViewModel == null) return;
+
+        var targetNode = Regions.GetPreferredTargetNode(this);
+        if (targetNode == null) return;
+
+        Regions.AssignNode(targetViewModel, targetNode);
+    }
+
     #endregion Selection
 
     #region Region Assignment Lifecycle
 
     protected internal override void OnRegionAssigning(RegionAssigningContext context) {
         var isSource = ReferenceEquals(context.SourceNode.PayloadViewModel, this);
-        var isDragged = ReferenceEquals(context.DraggedViewModel, this);
+        var isDragged = ReferenceEquals(context.IncomingViewModel, this);
         var isTarget = ReferenceEquals(context.TargetNode.PayloadViewModel, this);
 
         // MenuViewModel is a specialized source: it transports the ViewModel

@@ -89,6 +89,127 @@ public partial class RegionNodesTree : ObservableObject {
 
     #endregion Queries
 
+    #region Assignment Target Queries
+
+    /// <summary>
+    /// Gets the preferred Region destination for an assignment.
+    ///
+    /// The oldest empty Region is preferred. When no empty Region exists,
+    /// the active leaf is preferred unless it contains the protected ViewModel.
+    /// Otherwise the first unprotected leaf is returned.
+    /// </summary>
+    public RegionNode? GetPreferredTargetNode(BaseViewModel protectedViewModel) {
+        ArgumentNullException.ThrowIfNull(protectedViewModel);
+
+        var targetNode = FindOldestEmptyNode(RootRegionNode);
+
+        targetNode ??= GetReplaceableNode(
+            ActiveRegionNode,
+            RootRegionNode,
+            protectedViewModel);
+
+        return targetNode;
+    }
+
+    private static RegionNode? GetReplaceableNode(
+        RegionNode? activeNode,
+        RegionNode rootNode,
+        BaseViewModel protectedViewModel) {
+
+        if (activeNode != null &&
+            !activeNode.IsSplit &&
+            !ReferenceEquals(activeNode.PayloadViewModel, protectedViewModel)) {
+
+            return activeNode;
+        }
+
+        return FindFirstUnprotectedLeaf(
+            rootNode,
+            protectedViewModel);
+    }
+
+    private static RegionNode? FindFirstUnprotectedLeaf(
+        RegionNode currentNode,
+        BaseViewModel protectedViewModel) {
+
+        if (!currentNode.IsSplit) {
+            return ReferenceEquals(
+                currentNode.PayloadViewModel,
+                protectedViewModel)
+                    ? null
+                    : currentNode;
+        }
+
+        if (currentNode.FirstChild != null) {
+            var found = FindFirstUnprotectedLeaf(
+                currentNode.FirstChild,
+                protectedViewModel);
+
+            if (found != null) return found;
+        }
+
+        if (currentNode.SecondChild != null) {
+            var found = FindFirstUnprotectedLeaf(
+                currentNode.SecondChild,
+                protectedViewModel);
+
+            if (found != null) return found;
+        }
+
+        return null;
+    }
+
+    private static RegionNode? FindOldestEmptyNode(RegionNode rootNode) {
+        RegionNode? oldestEmptyNode = null;
+        FindOldestEmptyNode(rootNode, ref oldestEmptyNode);
+
+        return oldestEmptyNode;
+    }
+
+    private static void FindOldestEmptyNode(
+        RegionNode currentNode,
+        ref RegionNode? oldestEmptyNode) {
+
+        if (!currentNode.IsSplit) {
+            if (currentNode.PayloadViewModel == null &&
+                (oldestEmptyNode == null ||
+                 currentNode.CreationOrder < oldestEmptyNode.CreationOrder)) {
+
+                oldestEmptyNode = currentNode;
+            }
+
+            return;
+        }
+
+        if (currentNode.FirstChild != null)
+            FindOldestEmptyNode(currentNode.FirstChild, ref oldestEmptyNode);
+
+        if (currentNode.SecondChild != null)
+            FindOldestEmptyNode(currentNode.SecondChild, ref oldestEmptyNode);
+    }
+
+    #endregion Assignment Target Queries
+
+    #region Node Assignment
+
+    /// <summary>
+    /// Assigns a ViewModel to a Region outside the drag/drop lifecycle.
+    /// </summary>
+    public bool AssignNode(BaseViewModel viewModel, RegionNode targetNode) {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ArgumentNullException.ThrowIfNull(targetNode);
+
+        if (!targetNode.CanBeReplaced)
+            return false;
+
+        targetNode.PayloadViewModel = viewModel;
+        ActiveRegionNode = targetNode;
+
+        return true;
+    }
+
+    #endregion Node Assignment
+
     #region Region Assignment
 
     /// <summary>
@@ -97,12 +218,17 @@ public partial class RegionNodesTree : ObservableObject {
     /// Each distinct participating RegionBaseViewModel is consulted once.
     /// The target is consulted first, a distinct source second, and the
     /// dragged ViewModel last. Any participant may cancel the assignment.
+    ///
+    /// When the source Region contains the ViewModel being transported,
+    /// a successful assignment is a MOVE and the source Region is cleared.
+    /// Specialized sources such as MenuViewModel remain unchanged because
+    /// they transport another ViewModel rather than themselves.
     /// </summary>
     public bool AssignRegion(RegionNode sourceNode,
-        BaseViewModel draggedViewModel, RegionNode targetNode) {
+        BaseViewModel incomingViewModel, RegionNode targetNode) {
 
         ArgumentNullException.ThrowIfNull(sourceNode);
-        ArgumentNullException.ThrowIfNull(draggedViewModel);
+        ArgumentNullException.ThrowIfNull(incomingViewModel);
         ArgumentNullException.ThrowIfNull(targetNode);
 
         if (ReferenceEquals(sourceNode, targetNode))
@@ -110,7 +236,7 @@ public partial class RegionNodesTree : ObservableObject {
 
         var context = new RegionAssigningContext(
             sourceNode,
-            draggedViewModel,
+            incomingViewModel,
             targetNode);
 
         var targetViewModel =
@@ -120,7 +246,11 @@ public partial class RegionNodesTree : ObservableObject {
             sourceNode.PayloadViewModel as RegionBaseViewModel;
 
         var draggedRegionViewModel =
-            draggedViewModel as RegionBaseViewModel;
+            incomingViewModel as RegionBaseViewModel;
+
+        // Capture this before changing either node.
+        var isMove =
+            ReferenceEquals(sourceNode.PayloadViewModel, incomingViewModel);
 
         // Target gets first refusal unless it is also the dragged ViewModel.
         // In that unusual case it is deferred so the dragged participant
@@ -147,13 +277,17 @@ public partial class RegionNodesTree : ObservableObject {
             if (context.Cancel) return false;
         }
 
-        targetNode.PayloadViewModel = draggedViewModel;
+        targetNode.PayloadViewModel = incomingViewModel;
+
+        if (isMove)
+            sourceNode.PayloadViewModel = null;
+
         ActiveRegionNode = targetNode;
 
         RootRegionNode.RaiseRegionAssigned(
             sourceNode,
             targetNode,
-            draggedViewModel);
+            incomingViewModel);
 
         return true;
     }

@@ -7,7 +7,7 @@ namespace MILL06.ViewModels.UIContracts;
 /// Provides the complete context for a pending Region drag/drop assignment.
 ///
 /// SourceNode identifies the Region where the drag originated.
-/// DraggedViewModel identifies the ViewModel actually being transported and
+/// IncomingViewModel identifies the ViewModel actually being transported and
 /// may differ from SourceNode.PayloadViewModel.
 /// TargetNode identifies the destination Region and may have an empty payload.
 ///
@@ -15,7 +15,7 @@ namespace MILL06.ViewModels.UIContracts;
 /// </summary>
 public sealed class RegionAssigningContext(
     RegionNode sourceNode,
-    BaseViewModel draggedViewModel,
+    BaseViewModel incomingViewModel,
     RegionNode targetNode)
     : CancelEventArgs {
 
@@ -30,8 +30,8 @@ public sealed class RegionAssigningContext(
     /// ViewModel being transported by the drag operation. This is normally
     /// SourceNode.PayloadViewModel, but may differ, as with MenuViewModel.
     /// </summary>
-    public BaseViewModel DraggedViewModel { get; } =
-        draggedViewModel ?? throw new ArgumentNullException(nameof(draggedViewModel));
+    public BaseViewModel IncomingViewModel { get; } =
+        incomingViewModel ?? throw new ArgumentNullException(nameof(incomingViewModel));
 
     /// <summary>
     /// Destination Region. Its PayloadViewModel identifies the target
