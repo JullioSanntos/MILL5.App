@@ -33,7 +33,8 @@
                         </controls:DropTarget.InnerContent>
                     </controls:DropTarget>
 
-                    <Label x:Name="CloseBtnLabel" Style="{StaticResource RegionCloseButtonStyle}" ZIndex="100">
+                    <Label x:Name="CloseBtnLabel" Style="{StaticResource RegionCloseButtonStyle}"
+                           IsVisible="{Binding RegionNode.CanBeClosed, Source={x:Reference RegionCellRoot}}">
                         <Label.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnCloseButtonTapped" />
                         </Label.GestureRecognizers>

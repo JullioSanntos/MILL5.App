@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MILL06.ViewModels;
@@ -83,24 +84,34 @@ public partial class RegionNode : ObservableObject {
     #endregion Children
 
     #region Payload
-
     [ObservableProperty]
     private BaseViewModel? _payloadViewModel;
 
     partial void OnPayloadViewModelChanged(BaseViewModel? oldValue, BaseViewModel? newValue) {
+        if (oldValue != null)
+            oldValue.PropertyChanged -= PayloadViewModel_PropertyChanged;
+
         if (oldValue is RegionBaseViewModel oldRegionViewModel)
             oldRegionViewModel.DragDropCapabilitiesChanged -= PayloadViewModel_DragDropCapabilitiesChanged;
+
+        if (newValue != null)
+            newValue.PropertyChanged += PayloadViewModel_PropertyChanged;
 
         if (newValue is RegionBaseViewModel newRegionViewModel)
             newRegionViewModel.DragDropCapabilitiesChanged += PayloadViewModel_DragDropCapabilitiesChanged;
 
         OnPropertyChanged(nameof(IsOccupied));
+        OnPropertyChanged(nameof(CanBeClosed));
+
         ReevaluateOwnDragDropCapabilities();
     }
 
-    public bool IsOccupied =>
-        PayloadViewModel != null || IsSplit;
+    private void PayloadViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+        if (e.PropertyName == nameof(BaseViewModel.CanBeClosed))
+            OnPropertyChanged(nameof(CanBeClosed));
+    }
 
+    public bool IsOccupied => PayloadViewModel != null || IsSplit;
     #endregion Payload
 
     #region Drag Drop Capabilities
@@ -123,6 +134,8 @@ public partial class RegionNode : ObservableObject {
     public bool CanBeReplaced =>
         PayloadViewModel is not RegionBaseViewModel viewModel ||
         viewModel.CanBeReplaced;
+
+    public bool CanBeClosed => PayloadViewModel?.CanBeClosed ?? true;
 
     /// <summary>
     /// Causes bindings to reevaluate the drag/drop capabilities of this

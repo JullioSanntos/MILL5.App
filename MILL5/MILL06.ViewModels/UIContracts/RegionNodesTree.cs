@@ -29,6 +29,14 @@ public partial class RegionNodesTree : ObservableObject {
 
     #endregion Root Region
 
+    #region events
+    public event EventHandler? TreeChanged;
+
+    public void NotifyTreeChanged() {
+        TreeChanged?.Invoke(this, EventArgs.Empty);
+    }
+    #endregion events
+
     #region Active Region
 
     [ObservableProperty]
@@ -205,13 +213,14 @@ public partial class RegionNodesTree : ObservableObject {
         targetNode.PayloadViewModel = viewModel;
         ActiveRegionNode = targetNode;
 
+        NotifyTreeChanged();
+
         return true;
     }
 
     #endregion Node Assignment
 
     #region Region Assignment
-
     /// <summary>
     /// Performs the invariant lifecycle for a Region drag/drop assignment.
     ///
@@ -231,33 +240,23 @@ public partial class RegionNodesTree : ObservableObject {
         ArgumentNullException.ThrowIfNull(incomingViewModel);
         ArgumentNullException.ThrowIfNull(targetNode);
 
-        if (ReferenceEquals(sourceNode, targetNode))
-            return false;
+        if (ReferenceEquals(sourceNode, targetNode)) { return false; }
 
-        var context = new RegionAssigningContext(
-            sourceNode,
-            incomingViewModel,
-            targetNode);
+        var context = new RegionAssigningContext(sourceNode, incomingViewModel, targetNode);
 
-        var targetViewModel =
-            targetNode.PayloadViewModel as RegionBaseViewModel;
+        var targetViewModel = targetNode.PayloadViewModel as RegionBaseViewModel;
 
-        var sourceViewModel =
-            sourceNode.PayloadViewModel as RegionBaseViewModel;
+        var sourceViewModel = sourceNode.PayloadViewModel as RegionBaseViewModel;
 
-        var draggedRegionViewModel =
-            incomingViewModel as RegionBaseViewModel;
+        var draggedRegionViewModel = incomingViewModel as RegionBaseViewModel;
 
         // Capture this before changing either node.
-        var isMove =
-            ReferenceEquals(sourceNode.PayloadViewModel, incomingViewModel);
+        var isMove = ReferenceEquals(sourceNode.PayloadViewModel, incomingViewModel);
 
         // Target gets first refusal unless it is also the dragged ViewModel.
         // In that unusual case it is deferred so the dragged participant
         // retains the final decision.
-        if (targetViewModel != null &&
-            !ReferenceEquals(targetViewModel, draggedRegionViewModel)) {
-
+        if (targetViewModel != null && !ReferenceEquals(targetViewModel, draggedRegionViewModel)) {
             targetViewModel.OnRegionAssigning(context);
             if (context.Cancel) return false;
         }
@@ -279,18 +278,16 @@ public partial class RegionNodesTree : ObservableObject {
 
         targetNode.PayloadViewModel = incomingViewModel;
 
-        if (isMove)
-            sourceNode.PayloadViewModel = null;
+        if (isMove) { sourceNode.PayloadViewModel = null; }
 
         ActiveRegionNode = targetNode;
 
-        RootRegionNode.RaiseRegionAssigned(
-            sourceNode,
-            targetNode,
-            incomingViewModel);
+        NotifyTreeChanged();
+
+        RootRegionNode.RaiseRegionAssigned(sourceNode, targetNode, incomingViewModel);
 
         return true;
     }
-
     #endregion Region Assignment
+
 }

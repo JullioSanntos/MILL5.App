@@ -115,8 +115,9 @@ public partial class RegionCell : ContentView {
 
         ReplaceWithSplitGrid(splitGrid);
 
-        if (nodes.Second != null)
-            RegionNodesTree.Instance.ActiveRegionNode = nodes.Second;
+        if (nodes.Second != null) { RegionNodesTree.Instance.ActiveRegionNode = nodes.Second; }
+
+        RegionNodesTree.Instance.NotifyTreeChanged();
     }
 
     private double GetSplitWeight(
@@ -329,6 +330,8 @@ public partial class RegionCell : ContentView {
 
         CollapseVisualTree(context);
         RepairActiveRegion(context);
+
+        RegionNodesTree.Instance.NotifyTreeChanged();
     }
 
     private bool TryGetCloseContext(

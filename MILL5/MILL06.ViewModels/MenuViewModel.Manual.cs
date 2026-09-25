@@ -25,6 +25,36 @@ public partial class MenuViewModel {
 
     #endregion Selection
 
+    #region Region Capabilities
+
+    private bool _regionTreeSubscribed;
+
+    public override bool CanBeClosed {
+        get {
+            EnsureRegionTreeSubscription();
+            return Regions.GetRegionNodes(this).Count > 1;
+        }
+    }
+
+    private void EnsureRegionTreeSubscription() {
+        if (_regionTreeSubscribed) return;
+
+        Regions.TreeChanged += Regions_TreeChanged;
+        _regionTreeSubscribed = true;
+    }
+
+    private void Regions_TreeChanged(object? sender, EventArgs e) {
+        OnPropertyChanged(nameof(CanBeClosed));
+    }
+
+    #endregion Region Capabilities
+
+    //#region constructors
+    //public MenuViewModel() {
+    //    Regions.TreeChanged += Regions_TreeChanged;
+    //}
+    //#endregion constructors
+
     #region Region Assignment Lifecycle
 
     protected internal override void OnRegionAssigning(RegionAssigningContext context) {

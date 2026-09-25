@@ -19,6 +19,16 @@ namespace MILL06.ViewModels {
         public RegionNodesTree Regions =>
             _regions ??= RegionNodesTree.Instance;
 
+        #region CanBeClosed
+
+        public virtual bool CanBeClosed => true;
+
+        protected internal void NotifyCanBeClosedChanged() {
+            OnPropertyChanged(nameof(CanBeClosed));
+        }
+
+        #endregion CanBeClosed
+
         #endregion Regions
 
         #region IDisposing
