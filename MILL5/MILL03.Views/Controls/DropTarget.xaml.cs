@@ -1,6 +1,8 @@
 using Microsoft.Maui.Controls;
 
 #if WINDOWS
+using DragDropModifiers = Windows.ApplicationModel.DataTransfer.DragDrop.DragDropModifiers;
+using DataPackageOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation;
 using WinUIElement = Microsoft.UI.Xaml.UIElement;
 using WinUIDragEventArgs = Microsoft.UI.Xaml.DragEventArgs;
 #endif
@@ -157,61 +159,50 @@ public partial class DropTarget : ContentView {
         _platformView = null;
     }
 
-    private void PlatformView_DragEnter(
-        object sender,
-        WinUIDragEventArgs e) {
-
+    private void PlatformView_DragEnter(object sender, WinUIDragEventArgs e) {
         if (!CanAcceptDrop(e)) return;
 
-        e.AcceptedOperation =
-            Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
-
+        e.AcceptedOperation = GetAcceptedOperation(e);
         ShowDragOver();
     }
 
-    private void PlatformView_DragOver(
-        object sender,
-        WinUIDragEventArgs e) {
-
+    private void PlatformView_DragOver(object sender, WinUIDragEventArgs e) {
         if (!CanAcceptDrop(e)) {
-            e.AcceptedOperation =
-                Windows.ApplicationModel.DataTransfer.DataPackageOperation.None;
-
+            e.AcceptedOperation = DataPackageOperation.None;
             return;
         }
 
-        e.AcceptedOperation =
-            Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
-
+        e.AcceptedOperation = GetAcceptedOperation(e);
         ShowDragOver();
     }
 
-    private void PlatformView_DragLeave(
-        object sender,
-        WinUIDragEventArgs e) {
-
+    private void PlatformView_DragLeave(object sender, WinUIDragEventArgs e) {
         UpdateDropAvailability();
     }
 
-    private void PlatformView_Drop(
-        object sender,
-        WinUIDragEventArgs e) {
-
+    private void PlatformView_Drop(object sender, WinUIDragEventArgs e) {
         var dragData = DragDropCoordinator.DragData;
 
         ShowNormal();
 
         if (!IsDroppable || dragData == null) return;
 
-        Dropped?.Invoke(
-            this,
-            new DropTargetDroppedEventArgs(dragData));
+        Dropped?.Invoke(this,
+            new DropTargetDroppedEventArgs(dragData, GetDragDropOperation(e)));
     }
 
-    private bool CanAcceptDrop(WinUIDragEventArgs e) {
-        return IsDroppable &&
-               DragDropCoordinator.DragData != null;
-    }
+    private bool CanAcceptDrop(WinUIDragEventArgs e) =>
+        IsDroppable && DragDropCoordinator.DragData != null;
+
+    private static DataPackageOperation GetAcceptedOperation(WinUIDragEventArgs e) =>
+        GetDragDropOperation(e) == DragDropOperation.Copy
+            ? DataPackageOperation.Copy
+            : DataPackageOperation.Move;
+
+    private static DragDropOperation GetDragDropOperation(WinUIDragEventArgs e) =>
+        e.Modifiers.HasFlag(DragDropModifiers.Control)
+            ? DragDropOperation.Copy
+            : DragDropOperation.Move;
 
     #endregion Windows Drop
 
@@ -263,9 +254,7 @@ public partial class DropTarget : ContentView {
 
         if (!IsDroppable || dragData == null) return;
 
-        Dropped?.Invoke(
-            this,
-            new DropTargetDroppedEventArgs(dragData));
+        Dropped?.Invoke(this, new DropTargetDroppedEventArgs(dragData, DragDropOperation.Move));
     }
 
     #endregion MAUI Drop

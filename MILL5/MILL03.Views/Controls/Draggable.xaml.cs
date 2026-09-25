@@ -221,8 +221,12 @@ public partial class Draggable : ContentView {
         DragDropCoordinator.Begin(DragData);
         ApplyStyle(DraggingStyle);
 
-        e.Data.RequestedOperation =
+        e.AllowedOperations =
+            Windows.ApplicationModel.DataTransfer.DataPackageOperation.Move |
             Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+
+        e.Data.RequestedOperation =
+            Windows.ApplicationModel.DataTransfer.DataPackageOperation.Move;
 
         e.Data.SetText(DragData.ToString() ?? string.Empty);
     }

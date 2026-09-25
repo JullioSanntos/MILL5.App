@@ -556,41 +556,29 @@ public partial class RegionCell : ContentView {
 
     #region Drop
 
-    private void RegionDropTarget_Dropped(
-        object? sender,
-        DropTargetDroppedEventArgs e) {
-
+    private void RegionDropTarget_Dropped(object? sender, DropTargetDroppedEventArgs e) {
         if (RegionNode == null) return;
 
         switch (e.DragData) {
             case RegionNode sourceNode:
-                TryAssignRegionNode(
-                    sourceNode,
-                    RegionNode);
+                TryAssignRegionNode(sourceNode, RegionNode,
+                    e.Operation == DragDropOperation.Copy);
                 break;
 
             case MenuItemViewModel menuItem:
-                TryAssignMenuItem(
-                    menuItem,
-                    RegionNode);
+                TryAssignMenuItem(menuItem, RegionNode);
                 break;
         }
     }
 
     private static bool TryAssignRegionNode(
-        RegionNode sourceNode,
-        RegionNode targetNode) {
+        RegionNode sourceNode, RegionNode targetNode, bool retainSource) {
 
-        var viewModel =
-            sourceNode.PayloadViewModel;
-
-        if (viewModel == null)
-            return false;
+        var viewModel = sourceNode.PayloadViewModel;
+        if (viewModel == null) return false;
 
         return RegionNodesTree.Instance.AssignRegion(
-            sourceNode,
-            viewModel,
-            targetNode);
+            sourceNode, viewModel, targetNode, retainSource);
     }
 
     private static bool TryAssignMenuItem(

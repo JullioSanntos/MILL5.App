@@ -10,10 +10,21 @@ public partial class MenuViewModel {
 
     #region Selection
 
-    [ObservableProperty]
     private MenuItemViewModel? _selectedMenuNode;
 
-    partial void OnSelectedMenuNodeChanged(MenuItemViewModel? value) {
+    public MenuItemViewModel? SelectedMenuNode {
+        get => _selectedMenuNode;
+        set {
+            OnPropertyChanging(nameof(SelectedMenuNode));
+
+            _selectedMenuNode = value;
+
+            OnPropertyChanged(nameof(SelectedMenuNode));
+            OnSelectedMenuNodeChanged(value);
+        }
+    }
+
+    private void OnSelectedMenuNodeChanged(MenuItemViewModel? value) {
         var targetViewModel = value?.TargetViewModel;
         if (targetViewModel == null) return;
 
@@ -22,6 +33,16 @@ public partial class MenuViewModel {
 
         Regions.AssignNode(targetViewModel, targetNode);
     }
+
+    //partial void OnSelectedMenuNodeChanged(MenuItemViewModel? value) {
+    //    var targetViewModel = value?.TargetViewModel;
+    //    if (targetViewModel == null) return;
+
+    //    var targetNode = Regions.GetPreferredTargetNode(this);
+    //    if (targetNode == null) return;
+
+    //    Regions.AssignNode(targetViewModel, targetNode);
+    //}
 
     #endregion Selection
 

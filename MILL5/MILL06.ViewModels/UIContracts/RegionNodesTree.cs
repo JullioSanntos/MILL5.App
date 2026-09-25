@@ -233,8 +233,8 @@ public partial class RegionNodesTree : ObservableObject {
     /// Specialized sources such as MenuViewModel remain unchanged because
     /// they transport another ViewModel rather than themselves.
     /// </summary>
-    public bool AssignRegion(RegionNode sourceNode,
-        BaseViewModel incomingViewModel, RegionNode targetNode) {
+    public bool AssignRegion(RegionNode sourceNode, BaseViewModel incomingViewModel
+        , RegionNode targetNode, bool retainSource = false) {
 
         ArgumentNullException.ThrowIfNull(sourceNode);
         ArgumentNullException.ThrowIfNull(incomingViewModel);
@@ -251,7 +251,7 @@ public partial class RegionNodesTree : ObservableObject {
         var draggedRegionViewModel = incomingViewModel as RegionBaseViewModel;
 
         // Capture this before changing either node.
-        var isMove = ReferenceEquals(sourceNode.PayloadViewModel, incomingViewModel);
+        var isMove = !retainSource && ReferenceEquals(sourceNode.PayloadViewModel, incomingViewModel);
 
         // Target gets first refusal unless it is also the dragged ViewModel.
         // In that unusual case it is deferred so the dragged participant
