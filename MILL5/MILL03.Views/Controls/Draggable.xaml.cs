@@ -11,16 +11,24 @@ using WinUIPointerEventArgs = Microsoft.UI.Xaml.Input.PointerRoutedEventArgs;
 namespace MILL03.Views.Controls;
 
 public partial class Draggable : ContentView {
+
+    #region Styles
+
     private const string NormalStyle = "DraggableSurfaceStyle";
-    private const string PointerOverStyle = "DraggableSurfacePointerOverStyle";
     private const string DraggingStyle = "DraggableSurfaceDraggingStyle";
+    private const string DefaultDragIndicatorStyle = "DragIndicatorStyle";
+
+    #endregion Styles
+
+    #region State
 
     private bool _isDragging;
-    private bool _isPointerOver;
 
 #if WINDOWS
     private WinUIElement? _platformView;
 #endif
+
+    #endregion State
 
     #region DragData
 
@@ -53,6 +61,40 @@ public partial class Draggable : ContentView {
 
     #endregion IsDraggable
 
+    #region DragIndicatorStyle
+
+    /// <summary>
+    /// Optional host-specific presentation for the drag indicator.
+    /// When null, the application DragIndicatorStyle resource is used.
+    /// </summary>
+    public static readonly BindableProperty DragIndicatorStyleProperty = BindableProperty.Create(
+        nameof(DragIndicatorStyle), typeof(Style), typeof(Draggable), null,
+        propertyChanged: OnDragIndicatorStyleChanged);
+
+    public Style? DragIndicatorStyle {
+        get => (Style?)GetValue(DragIndicatorStyleProperty);
+        set => SetValue(DragIndicatorStyleProperty, value);
+    }
+
+    private static void OnDragIndicatorStyleChanged(
+        BindableObject bindable, object oldValue, object newValue) {
+
+        ((Draggable)bindable).ApplyDragIndicatorStyle();
+    }
+
+    private void ApplyDragIndicatorStyle() {
+        if (DragIndicatorStyle != null) {
+            DragIndicator.Style = DragIndicatorStyle;
+            return;
+        }
+
+        DragIndicator.SetDynamicResource(
+            NavigableElement.StyleProperty,
+            DefaultDragIndicatorStyle);
+    }
+
+    #endregion DragIndicatorStyle
+
     #region InnerContent
 
     public static readonly BindableProperty InnerContentProperty = BindableProperty.Create(
@@ -77,8 +119,10 @@ public partial class Draggable : ContentView {
     public Draggable() {
         InitializeComponent();
 
+        ApplyDragIndicatorStyle();
+
 #if WINDOWS
-        Surface.HandlerChanged += Surface_HandlerChanged;
+        DragIndicator.HandlerChanged += DragIndicator_HandlerChanged;
 #else
         WirePointerGesture();
         WireDragGesture();
@@ -89,21 +133,19 @@ public partial class Draggable : ContentView {
 
     #endregion Constructors
 
-    #region State
+    #region State Management
 
     private void UpdateDraggableState() {
         DragIndicator.IsVisible = IsDraggable;
 
 #if WINDOWS
-        if (_platformView != null) {
+        if (_platformView != null)
             _platformView.CanDrag = IsDraggable;
-        }
 #endif
 
         if (IsDraggable) return;
 
         _isDragging = false;
-        _isPointerOver = false;
 
         ApplyStyle(NormalStyle);
         DragDropCoordinator.End();
@@ -117,23 +159,19 @@ public partial class Draggable : ContentView {
         _isDragging = false;
 
         DragDropCoordinator.End();
-
-        ApplyStyle(
-            IsDraggable && _isPointerOver
-                ? PointerOverStyle
-                : NormalStyle);
+        ApplyStyle(NormalStyle);
     }
 
-    #endregion State
+    #endregion State Management
 
 #if WINDOWS
 
     #region Windows Interaction
 
-    private void Surface_HandlerChanged(object? sender, EventArgs e) {
+    private void DragIndicator_HandlerChanged(object? sender, EventArgs e) {
         UnwirePlatformView();
 
-        _platformView = Surface.Handler?.PlatformView as WinUIElement;
+        _platformView = DragIndicator.Handler?.PlatformView as WinUIElement;
         if (_platformView == null) return;
 
         _platformView.CanDrag = IsDraggable;
@@ -161,21 +199,11 @@ public partial class Draggable : ContentView {
 
         if (!IsDraggable) return;
 
-        _isPointerOver = true;
-
-        if (!_isDragging) ApplyStyle(PointerOverStyle);
-
         SetCursor(InputSystemCursorShape.Hand);
     }
 
     private void PlatformView_PointerExited(
         object sender, WinUIPointerEventArgs e) {
-
-        if (!IsDraggable) return;
-
-        _isPointerOver = false;
-
-        if (!_isDragging) ApplyStyle(NormalStyle);
 
         SetCursor(InputSystemCursorShape.Arrow);
     }
@@ -206,9 +234,8 @@ public partial class Draggable : ContentView {
     }
 
     private void SetCursor(InputSystemCursorShape cursor) {
-        if (_platformView != null) {
+        if (_platformView != null)
             WinUICursorExtensions.ForceSetCursor(_platformView, cursor);
-        }
     }
 
     #endregion Windows Interaction
@@ -223,29 +250,15 @@ public partial class Draggable : ContentView {
         pointerGesture.PointerEntered += OnPointerEntered;
         pointerGesture.PointerExited += OnPointerExited;
 
-        Surface.GestureRecognizers.Add(pointerGesture);
+        DragIndicator.GestureRecognizers.Add(pointerGesture);
     }
 
     private void OnPointerEntered(
-        object? sender,
-        Microsoft.Maui.Controls.PointerEventArgs e) {
-
-        if (!IsDraggable) return;
-
-        _isPointerOver = true;
-
-        if (!_isDragging) ApplyStyle(PointerOverStyle);
+        object? sender, Microsoft.Maui.Controls.PointerEventArgs e) {
     }
 
     private void OnPointerExited(
-        object? sender,
-        Microsoft.Maui.Controls.PointerEventArgs e) {
-
-        if (!IsDraggable) return;
-
-        _isPointerOver = false;
-
-        if (!_isDragging) ApplyStyle(NormalStyle);
+        object? sender, Microsoft.Maui.Controls.PointerEventArgs e) {
     }
 
     private void WireDragGesture() {
@@ -254,13 +267,10 @@ public partial class Draggable : ContentView {
         dragGesture.DragStarting += OnDragStarting;
         dragGesture.DropCompleted += OnDropCompleted;
 
-        Surface.GestureRecognizers.Add(dragGesture);
+        DragIndicator.GestureRecognizers.Add(dragGesture);
     }
 
-    private void OnDragStarting(
-        object? sender,
-        DragStartingEventArgs e) {
-
+    private void OnDragStarting(object? sender, DragStartingEventArgs e) {
         if (!IsDraggable || DragData == null) {
             e.Cancel = true;
             return;
@@ -274,10 +284,7 @@ public partial class Draggable : ContentView {
         e.Data.Properties[DragDropData.DataKey] = DragData;
     }
 
-    private void OnDropCompleted(
-        object? sender,
-        DropCompletedEventArgs e) {
-
+    private void OnDropCompleted(object? sender, DropCompletedEventArgs e) {
         EndDrag();
     }
 

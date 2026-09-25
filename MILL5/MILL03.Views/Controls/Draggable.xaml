@@ -5,13 +5,15 @@
              x:Class="MILL03.Views.Controls.Draggable">
 
     <Border x:Name="Surface" Style="{DynamicResource DraggableSurfaceStyle}">
-        <Grid ColumnDefinitions="Auto,*">
+        <Grid>
 
-            <Label x:Name="DragIndicator" Grid.Column="0" Text="⠿"
-                   Style="{DynamicResource DragIndicatorStyle}" InputTransparent="True" />
+            <ContentView x:Name="InnerContentHost"
+                         VerticalOptions="Fill"
+                         HorizontalOptions="Fill" />
 
-            <ContentView x:Name="InnerContentHost" Grid.Column="1"
-                         VerticalOptions="Fill" HorizontalOptions="Fill" />
+            <Label x:Name="DragIndicator"
+                   Style="{DynamicResource DragIndicatorStyle}" />
+
         </Grid>
     </Border>
 
