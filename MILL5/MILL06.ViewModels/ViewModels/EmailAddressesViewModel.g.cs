@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class EmailAddressesViewModel : BaseViewModel
+    public partial class EmailAddressesViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<EmailAddress> EmailAddresses => MainViewModel.Instance.MainModel.EmailAddresses;

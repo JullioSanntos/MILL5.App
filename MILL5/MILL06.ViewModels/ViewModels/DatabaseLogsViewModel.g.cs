@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class DatabaseLogsViewModel : BaseViewModel
+    public partial class DatabaseLogsViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<DatabaseLog> DatabaseLogs => MainViewModel.Instance.MainModel.DatabaseLogs;

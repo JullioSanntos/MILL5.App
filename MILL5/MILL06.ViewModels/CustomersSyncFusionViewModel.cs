@@ -5,7 +5,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels {
     [Register]
-    public partial class CustomersSyncFusionViewModel : BaseViewModel {
+    public partial class CustomersSyncFusionViewModel : RegionBaseViewModel {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<Customer> Customers => MainViewModel.Instance.MainModel.Customers;
 

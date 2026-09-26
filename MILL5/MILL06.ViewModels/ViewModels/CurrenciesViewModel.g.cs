@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class CurrenciesViewModel : BaseViewModel
+    public partial class CurrenciesViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<Currency> Currencies => MainViewModel.Instance.MainModel.Currencies;

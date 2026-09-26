@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class CreditCardsViewModel : BaseViewModel
+    public partial class CreditCardsViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<CreditCard> CreditCards => MainViewModel.Instance.MainModel.CreditCards;

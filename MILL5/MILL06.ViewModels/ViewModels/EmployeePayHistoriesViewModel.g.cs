@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class EmployeePayHistoriesViewModel : BaseViewModel
+    public partial class EmployeePayHistoriesViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<EmployeePayHistory> EmployeePayHistories => MainViewModel.Instance.MainModel.EmployeePayHistories;

@@ -31,6 +31,7 @@
 
         <syncfusion:SfDataGrid Grid.Row="1" GridLinesVisibility="Both" HeaderGridLinesVisibility="Both"
                 AutoGeneratingColumn="SfDataGrid_OnAutoGeneratingColumn" ColumnWidthMode="Fill" RowHeight="30"
+                SortingMode="Multiple" AllowTriStateSorting="True" AllowGroupExpandCollapse="True" FilterRowPosition="FixedTop" AllowEditing="True"
                 ItemsSource="{Binding Addresses, Source={x:Static models:MainModel.Instance}}" />
     </Grid>
 </ContentView>

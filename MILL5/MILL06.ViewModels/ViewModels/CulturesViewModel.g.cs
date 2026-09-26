@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class CulturesViewModel : BaseViewModel
+    public partial class CulturesViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<Culture> Cultures => MainViewModel.Instance.MainModel.Cultures;

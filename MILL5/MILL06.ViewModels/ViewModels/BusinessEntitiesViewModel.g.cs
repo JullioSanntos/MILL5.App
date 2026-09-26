@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class BusinessEntitiesViewModel : BaseViewModel
+    public partial class BusinessEntitiesViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<BusinessEntity> BusinessEntities => MainViewModel.Instance.MainModel.BusinessEntities;

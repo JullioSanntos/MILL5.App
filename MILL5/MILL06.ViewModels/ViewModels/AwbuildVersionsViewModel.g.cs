@@ -13,7 +13,7 @@ using MILL80.Infrastructure;
 
 namespace MILL06.ViewModels
 {
-    public partial class AwbuildVersionsViewModel : BaseViewModel
+    public partial class AwbuildVersionsViewModel : RegionBaseViewModel
     {
         // 1. Bridge the View to the MainModel's collection
         public ObservableCollection<AwbuildVersion> AwbuildVersions => MainViewModel.Instance.MainModel.AwbuildVersions;
