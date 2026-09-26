@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 
 #if WINDOWS
+using DataPackageOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation;
 using InputSystemCursorShape = Microsoft.UI.Input.InputSystemCursorShape;
 using WinUIElement = Microsoft.UI.Xaml.UIElement;
 using WinUIDragStartingEventArgs = Microsoft.UI.Xaml.DragStartingEventArgs;
@@ -155,10 +156,10 @@ public partial class Draggable : ContentView {
 #endif
     }
 
-    private void EndDrag() {
+    private void EndDrag(bool droppedOutside = false) {
         _isDragging = false;
 
-        DragDropCoordinator.End();
+        DragDropCoordinator.End(droppedOutside);
         ApplyStyle(NormalStyle);
     }
 
@@ -222,11 +223,11 @@ public partial class Draggable : ContentView {
         ApplyStyle(DraggingStyle);
 
         e.AllowedOperations =
-            Windows.ApplicationModel.DataTransfer.DataPackageOperation.Move |
-            Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            DataPackageOperation.Move |
+            DataPackageOperation.Copy;
 
         e.Data.RequestedOperation =
-            Windows.ApplicationModel.DataTransfer.DataPackageOperation.Move;
+            DataPackageOperation.Move;
 
         e.Data.SetText(DragData.ToString() ?? string.Empty);
     }
@@ -234,7 +235,7 @@ public partial class Draggable : ContentView {
     private void PlatformView_DropCompleted(
         WinUIElement sender, WinUIDropCompletedEventArgs e) {
 
-        EndDrag();
+        EndDrag(e.DropResult == DataPackageOperation.None);
     }
 
     private void SetCursor(InputSystemCursorShape cursor) {

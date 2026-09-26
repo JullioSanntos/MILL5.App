@@ -3,13 +3,34 @@ using MILL06.ViewModels;
 
 namespace MILL03.Views;
 
-public partial class MainView : ContentPage
-{
-	public MainView()
-	{
-		InitializeComponent();
-		BindingContext = MainViewModel.Instance;
-	}
+public partial class MainView : ContentPage {
+
+    #region Constructors
+
+    public MainView() {
+        InitializeComponent();
+
+        BindingContext = MainViewModel.Instance;
+
+        Loaded += MainView_Loaded;
+        Unloaded += MainView_Unloaded;
+    }
+
+    #endregion Constructors
+
+    #region Lifecycle
+
+    private void MainView_Loaded(object? sender, EventArgs e) {
+        DragDropCoordinator.DroppedOutside += DragDropCoordinator_DroppedOutside;
+    }
+
+    private void MainView_Unloaded(object? sender, EventArgs e) {
+        DragDropCoordinator.DroppedOutside -= DragDropCoordinator_DroppedOutside;
+    }
+
+    #endregion Lifecycle
+
+    #region Drag Drop
 
     private void DropTarget_Dropped(
         object? sender,
@@ -20,4 +41,33 @@ public partial class MainView : ContentPage
                 $"Dropped: {menuNode.Title}");
         }
     }
+
+    private void DragDropCoordinator_DroppedOutside(
+        object? sender, EventArgs e) {
+
+        Dispatcher.Dispatch(OpenFloatingWindow);
+    }
+
+    #endregion Drag Drop
+
+    #region Windows
+
+    private static void OpenFloatingWindow() {
+        var page = new ContentPage {
+            Title = "Floating Window",
+            Content = new Grid {
+                Children = {
+                    new Label {
+                        Text = "New Window",
+                        HorizontalOptions = LayoutOptions.Center,
+                        VerticalOptions = LayoutOptions.Center
+                    }
+                }
+            }
+        };
+
+        Application.Current?.OpenWindow(new Window(page));
+    }
+
+    #endregion Windows
 }
