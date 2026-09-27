@@ -21,40 +21,63 @@ public partial class RegionCell : ContentView {
         set => SetValue(RegionNodeProperty, value);
     }
 
-    private static void OnRegionNodeChanged(BindableObject bindable, object oldValue, object newValue) {
-        if (bindable is not RegionCell cell) return;
+    private static void OnRegionNodeChanged(
+        BindableObject bindable,
+        object oldValue,
+        object newValue) {
+
+        if (bindable is not RegionCell cell)
+            return;
 
         if (oldValue is RegionNode oldNode)
-            oldNode.PropertyChanged -= cell.OnNodePropertyChanged;
+            oldNode.PropertyChanged -=
+                cell.OnNodePropertyChanged;
 
         if (newValue is RegionNode newNode) {
-            newNode.PropertyChanged += cell.OnNodePropertyChanged;
-            cell.SyncWithNode(newNode);
+            newNode.PropertyChanged +=
+                cell.OnNodePropertyChanged;
+
+            cell.SyncWithNode(
+                newNode);
         }
     }
 
-    private void OnNodePropertyChanged(object? sender, PropertyChangedEventArgs e) {
+    private void OnNodePropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e) {
+
         if (sender is RegionNode node &&
-            e.PropertyName == nameof(RegionNode.PayloadViewModel)) {
+            e.PropertyName ==
+            nameof(RegionNode.PayloadViewModel)) {
 
             MainThread.BeginInvokeOnMainThread(
                 () => SyncWithNode(node));
         }
     }
 
-    private void SyncWithNode(RegionNode node) {
-        if (PayloadContainer == null) return;
+    private void SyncWithNode(
+        RegionNode node) {
+
+        if (PayloadContainer == null)
+            return;
 
         if (node.PayloadViewModel == null) {
-            InjectPayload(CreateEmptyPayload());
+            InjectPayload(
+                CreateEmptyPayload());
+
             return;
         }
 
-        var view = ViewLocator.Instance.Resolve(node.PayloadViewModel);
-        if (view == null) return;
+        var view =
+            ViewLocator.Instance.Resolve(
+                node.PayloadViewModel);
+
+        if (view == null)
+            return;
 
         if (view.BackgroundColor == null)
-            view.BackgroundColor = Colors.White;
+            view.BackgroundColor =
+                Colors.White;
 
         InjectPayload(view);
     }
@@ -65,14 +88,18 @@ public partial class RegionCell : ContentView {
 
     public RegionCell() {
         InitializeComponent();
-        SplitPerimeter.SplitRequested += SplitPerimeter_SplitRequested;
+
+        SplitPerimeter.SplitRequested +=
+            SplitPerimeter_SplitRequested;
     }
 
     private void SplitPerimeter_SplitRequested(
         object? sender,
         SplitRequestedEventArgs e) {
 
-        PerformSplit(e.Direction, e.Position);
+        PerformSplit(
+            e.Direction,
+            e.Position);
     }
 
     #endregion Constructors
@@ -82,40 +109,129 @@ public partial class RegionCell : ContentView {
     protected override void OnHandlerChanged() {
         base.OnHandlerChanged();
 
-        // A binding may have assigned RegionNode before InitializeComponent completed.
-        if (Handler != null && RegionNode != null)
-            SyncWithNode(RegionNode);
+        if (Handler != null &&
+            RegionNode != null) {
+
+            SyncWithNode(
+                RegionNode);
+        }
     }
 
     #endregion Lifecycle
 
+    #region Visual Placement
+
+    private readonly record struct GridPlacement(
+        int Row,
+        int Column,
+        int RowSpan,
+        int ColumnSpan);
+
+    private static GridPlacement CapturePlacement(
+        View view) {
+
+        return new GridPlacement(
+            Grid.GetRow(view),
+            Grid.GetColumn(view),
+            Grid.GetRowSpan(view),
+            Grid.GetColumnSpan(view));
+    }
+
+    private static void ApplyPlacement(
+        View view,
+        GridPlacement placement) {
+
+        Grid.SetRow(
+            view,
+            placement.Row);
+
+        Grid.SetColumn(
+            view,
+            placement.Column);
+
+        Grid.SetRowSpan(
+            view,
+            placement.RowSpan);
+
+        Grid.SetColumnSpan(
+            view,
+            placement.ColumnSpan);
+    }
+
+    #endregion Visual Placement
+
     #region Split
 
-    private readonly record struct SplitNodes(
-        RegionNode? First,
-        RegionNode? Second);
+    private void PerformSplit(
+        SplitDirection direction,
+        Point position) {
 
-    private void PerformSplit(SplitDirection direction, Point position) {
-        if (RegionNode != null &&
-            !RegionNode.RaiseNodeChanging(
-                RegionNode.Id,
+        var node =
+            RegionNode;
+
+        if (node == null ||
+            Parent is not Grid parentGrid) {
+
+            return;
+        }
+
+        if (!node.RaiseNodeChanging(
+                node.Id,
                 NodeAction.Splitting)) {
 
             return;
         }
 
-        var firstWeight = GetSplitWeight(direction, position);
-        var payload = ExtractPayload();
-        var nodes = SplitNode(direction, firstWeight);
-        var splitGrid = CreateSplitGrid(
-            direction,
-            firstWeight,
-            nodes,
-            payload);
+        var placement =
+            CapturePlacement(this);
 
-        ReplaceWithSplitGrid(splitGrid);
+        var firstWeight =
+            GetSplitWeight(
+                direction,
+                position);
 
-        if (nodes.Second != null) { RegionNodesTree.Instance.ActiveRegionNode = nodes.Second; }
+        var orientation =
+            direction.IsVerticalSplit()
+                ? SplitOrientation.Vertical
+                : SplitOrientation.Horizontal;
+
+        var split =
+            RegionNodesTree.Instance.SplitNode(
+                node,
+                orientation,
+                firstWeight);
+
+        var branchCell =
+            new RegionCell {
+                RegionNode =
+                    split.BranchNode
+            };
+
+        var emptyCell =
+            new RegionCell {
+                RegionNode =
+                    split.EmptyNode
+            };
+
+        parentGrid.Children.Remove(
+            this);
+
+        var splitGrid =
+            CreateSplitGrid(
+                direction,
+                firstWeight,
+                this,
+                emptyCell);
+
+        branchCell.ReplaceWithSplitGrid(
+            splitGrid);
+
+        ApplyPlacement(
+            branchCell,
+            placement);
+
+        parentGrid.Children.Add(
+            branchCell);
 
         RegionNodesTree.Instance.NotifyTreeChanged();
     }
@@ -129,54 +245,18 @@ public partial class RegionCell : ContentView {
             : position.Y / RootGrid.Height;
     }
 
-    private View ExtractPayload() {
-        var payload =
-            PayloadContainer.Content ?? CreateEmptyPayload();
-
-        PayloadContainer.Content = null;
-
-        return payload;
-    }
-
-    private SplitNodes SplitNode(
-        SplitDirection direction,
-        double firstWeight) {
-
-        if (RegionNode == null) return default;
-
-        var first = new RegionNode {
-            PayloadViewModel = RegionNode.PayloadViewModel
-        };
-
-        var second = new RegionNode();
-
-        RegionNode.PayloadViewModel = null;
-        RegionNode.FirstChildWeight = firstWeight;
-        RegionNode.SecondChildWeight = 1.0 - firstWeight;
-        RegionNode.FirstChild = first;
-        RegionNode.SecondChild = second;
-
-        RegionNode.Orientation = direction.IsVerticalSplit()
-            ? SplitOrientation.Vertical
-            : SplitOrientation.Horizontal;
-
-        return new SplitNodes(first, second);
-    }
-
-    private Grid CreateSplitGrid(
+    private static Grid CreateSplitGrid(
         SplitDirection direction,
         double firstWeight,
-        SplitNodes nodes,
-        View payload) {
+        RegionCell firstCell,
+        RegionCell secondCell) {
 
-        var firstCell =
-            CreateCell(nodes.First, payload);
+        var splitter =
+            CreateSplitter(
+                direction);
 
-        var secondCell =
-            CreateCell(nodes.Second, CreateEmptyPayload());
-
-        var splitter = CreateSplitter(direction);
-        var grid = new Grid();
+        var grid =
+            new Grid();
 
         ConfigureSplitGrid(
             grid,
@@ -186,31 +266,23 @@ public partial class RegionCell : ContentView {
             splitter,
             secondCell);
 
-        grid.Children.Add(firstCell);
-        grid.Children.Add(splitter);
-        grid.Children.Add(secondCell);
+        grid.Children.Add(
+            firstCell);
+
+        grid.Children.Add(
+            splitter);
+
+        grid.Children.Add(
+            secondCell);
 
         return grid;
-    }
-
-    private static RegionCell CreateCell(
-        RegionNode? node,
-        View payload) {
-
-        var cell = new RegionCell();
-
-        if (node != null)
-            cell.RegionNode = node;
-
-        cell.InjectPayload(payload);
-
-        return cell;
     }
 
     private static GridSplitter CreateSplitter(
         SplitDirection direction) {
 
-        bool isVertical = direction.IsVerticalSplit();
+        var isVertical =
+            direction.IsVerticalSplit();
 
         return new GridSplitter {
             Orientation = isVertical
@@ -236,19 +308,40 @@ public partial class RegionCell : ContentView {
         RegionCell secondCell) {
 
         if (direction.IsVerticalSplit()) {
-            ConfigureColumns(grid, firstWeight);
+            ConfigureColumns(
+                grid,
+                firstWeight);
 
-            Grid.SetColumn(firstCell, 0);
-            Grid.SetColumn(splitter, 1);
-            Grid.SetColumn(secondCell, 2);
-        }
-        else {
-            ConfigureRows(grid, firstWeight);
+            Grid.SetColumn(
+                firstCell,
+                0);
 
-            Grid.SetRow(firstCell, 0);
-            Grid.SetRow(splitter, 1);
-            Grid.SetRow(secondCell, 2);
+            Grid.SetColumn(
+                splitter,
+                1);
+
+            Grid.SetColumn(
+                secondCell,
+                2);
+
+            return;
         }
+
+        ConfigureRows(
+            grid,
+            firstWeight);
+
+        Grid.SetRow(
+            firstCell,
+            0);
+
+        Grid.SetRow(
+            splitter,
+            1);
+
+        Grid.SetRow(
+            secondCell,
+            2);
     }
 
     private static void ConfigureColumns(
@@ -262,7 +355,8 @@ public partial class RegionCell : ContentView {
                     GridUnitType.Star)));
 
         grid.ColumnDefinitions.Add(
-            new ColumnDefinition(GridLength.Auto));
+            new ColumnDefinition(
+                GridLength.Auto));
 
         grid.ColumnDefinitions.Add(
             new ColumnDefinition(
@@ -282,7 +376,8 @@ public partial class RegionCell : ContentView {
                     GridUnitType.Star)));
 
         grid.RowDefinitions.Add(
-            new RowDefinition(GridLength.Auto));
+            new RowDefinition(
+                GridLength.Auto));
 
         grid.RowDefinitions.Add(
             new RowDefinition(
@@ -291,11 +386,15 @@ public partial class RegionCell : ContentView {
                     GridUnitType.Star)));
     }
 
-    private void ReplaceWithSplitGrid(Grid splitGrid) {
+    private void ReplaceWithSplitGrid(
+        Grid splitGrid) {
+
         RootGrid.Children.Clear();
         RootGrid.RowDefinitions.Clear();
         RootGrid.ColumnDefinitions.Clear();
-        RootGrid.Children.Add(splitGrid);
+
+        RootGrid.Children.Add(
+            splitGrid);
     }
 
     #endregion Split
@@ -304,32 +403,49 @@ public partial class RegionCell : ContentView {
 
     private readonly record struct CloseContext(
         Grid SplitGrid,
+        Grid ParentGrid,
+        GridPlacement OwnerPlacement,
         RegionCell OwnerCell,
         RegionCell Sibling,
-        RegionNode ClosedNode,
-        RegionNode SurvivingNode,
-        RegionNode ParentNode);
+        RegionNode ClosedNode);
 
     private void OnCloseButtonTapped(
         object sender,
         TappedEventArgs e) {
 
-        if (!TryGetCloseContext(out var context))
-            return;
-
-        if (!context.ClosedNode.RaiseNodeChanging(
-            context.ClosedNode.Id,
-            NodeAction.Closing)) {
+        if (!TryGetCloseContext(
+                out var context)) {
 
             return;
         }
 
-        PromoteNode(
-            context.SurvivingNode,
-            context.ParentNode);
+        if (!context.ClosedNode.RaiseNodeChanging(
+                context.ClosedNode.Id,
+                NodeAction.Closing)) {
 
-        CollapseVisualTree(context);
-        RepairActiveRegion(context);
+            return;
+        }
+
+        var survivingNode =
+            RegionNodesTree.Instance.CloseNode(
+                context.ClosedNode);
+
+        if (survivingNode == null)
+            return;
+
+        if (!ReferenceEquals(
+                survivingNode,
+                context.Sibling.RegionNode)) {
+
+            throw new InvalidOperationException(
+                "The surviving RegionNode does not match the surviving RegionCell.");
+        }
+
+        PromoteSurvivingCell(
+            context);
+
+        RegionNode = null;
+        context.OwnerCell.RegionNode = null;
 
         RegionNodesTree.Instance.NotifyTreeChanged();
     }
@@ -345,144 +461,51 @@ public partial class RegionCell : ContentView {
             return false;
         }
 
-        var sibling = splitGrid.Children
-            .OfType<RegionCell>()
-            .FirstOrDefault(cell => cell != this);
+        var sibling =
+            splitGrid.Children
+                .OfType<RegionCell>()
+                .FirstOrDefault(
+                    cell => cell != this);
 
         if (sibling?.RegionNode == null)
             return false;
 
         var ownerCell =
-            FindOwningRegionCell(splitGrid);
+            FindOwningRegionCell(
+                splitGrid);
 
-        if (ownerCell?.RegionNode == null)
+        if (ownerCell?.RegionNode == null ||
+            ownerCell.Parent is not Grid parentGrid) {
+
             return false;
+        }
 
         context = new CloseContext(
             splitGrid,
+            parentGrid,
+            CapturePlacement(ownerCell),
             ownerCell,
             sibling,
-            RegionNode,
-            sibling.RegionNode,
-            ownerCell.RegionNode);
+            RegionNode);
 
         return true;
     }
 
-    private static void PromoteNode(
-        RegionNode source,
-        RegionNode target) {
-
-        target.PayloadViewModel =
-            source.PayloadViewModel;
-
-        target.FirstChildWeight =
-            source.FirstChildWeight;
-
-        target.SecondChildWeight =
-            source.SecondChildWeight;
-
-        target.FirstChild =
-            source.FirstChild;
-
-        target.SecondChild =
-            source.SecondChild;
-
-        target.Orientation =
-            source.Orientation;
-    }
-
-    private void CollapseVisualTree(
+    private static void PromoteSurvivingCell(
         CloseContext context) {
 
-        if (context.SurvivingNode.IsSplit)
-            PromoteSplitVisual(context);
-        else
-            PromoteLeafVisual(context);
+        context.SplitGrid.Children.Remove(
+            context.Sibling);
 
-        // These RegionCells are no longer part of the visual/logical tree.
-        // Detach their RegionNode subscriptions as well.
-        context.Sibling.RegionNode = null;
-        RegionNode = null;
-    }
+        context.ParentGrid.Children.Remove(
+            context.OwnerCell);
 
-    private static void PromoteLeafVisual(
-        CloseContext context) {
+        ApplyPlacement(
+            context.Sibling,
+            context.OwnerPlacement);
 
-        var payload =
-            context.Sibling.ExtractPayload();
-
-        ClearRootGrid(context.OwnerCell);
-
-        context.OwnerCell.RootGrid.Children.Add(
-            context.OwnerCell.SplitPerimeter);
-
-        context.OwnerCell.InjectPayload(payload);
-    }
-
-    private static void PromoteSplitVisual(
-        CloseContext context) {
-
-        var survivingSplitGrid =
-            context.Sibling.RootGrid.Children
-                .OfType<Grid>()
-                .FirstOrDefault();
-
-        if (survivingSplitGrid == null) {
-            throw new InvalidOperationException(
-                "A split RegionNode must be represented by a split Grid.");
-        }
-
-        // Detach it from the surviving child before removing
-        // the old outer split hierarchy.
-        context.Sibling.RootGrid.Children.Remove(
-            survivingSplitGrid);
-
-        ClearRootGrid(context.OwnerCell);
-
-        context.OwnerCell.RootGrid.Children.Add(
-            survivingSplitGrid);
-    }
-
-    private static void ClearRootGrid(
-        RegionCell cell) {
-
-        cell.RootGrid.Children.Clear();
-        cell.RootGrid.ColumnDefinitions.Clear();
-        cell.RootGrid.RowDefinitions.Clear();
-    }
-
-    private static void RepairActiveRegion(
-        CloseContext context) {
-
-        var regions = RegionNodesTree.Instance;
-        var activeNode = regions.ActiveRegionNode;
-
-        if (ReferenceEquals(
-                activeNode,
-                context.ClosedNode) ||
-            ReferenceEquals(
-                activeNode,
-                context.SurvivingNode)) {
-
-            regions.ActiveRegionNode =
-                FindFirstLeaf(context.ParentNode);
-        }
-    }
-
-    private static RegionNode FindFirstLeaf(
-        RegionNode node) {
-
-        if (node.FirstChild == null &&
-            node.SecondChild == null) {
-
-            return node;
-        }
-
-        if (node.FirstChild != null)
-            return FindFirstLeaf(node.FirstChild);
-
-        return FindFirstLeaf(node.SecondChild!);
+        context.ParentGrid.Children.Add(
+            context.Sibling);
     }
 
     private static RegionCell? FindOwningRegionCell(
@@ -503,13 +526,17 @@ public partial class RegionCell : ContentView {
 
     #region Payload
 
-    public void InjectPayload(View payload) {
-        PayloadContainer.Content = payload;
+    public void InjectPayload(
+        View payload) {
+
+        PayloadContainer.Content =
+            payload;
     }
 
     private static ContentView CreateEmptyPayload() {
         return new ContentView {
-            BackgroundColor = GetNextColor()
+            BackgroundColor =
+                GetNextColor()
         };
     }
 
@@ -531,8 +558,11 @@ public partial class RegionCell : ContentView {
         Colors.Plum
     };
 
-    private static readonly Random _random = new();
-    private static int _lastColorIndex = -1;
+    private static readonly Random _random =
+        new();
+
+    private static int _lastColorIndex =
+        -1;
 
     public static Color GetNextColor() {
         int nextIndex;
@@ -543,42 +573,66 @@ public partial class RegionCell : ContentView {
         else {
             do {
                 nextIndex =
-                    _random.Next(RegionColors.Length);
+                    _random.Next(
+                        RegionColors.Length);
 
-            } while (nextIndex == _lastColorIndex);
+            } while (nextIndex ==
+                     _lastColorIndex);
         }
 
-        _lastColorIndex = nextIndex;
-        return RegionColors[nextIndex];
+        _lastColorIndex =
+            nextIndex;
+
+        return RegionColors[
+            nextIndex];
     }
 
     #endregion Colors
 
     #region Drop
 
-    private void RegionDropTarget_Dropped(object? sender, DropTargetDroppedEventArgs e) {
-        if (RegionNode == null) return;
+    private void RegionDropTarget_Dropped(
+        object? sender,
+        DropTargetDroppedEventArgs e) {
+
+        if (RegionNode == null)
+            return;
 
         switch (e.DragData) {
             case RegionNode sourceNode:
-                TryAssignRegionNode(sourceNode, RegionNode,
-                    e.Operation == DragDropOperation.Copy);
+                TryAssignRegionNode(
+                    sourceNode,
+                    RegionNode,
+                    e.Operation ==
+                    DragDropOperation.Copy);
+
                 break;
 
             case MenuItemViewModel menuItem:
-                TryAssignMenuItem(menuItem, RegionNode);
+                TryAssignMenuItem(
+                    menuItem,
+                    RegionNode);
+
                 break;
         }
     }
 
     private static bool TryAssignRegionNode(
-        RegionNode sourceNode, RegionNode targetNode, bool retainSource) {
+        RegionNode sourceNode,
+        RegionNode targetNode,
+        bool retainSource) {
 
-        var viewModel = sourceNode.PayloadViewModel;
-        if (viewModel == null) return false;
+        var viewModel =
+            sourceNode.PayloadViewModel;
+
+        if (viewModel == null)
+            return false;
 
         return RegionNodesTree.Instance.AssignRegion(
-            sourceNode, viewModel, targetNode, retainSource);
+            sourceNode,
+            viewModel,
+            targetNode,
+            retainSource);
     }
 
     private static bool TryAssignMenuItem(

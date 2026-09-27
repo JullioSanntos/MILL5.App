@@ -7,6 +7,7 @@ using MILL06.ViewModels;
 namespace MILL06.ViewModels.UIContracts;
 
 public partial class RegionNode : ObservableObject {
+
     #region Identity
 
     [ObservableProperty]
@@ -76,6 +77,10 @@ public partial class RegionNode : ObservableObject {
         OnPropertyChanged(nameof(IsOccupied));
     }
 
+    partial void OnParentChanged(RegionNode? value) {
+        OnPropertyChanged(nameof(CanBeClosed));
+    }
+
     public bool IsSplit =>
         Orientation.HasValue &&
         FirstChild != null &&
@@ -84,6 +89,7 @@ public partial class RegionNode : ObservableObject {
     #endregion Children
 
     #region Payload
+
     [ObservableProperty]
     private BaseViewModel? _payloadViewModel;
 
@@ -92,13 +98,15 @@ public partial class RegionNode : ObservableObject {
             oldValue.PropertyChanged -= PayloadViewModel_PropertyChanged;
 
         if (oldValue is RegionBaseViewModel oldRegionViewModel)
-            oldRegionViewModel.DragDropCapabilitiesChanged -= PayloadViewModel_DragDropCapabilitiesChanged;
+            oldRegionViewModel.DragDropCapabilitiesChanged -=
+                PayloadViewModel_DragDropCapabilitiesChanged;
 
         if (newValue != null)
             newValue.PropertyChanged += PayloadViewModel_PropertyChanged;
 
         if (newValue is RegionBaseViewModel newRegionViewModel)
-            newRegionViewModel.DragDropCapabilitiesChanged += PayloadViewModel_DragDropCapabilitiesChanged;
+            newRegionViewModel.DragDropCapabilitiesChanged +=
+                PayloadViewModel_DragDropCapabilitiesChanged;
 
         OnPropertyChanged(nameof(IsOccupied));
         OnPropertyChanged(nameof(CanBeClosed));
@@ -106,50 +114,37 @@ public partial class RegionNode : ObservableObject {
         ReevaluateOwnDragDropCapabilities();
     }
 
-    private void PayloadViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+    private void PayloadViewModel_PropertyChanged(
+        object? sender, PropertyChangedEventArgs e) {
+
         if (e.PropertyName == nameof(BaseViewModel.CanBeClosed))
             OnPropertyChanged(nameof(CanBeClosed));
     }
 
-    public bool IsOccupied => PayloadViewModel != null || IsSplit;
+    public bool IsOccupied =>
+        PayloadViewModel != null || IsSplit;
+
     #endregion Payload
 
     #region Drag Drop Capabilities
 
-    /// <summary>
-    /// Determines whether the payload presented by this Region may
-    /// currently participate as the source of a drag operation.
-    /// </summary>
     public bool CanBeDragged =>
         PayloadViewModel is RegionBaseViewModel viewModel &&
         viewModel.CanBeDragged;
 
-    /// <summary>
-    /// Determines whether the payload presented by this Region may
-    /// currently be replaced.
-    ///
-    /// Empty Regions and payloads that do not participate in Region
-    /// drag/drop behavior are replaceable by default.
-    /// </summary>
     public bool CanBeReplaced =>
         PayloadViewModel is not RegionBaseViewModel viewModel ||
         viewModel.CanBeReplaced;
 
-    public bool CanBeClosed => PayloadViewModel?.CanBeClosed ?? true;
+    public bool CanBeClosed =>
+        Parent != null &&
+        (PayloadViewModel?.CanBeClosed ?? true);
 
-    /// <summary>
-    /// Causes bindings to reevaluate the drag/drop capabilities of this
-    /// Region only.
-    /// </summary>
     public void ReevaluateOwnDragDropCapabilities() {
         OnPropertyChanged(nameof(CanBeDragged));
         OnPropertyChanged(nameof(CanBeReplaced));
     }
 
-    /// <summary>
-    /// Causes bindings to reevaluate the drag/drop capabilities of this
-    /// Region and all descendant Regions.
-    /// </summary>
     public void ReevaluateDragDropCapabilities() {
         ReevaluateOwnDragDropCapabilities();
 
@@ -157,7 +152,9 @@ public partial class RegionNode : ObservableObject {
         SecondChild?.ReevaluateDragDropCapabilities();
     }
 
-    private void PayloadViewModel_DragDropCapabilitiesChanged(object? sender, EventArgs e) {
+    private void PayloadViewModel_DragDropCapabilitiesChanged(
+        object? sender, EventArgs e) {
+
         ReevaluateOwnDragDropCapabilities();
     }
 
@@ -165,14 +162,12 @@ public partial class RegionNode : ObservableObject {
 
     #region Region Assignment
 
-    /// <summary>
-    /// Broadcast after a Region drag/drop assignment has successfully completed.
-    /// This event is normally raised from the RootRegionNode.
-    /// </summary>
     public event EventHandler<RegionAssignedEventArgs>? RegionAssigned;
 
-    public void RaiseRegionAssigned(RegionNode? sourceRegionNode,
-        RegionNode targetRegionNode, BaseViewModel assignedViewModel) {
+    public void RaiseRegionAssigned(
+        RegionNode? sourceRegionNode,
+        RegionNode targetRegionNode,
+        BaseViewModel assignedViewModel) {
 
         var e = new RegionAssignedEventArgs(
             sourceRegionNode,
@@ -190,6 +185,7 @@ public partial class RegionNode : ObservableObject {
 
     public bool RaiseNodeChanging(string nodeId, NodeAction action) {
         var args = new RegionNodeChangingEventArgs(nodeId, action);
+
         OnNodeChanging(args);
 
         return !args.Cancel;

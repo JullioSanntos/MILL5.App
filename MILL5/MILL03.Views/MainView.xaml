@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:controls="clr-namespace:MILL03.Views.Controls"
-             xmlns:views="using:MILL03.Views.Views"
              x:Class="MILL03.Views.MainView"
              Title="Enterprise Dashboard">
 
-    <Grid x:Name="RootGrid" BackgroundColor="Transparent">
-        <controls:RegionCell Grid.Column="0" RegionNode="{Binding Regions.RootRegionNode}" />
-    </Grid>
+    <Grid x:Name="RootGrid"
+          BackgroundColor="Transparent" />
 
 </ContentPage>

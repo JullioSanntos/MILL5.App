@@ -10,7 +10,17 @@ public partial class MainView : ContentPage {
     public MainView() {
         InitializeComponent();
 
-        BindingContext = MainViewModel.Instance;
+        var viewModel =
+            MainViewModel.Instance;
+
+        BindingContext =
+            viewModel;
+
+        RootGrid.Children.Add(
+            new RegionCell {
+                RegionNode =
+                    viewModel.Regions.RootRegionNode
+            });
 
         Loaded += MainView_Loaded;
         Unloaded += MainView_Unloaded;
@@ -20,12 +30,18 @@ public partial class MainView : ContentPage {
 
     #region Lifecycle
 
-    private void MainView_Loaded(object? sender, EventArgs e) {
-        DragDropCoordinator.DroppedOutside += DragDropCoordinator_DroppedOutside;
+    private void MainView_Loaded(
+        object? sender, EventArgs e) {
+
+        DragDropCoordinator.DroppedOutside +=
+            DragDropCoordinator_DroppedOutside;
     }
 
-    private void MainView_Unloaded(object? sender, EventArgs e) {
-        DragDropCoordinator.DroppedOutside -= DragDropCoordinator_DroppedOutside;
+    private void MainView_Unloaded(
+        object? sender, EventArgs e) {
+
+        DragDropCoordinator.DroppedOutside -=
+            DragDropCoordinator_DroppedOutside;
     }
 
     #endregion Lifecycle
@@ -45,7 +61,8 @@ public partial class MainView : ContentPage {
     private void DragDropCoordinator_DroppedOutside(
         object? sender, EventArgs e) {
 
-        Dispatcher.Dispatch(OpenFloatingWindow);
+        Dispatcher.Dispatch(
+            OpenFloatingWindow);
     }
 
     #endregion Drag Drop
@@ -66,7 +83,8 @@ public partial class MainView : ContentPage {
             }
         };
 
-        Application.Current?.OpenWindow(new Window(page));
+        Application.Current?.OpenWindow(
+            new Window(page));
     }
 
     #endregion Windows
