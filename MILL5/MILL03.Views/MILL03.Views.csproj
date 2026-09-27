@@ -112,6 +112,9 @@
 	  <MauiXaml Update="Controls\RegionCell.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Controls\RegionTreeHost.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="MainView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
