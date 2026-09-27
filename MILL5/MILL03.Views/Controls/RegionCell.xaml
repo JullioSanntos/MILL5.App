@@ -18,8 +18,7 @@
                                          Dropped="RegionDropTarget_Dropped">
                         <controls:DropTarget.InnerContent>
 
-                            <controls:Draggable DragData="{Binding RegionNode,
-                                                                 Source={x:Reference RegionCellRoot}}"
+                            <controls:Draggable DragData="{Binding Source={x:Reference RegionCellRoot}}"
                                                 IsDraggable="{Binding RegionNode.CanBeDragged,
                                                                      Source={x:Reference RegionCellRoot}}">
                                 <controls:Draggable.InnerContent>
